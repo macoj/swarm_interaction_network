@@ -1,9 +1,11 @@
 __author__ = 'marcos'
+import re
+import sys
 import math
 import numpy as np
 
 
-class Parser:
+class EasyGraph:
     def __init__(self):
         pass
 
@@ -43,3 +45,270 @@ class Parser:
             matrix_read = list(map(float, matrix_read))
             matrix_result = np.array(matrix_read)
         return matrix_result
+
+    @staticmethod
+    def get_influence_graph_and_particles_position(filename,
+                                                   position_grep=None,
+                                                   influence_graph_grep=None,
+                                                   window_size=-1,
+                                                   calculate_on=-1):
+        """ Gets the influence graph and the particles positions in an iteration given.
+        :param filename:
+        :param position_grep:
+        :param influence_graph_grep:
+        :param window_size:
+        :param calculate_on:
+        :return:
+        """
+        input_file = open(filename, 'r')
+        #window_size = 10
+        windowed = window_size >= 1
+        window = {}
+        window_current = 0
+
+        matrix_count = 0
+        accumulated_matrix = None
+        particles_position = {}
+        ig_pp_return = None
+
+        # let's get just the dimension of the influence graph
+        for line in input_file:
+            line, times = re.subn(influence_graph_grep, "", line)
+            ig_greped = (times != 0)
+            if ig_greped:
+                accumulated_matrix = EasyGraph.read_matrix_from_line(line)
+                accumulated_matrix = np.zeros(accumulated_matrix.shape)
+                break
+
+        # rewind
+        input_file.seek(0L)
+
+        graph_done = False
+        if accumulated_matrix is not None:
+            for line in input_file:
+                # tries to get influence graph
+                line, times = re.subn(influence_graph_grep, "", line)
+                ig_greped = (times != 0)
+                if ig_greped and graph_done is False:
+                    matrix_count += 1
+                    matrix = EasyGraph.read_matrix_from_line(line)
+                    accumulated_matrix = accumulated_matrix + matrix
+                    # let's keep the window history
+                    if windowed:
+                        window_current += 1
+                        window[window_current % window_size] = matrix
+                else:
+                    # let's try to get a position vector,
+                    # the pattern is something like: position:#0#i x y z
+                    # what means that the position_grep = position:#
+                    line, times = re.subn(position_grep, "", line)
+                    pos_greped = (times != 0)
+                    if pos_greped:
+                        pos_match = re.match('^[0-9]*#[0-9]*', line)
+                        if pos_match is not None:
+                            pos_match = pos_match.group(0)
+                            iteration, particle_id = pos_match.split('#')
+                            if int(iteration) == calculate_on:
+                                line_mod, _ = re.subn('^[0-9]*#[0-9]*', "", line)
+                                particles_position[particle_id] = EasyGraph.read_vector_from_line(line_mod)
+                if matrix_count == calculate_on:
+                    graph_done = True   # and we do not care about the graph anymore
+                    if len(particles_position) != accumulated_matrix.shape[0]:
+                        continue
+                    if windowed:
+                        graph_return = EasyGraph.sum_matrices(window)
+                    else:
+                        graph_return = accumulated_matrix
+                    ig_pp_return = (graph_return, particles_position)
+                    break
+        input_file.close()
+        return ig_pp_return
+
+    @staticmethod
+    def read_file_line_and_measure(filename, calculate, grep=None, pre_callback=None, pos_callback=sys.stdout.write):
+        """ Reads each line in a file, creates a graph for each one based on the line content and measure the graph.
+        :param filename: The filename of the file to be processed.
+        :param calculate: The function used to measure the graph.
+        :param grep: A regexp to use just specific lines of the file. The match is removed from the line.
+        :param pre_callback: A function used to pre-process the graph.
+        :param pos_callback: A function used to receive the mesasurement. If none, sys.stdout.write is used.
+        :return: None.
+        """
+        input_file = open(filename, 'r')
+        for line in input_file:
+            if grep is not None:
+                line, times = re.subn(grep, "", line)
+                if times == 0:
+                    continue
+            matrix = EasyGraph.read_matrix_from_line(line)
+            if pre_callback is not None:
+                matrix = pre_callback(matrix)
+                #print matrix
+            matrix_measured = calculate(matrix)
+            if pos_callback == sys.stdout.write:
+                matrix_measured = str(matrix_measured) + "\n"
+            pos_callback(matrix_measured)
+        input_file.close()
+    '''
+ EasyGraph.read_file_and_measure(
+ '/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
+ SpectraUndirect.calculate, grep = 'ig\:#[0-9]*')
+ EasyGraph.read_file_and_measure(
+ '/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
+igraph.Graph.degree, grep = 'ig\:#[0-9]*', pre_callback = create_igraph_from_matrix)
+
+EasyGraph.read_file_and_measure_no_window(
+'/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
+igraph.Graph.degree, grep = 'ig\:#[0-9]*', pre_callback = create_igraph_from_matrix)
+EasyGraph.read_file_and_measure_no_window(
+'/home/marcos/PhD/research/pso_influence_graph_communities/50_particles/pso_dynamic_initial_ring_F6_30',
+calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = create_and_save_plot)
+    '''
+    @staticmethod
+    def read_file_and_measure(filename,
+                              calculate=None,
+                              influence_graph_grep=None,
+                              fitness_grep=None,
+                              window_size=-1,
+                              pre_callback=None,
+                              pos_callback=sys.stdout.write,
+                              calculate_on=-1):
+        """ Measures each pair (fitnesses, graph) from the file.
+
+        This function uses a regexp for fitness (or any other kind of information related to the graph) and a regexp
+        for the graph. So, after finding a pair (fitness, graph), the graph is measured and this measurement is passed
+        to the pos_callback function with the fitness values found so far. Thus, the pos_callback function must handle
+        two arguments, where the first one is the result of the calculate function and the second one is a list of
+        fitness values.
+
+        :param filename:
+        :param calculate:
+        :param influence_graph_grep:
+        :param fitness_grep:
+        :param window_size:
+        :param pre_callback:
+        :param pos_callback:
+        :return:
+        """
+        input_file = open(filename, 'r')
+        #window_size = 10
+        windowed = window_size >= 1
+        window = {}
+        window_current = 0
+
+        # gets first line in order to create the sum_matrix
+        matrix_count = 0
+        fitnesses = None
+        if fitness_grep:
+            fitnesses = []
+        ig_greped = False
+        fitness_greped = False
+        accumulated_matrix = None
+        for line in input_file:
+            ig_greped, fitness_greped, fitnesses, line = EasyGraph.grep_line(line, ig_greped, fitness_greped,
+                                                                             fitnesses, influence_graph_grep,
+                                                                             fitness_grep)
+            # we will go until find ig and fitness
+            if not ig_greped or (not fitness_greped and fitness_grep is not None):
+                continue
+            accumulated_matrix = EasyGraph.read_matrix_from_line(line)
+            matrix_count += 1
+            sum_matrix_measured = accumulated_matrix
+            # let's keep the window history
+            if windowed:
+                window[window_current % window_size] = sum_matrix_measured
+                window_current += 1
+                #print str(window)
+                sum_matrix_measured = EasyGraph.sum_matrices(window)
+            # does it calculate all the time? or only one shot?
+            is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
+            # let's calculate
+            if (matrix_count >= window_size or not windowed) and is_to_calculate:
+                EasyGraph.measure(sum_matrix_measured, pre_callback, calculate,
+                                  pos_callback, matrix_count, fitnesses)
+            break
+
+        # now we go to the other lines
+        ig_greped = False
+        fitness_greped = False
+        # did we get the first line? did we already do what we needed?
+        if accumulated_matrix is not None and not (calculate_on != -1 and matrix_count == calculate_on):
+            for line in input_file:
+                ig_greped, fitness_greped, fitnesses, line = EasyGraph.grep_line(line, ig_greped, fitness_greped,
+                                                                                 fitnesses, influence_graph_grep,
+                                                                                 fitness_grep)
+                # we will go until find ig and fitness pair
+                if not ig_greped or (not fitness_greped and fitness_grep is not None):
+                    continue
+                matrix_count += 1
+                matrix = EasyGraph.read_matrix_from_line(line)
+                accumulated_matrix = accumulated_matrix + matrix
+                sum_matrix_measured = accumulated_matrix
+                ig_greped = False
+                fitness_greped = False
+                # let's keep the window history
+                if windowed:
+                    window_current += 1
+                    window[window_current % window_size] = matrix
+                    sum_matrix_measured = EasyGraph.sum_matrices(window)
+                # does it calculate all the time? or only one shot?
+                is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
+                # let's calculate
+                if (matrix_count >= window_size or not windowed) and is_to_calculate:
+                    EasyGraph.measure(sum_matrix_measured, pre_callback, calculate,
+                                      pos_callback, matrix_count, fitnesses)
+                # already done?
+                if calculate_on != -1 and matrix_count >= calculate_on:
+                    break
+        input_file.close()
+
+    @staticmethod
+    def grep_line(line, ig_greped, fitness_greped, fitnesses, influence_graph_grep=None, fitness_grep=None):
+        if influence_graph_grep is not None and not ig_greped:
+            line, times = re.subn(influence_graph_grep, "", line)
+            ig_greped = (times != 0)
+        if fitness_grep is not None and not fitness_greped:
+            fitness, times = re.subn(fitness_grep, "", line)
+            fitness_greped = fitness_greped or (times != 0)
+            if fitness_greped:
+                #print str(fitness)
+                fitnesses.append(float(fitness.strip()))
+        return ig_greped, fitness_greped, fitnesses, line
+
+    @staticmethod
+    def measure(matrix, pre_callback, calculate, pos_callback, matrix_count, fitnesses=None):
+        # matrix here can be symmetric or not, pre_callback should work on it...
+        sum_matrix_measured = matrix
+        if pre_callback is not None:
+            sum_matrix_measured = pre_callback(matrix)
+        if calculate is not None:
+            sum_matrix_measured = calculate(sum_matrix_measured)
+        # adds info about line read
+        matrix_out = matrix_count, sum_matrix_measured
+        ##
+#             if (matrix_count == 100):
+#                 return (sum_matrix_measured)
+#             continue
+        ##
+        if pos_callback == sys.stdout.write:
+            matrix_out = str(matrix_out).strip() + "\n"
+
+        if pos_callback is not None:
+            if fitnesses:
+                pos_callback(matrix_out, fitnesses)
+            else:
+                pos_callback(matrix_out)
+
+    @staticmethod
+    def sum_matrices(window):
+        """
+
+        :rtype : object
+        """
+        sum_matrix = None
+        if window is not None:
+            sum_matrix = np.zeros(window[0].shape)
+        for w in window:
+            sum_matrix = sum_matrix + window[w]
+        return sum_matrix
+
