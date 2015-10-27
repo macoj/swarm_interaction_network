@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 
-class EasyGraph:
+class SwarmParser:
     def __init__(self):
         pass
 
@@ -76,7 +76,7 @@ class EasyGraph:
             line, times = re.subn(influence_graph_grep, "", line)
             ig_greped = (times != 0)
             if ig_greped:
-                accumulated_matrix = EasyGraph.read_matrix_from_line(line)
+                accumulated_matrix = SwarmParser.read_matrix_from_line(line)
                 accumulated_matrix = np.zeros(accumulated_matrix.shape)
                 break
 
@@ -91,7 +91,7 @@ class EasyGraph:
                 ig_greped = (times != 0)
                 if ig_greped and graph_done is False:
                     matrix_count += 1
-                    matrix = EasyGraph.read_matrix_from_line(line)
+                    matrix = SwarmParser.read_matrix_from_line(line)
                     accumulated_matrix = accumulated_matrix + matrix
                     # let's keep the window history
                     if windowed:
@@ -110,13 +110,13 @@ class EasyGraph:
                             iteration, particle_id = pos_match.split('#')
                             if int(iteration) == calculate_on:
                                 line_mod, _ = re.subn('^[0-9]*#[0-9]*', "", line)
-                                particles_position[particle_id] = EasyGraph.read_vector_from_line(line_mod)
+                                particles_position[particle_id] = SwarmParser.read_vector_from_line(line_mod)
                 if matrix_count == calculate_on:
                     graph_done = True   # and we do not care about the graph anymore
                     if len(particles_position) != accumulated_matrix.shape[0]:
                         continue
                     if windowed:
-                        graph_return = EasyGraph.sum_matrices(window)
+                        graph_return = SwarmParser.sum_matrices(window)
                     else:
                         graph_return = accumulated_matrix
                     ig_pp_return = (graph_return, particles_position)
@@ -140,7 +140,7 @@ class EasyGraph:
                 line, times = re.subn(grep, "", line)
                 if times == 0:
                     continue
-            matrix = EasyGraph.read_matrix_from_line(line)
+            matrix = SwarmParser.read_matrix_from_line(line)
             if pre_callback is not None:
                 matrix = pre_callback(matrix)
                 #print matrix
@@ -150,17 +150,17 @@ class EasyGraph:
             pos_callback(matrix_measured)
         input_file.close()
     '''
- EasyGraph.read_file_and_measure(
+ SwarmParser.read_file_and_measure(
  '/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
  SpectraUndirect.calculate, grep = 'ig\:#[0-9]*')
- EasyGraph.read_file_and_measure(
+ SwarmParser.read_file_and_measure(
  '/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
 igraph.Graph.degree, grep = 'ig\:#[0-9]*', pre_callback = create_igraph_from_matrix)
 
-EasyGraph.read_file_and_measure_no_window(
+SwarmParser.read_file_and_measure_no_window(
 '/home/marcos/PhD/research/pso_influence_graph_communities/pso_dynamic_initial_ring_F6_30',
 igraph.Graph.degree, grep = 'ig\:#[0-9]*', pre_callback = create_igraph_from_matrix)
-EasyGraph.read_file_and_measure_no_window(
+SwarmParser.read_file_and_measure_no_window(
 '/home/marcos/PhD/research/pso_influence_graph_communities/50_particles/pso_dynamic_initial_ring_F6_30',
 calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = create_and_save_plot)
     '''
@@ -205,13 +205,13 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         fitness_greped = False
         accumulated_matrix = None
         for line in input_file:
-            ig_greped, fitness_greped, fitnesses, line = EasyGraph.grep_line(line, ig_greped, fitness_greped,
+            ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
                                                                              fitnesses, influence_graph_grep,
                                                                              fitness_grep)
             # we will go until find ig and fitness
             if not ig_greped or (not fitness_greped and fitness_grep is not None):
                 continue
-            accumulated_matrix = EasyGraph.read_matrix_from_line(line)
+            accumulated_matrix = SwarmParser.read_matrix_from_line(line)
             matrix_count += 1
             sum_matrix_measured = accumulated_matrix
             # let's keep the window history
@@ -219,12 +219,12 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
                 window[window_current % window_size] = sum_matrix_measured
                 window_current += 1
                 #print str(window)
-                sum_matrix_measured = EasyGraph.sum_matrices(window)
+                sum_matrix_measured = SwarmParser.sum_matrices(window)
             # does it calculate all the time? or only one shot?
             is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
             # let's calculate
             if (matrix_count >= window_size or not windowed) and is_to_calculate:
-                EasyGraph.measure(sum_matrix_measured, pre_callback, calculate,
+                SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
                                   pos_callback, matrix_count, fitnesses)
             break
 
@@ -234,14 +234,14 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         # did we get the first line? did we already do what we needed?
         if accumulated_matrix is not None and not (calculate_on != -1 and matrix_count == calculate_on):
             for line in input_file:
-                ig_greped, fitness_greped, fitnesses, line = EasyGraph.grep_line(line, ig_greped, fitness_greped,
+                ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
                                                                                  fitnesses, influence_graph_grep,
                                                                                  fitness_grep)
                 # we will go until find ig and fitness pair
                 if not ig_greped or (not fitness_greped and fitness_grep is not None):
                     continue
                 matrix_count += 1
-                matrix = EasyGraph.read_matrix_from_line(line)
+                matrix = SwarmParser.read_matrix_from_line(line)
                 accumulated_matrix = accumulated_matrix + matrix
                 sum_matrix_measured = accumulated_matrix
                 ig_greped = False
@@ -250,12 +250,12 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
                 if windowed:
                     window_current += 1
                     window[window_current % window_size] = matrix
-                    sum_matrix_measured = EasyGraph.sum_matrices(window)
+                    sum_matrix_measured = SwarmParser.sum_matrices(window)
                 # does it calculate all the time? or only one shot?
                 is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
                 # let's calculate
                 if (matrix_count >= window_size or not windowed) and is_to_calculate:
-                    EasyGraph.measure(sum_matrix_measured, pre_callback, calculate,
+                    SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
                                       pos_callback, matrix_count, fitnesses)
                 # already done?
                 if calculate_on != -1 and matrix_count >= calculate_on:
