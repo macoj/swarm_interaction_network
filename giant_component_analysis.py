@@ -129,7 +129,7 @@ class GiantComponentDeath:
         print 'removing all with degree ' + str(degree) + ' - removed ' + str(a)
 
     @staticmethod
-    def create_giant_component_curves(all_graph_matrices, calculate_on, windows_size):
+    def create_giant_component_curves(all_graph_matrices):
         pd_datas_1 = {}
         for title in all_graph_matrices:
             return_graphs_with_giant_sizes = [1.0, 0.9, 0.7, 0.5, 0.3]
@@ -145,5 +145,6 @@ class GiantComponentDeath:
                 pd_data['x'] /= (2 * float(title_legend))
                 pd_datas_1[title][title_legend] = pd_data
         # now we plot... pd_datas_1
-        GiantComponentDeathPlotter.create_giant_component_death_curve(calculate_on, pd_datas_1, windows_size)
+        return pd_datas_1
+
 

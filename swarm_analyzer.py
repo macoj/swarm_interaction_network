@@ -1,3 +1,5 @@
+from giant_component_analysis_plotter import GiantComponentDeathPlotter
+
 __author__ = 'marcos'
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
@@ -38,7 +40,8 @@ class SwarmAnalyzer:
                                                   calculate_on=calculate_on)
             all_graph_matrices[title] = graph_matrices
             ### create the GiantComponentDeath analysis
-        GiantComponentDeath.create_giant_component_curves(all_graph_matrices, calculate_on, windows_size)
+        pd_datas = GiantComponentDeath.create_giant_component_curves(all_graph_matrices)
+        GiantComponentDeathPlotter.create_giant_component_death_curve(calculate_on, pd_datas, windows_size)
         #create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
         #create_heatmap_plot(all_graph_matrices, calculate_on)
         #create_strength_distribution_curves(all_graph_matrices, calculate_on)
@@ -92,7 +95,7 @@ class SwarmAnalyzer:
              '/mnt/50_particles_simulations/pso_global_F6_16'),
             ('von Neumann',
              '/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_16')],
-            windows_size=[500, 1000],
+            windows_size=[10, 500, 1000],
             calculate_on=1000)
         # return
 
