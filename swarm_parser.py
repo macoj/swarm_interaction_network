@@ -204,14 +204,18 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         ig_greped = False
         fitness_greped = False
         accumulated_matrix = None
+        ig_line = []
         for line in input_file:
-            ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
-                                                                               fitnesses, influence_graph_grep,
-                                                                               fitness_grep)
-            # we will go until find ig and fitness
+            # we add fitnesses and influence graphs in ig_line and fitnesses
+            ig_greped, fitness_greped, fitnesses, ig_line = SwarmParser.grep_line(line,
+                                                                                  ig_greped, fitness_greped,
+                                                                                  ig_line, fitnesses,
+                                                                                  influence_graph_grep,
+                                                                                  fitness_grep)
+            # we will keep reading until we find at least a pair ig/fitness
             if not ig_greped or (not fitness_greped and fitness_grep is not None):
                 continue
-            accumulated_matrix = SwarmParser.read_matrix_from_line(line)
+            accumulated_matrix = SwarmParser.read_matrix_from_line(ig_line[len(ig_line)-1])
             matrix_count += 1
             sum_matrix_measured = accumulated_matrix
             # let's keep the window history
@@ -221,7 +225,7 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
                 #print str(window)
                 sum_matrix_measured = SwarmParser.sum_matrices(window)
             # does it calculate all the time? or only one shot?
-            is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
+            is_to_calculate = calculate_on == -1 or (calculate_on != -1 and matrix_count == calculate_on)
             # let's calculate
             if (matrix_count >= window_size or not windowed) and is_to_calculate:
                 SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
@@ -231,28 +235,33 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         # now we go to the other lines
         ig_greped = False
         fitness_greped = False
+        ig_line = []
         # did we get the first line? did we already do what we needed?
         if accumulated_matrix is not None and not (calculate_on != -1 and matrix_count == calculate_on):
             for line in input_file:
-                ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
-                                                                                   fitnesses, influence_graph_grep,
+                ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line,
+                                                                                   ig_greped, fitness_greped,
+                                                                                   ig_line, fitnesses,
+                                                                                   influence_graph_grep,
                                                                                    fitness_grep)
                 # we will go until find ig and fitness pair
                 if not ig_greped or (not fitness_greped and fitness_grep is not None):
                     continue
                 matrix_count += 1
-                matrix = SwarmParser.read_matrix_from_line(line)
+                matrix = SwarmParser.read_matrix_from_line(ig_line[len(ig_line)-1])
                 accumulated_matrix = accumulated_matrix + matrix
                 sum_matrix_measured = accumulated_matrix
+                # reset:
                 ig_greped = False
                 fitness_greped = False
+                ig_line = []
                 # let's keep the window history
                 if windowed:
                     window_current += 1
                     window[window_current % window_size] = matrix
                     sum_matrix_measured = SwarmParser.sum_matrices(window)
                 # does it calculate all the time? or only one shot?
-                is_to_calculate = calculate == -1 or (calculate_on != -1 and matrix_count == calculate_on)
+                is_to_calculate = calculate_on == -1 or (calculate_on != -1 and matrix_count == calculate_on)
                 # let's calculate
                 if (matrix_count >= window_size or not windowed) and is_to_calculate:
                     SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
@@ -263,17 +272,41 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         input_file.close()
 
     @staticmethod
-    def grep_line(line, ig_greped, fitness_greped, fitnesses, influence_graph_grep=None, fitness_grep=None):
+    def read_files_and_measure(calculate_on, filenames, fitness_grep, influence_graph_grep, pre_callback, windows_size, calculate=None):
+        all_graph_matrices = {}
+        for filename in filenames:
+            print filename
+            title, filename = filename
+            graph_matrices = []
+            # for calculate_on in calculates_on:
+            for window_size in windows_size:
+                graph_index = window_size
+                pos_callback = lambda x, y: graph_matrices.append((graph_index, x[1]))
+                SwarmParser.read_file_and_measure(filename,
+                                                  calculate=calculate,
+                                                  influence_graph_grep=influence_graph_grep,
+                                                  fitness_grep=fitness_grep,
+                                                  window_size=window_size,
+                                                  pre_callback=pre_callback,
+                                                  pos_callback=pos_callback,
+                                                  calculate_on=calculate_on)
+            all_graph_matrices[title] = graph_matrices
+        return all_graph_matrices
+
+    @staticmethod
+    def grep_line(line, ig_greped, fitness_greped, ig_line, fitnesses, influence_graph_grep=None, fitness_grep=None):
         if influence_graph_grep is not None and not ig_greped:
             line, times = re.subn(influence_graph_grep, "", line)
             ig_greped = (times != 0)
+            if ig_greped:
+                ig_line.append(line)
         if fitness_grep is not None and not fitness_greped:
             fitness, times = re.subn(fitness_grep, "", line)
             fitness_greped = fitness_greped or (times != 0)
             if fitness_greped:
                 #print str(fitness)
                 fitnesses.append(float(fitness.strip()))
-        return ig_greped, fitness_greped, fitnesses, line
+        return ig_greped, fitness_greped, fitnesses, ig_line
 
     @staticmethod
     def measure(matrix, pre_callback, calculate, pos_callback, matrix_count, fitnesses=None):

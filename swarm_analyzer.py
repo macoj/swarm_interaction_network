@@ -11,6 +11,24 @@ class SwarmAnalyzer:
         pass
 
     @staticmethod
+    def read_file_and_plot(filename, windows_size=None, calculate_on=None):
+        fitness_grep = 'it\:#[0-9]*'
+        influence_graph_grep = 'ig\:#[0-9]*'
+        pre_callback = PreCallback.to_symmetric
+        if type(windows_size) == int:
+            windows_size = [windows_size]
+        all_graph_matrices = SwarmParser.read_files_and_measure(calculate_on, [filename], fitness_grep,
+                                                                influence_graph_grep, pre_callback, windows_size)
+        title, filename = filename
+        graph_matrices = all_graph_matrices[title]
+        return graph_matrices
+    """
+execfile("swarm_analyzer.py")
+filename = ('Dynamic', '/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_16')
+g = SwarmAnalyzer.read_file_and_plot(filename, windows_size=[1], calculate_on=-1)
+
+    """
+    @staticmethod
     def read_files_and_plot(filenames, windows_size=None, calculate_on=None):
         # windows_size = [10, 40, 50, 60, 70, 80, 90, 100]
         # windows_size = [1, 5, 10, 15, 20] #, 40, 50, 60, 70, 80, 90, 100]
@@ -20,26 +38,10 @@ class SwarmAnalyzer:
         fitness_grep = 'it\:#[0-9]*'
         influence_graph_grep = 'ig\:#[0-9]*'
         pre_callback = PreCallback.to_symmetric
-        all_graph_matrices = {}
-        for filename in filenames:
-            title, filename = filename
-            graph_matrices = []
-            #for calculate_on in calculates_on:
-            if type(windows_size) == int:
-                windows_size = [windows_size]
-            for window_size in windows_size:
-                graph_index = window_size
-                pos_callback = lambda x, y: graph_matrices.append((graph_index, x[1]))
-                SwarmParser.read_file_and_measure(filename,
-                                                  calculate=None,
-                                                  influence_graph_grep=influence_graph_grep,
-                                                  fitness_grep=fitness_grep,
-                                                  window_size=window_size,
-                                                  pre_callback=pre_callback,
-                                                  pos_callback=pos_callback,
-                                                  calculate_on=calculate_on)
-            all_graph_matrices[title] = graph_matrices
-            ### create the GiantComponentDeath analysis
+        if type(windows_size) == int:
+            windows_size = [windows_size]
+        all_graph_matrices = SwarmParser.read_files_and_measure(calculate_on, filenames, fitness_grep,
+                                                                influence_graph_grep, pre_callback, windows_size)
         pd_datas = GiantComponentDeath.create_giant_component_curves(all_graph_matrices)
         GiantComponentDeathPlotter.create_giant_component_death_curve(calculate_on, pd_datas, windows_size)
         #create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
