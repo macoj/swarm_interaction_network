@@ -55,7 +55,6 @@ class Plotter:
             else:
                 plt.show()
 
-
     @staticmethod
     def create_heatmap(matrix,
                        main_title=None,

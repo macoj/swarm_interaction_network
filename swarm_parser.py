@@ -206,8 +206,8 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         accumulated_matrix = None
         for line in input_file:
             ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
-                                                                             fitnesses, influence_graph_grep,
-                                                                             fitness_grep)
+                                                                               fitnesses, influence_graph_grep,
+                                                                               fitness_grep)
             # we will go until find ig and fitness
             if not ig_greped or (not fitness_greped and fitness_grep is not None):
                 continue
@@ -225,7 +225,7 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
             # let's calculate
             if (matrix_count >= window_size or not windowed) and is_to_calculate:
                 SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
-                                  pos_callback, matrix_count, fitnesses)
+                                    pos_callback, matrix_count, fitnesses)
             break
 
         # now we go to the other lines
@@ -235,8 +235,8 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         if accumulated_matrix is not None and not (calculate_on != -1 and matrix_count == calculate_on):
             for line in input_file:
                 ig_greped, fitness_greped, fitnesses, line = SwarmParser.grep_line(line, ig_greped, fitness_greped,
-                                                                                 fitnesses, influence_graph_grep,
-                                                                                 fitness_grep)
+                                                                                   fitnesses, influence_graph_grep,
+                                                                                   fitness_grep)
                 # we will go until find ig and fitness pair
                 if not ig_greped or (not fitness_greped and fitness_grep is not None):
                     continue
@@ -256,7 +256,7 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
                 # let's calculate
                 if (matrix_count >= window_size or not windowed) and is_to_calculate:
                     SwarmParser.measure(sum_matrix_measured, pre_callback, calculate,
-                                      pos_callback, matrix_count, fitnesses)
+                                        pos_callback, matrix_count, fitnesses)
                 # already done?
                 if calculate_on != -1 and matrix_count >= calculate_on:
                     break
@@ -311,4 +311,3 @@ calculate = None, grep = 'ig\:#[0-9]*', pre_callback = None, pos_callback = crea
         for w in window:
             sum_matrix = sum_matrix + window[w]
         return sum_matrix
-

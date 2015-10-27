@@ -1,6 +1,7 @@
 __author__ = 'marcos'
-from parser import SwarmParser
+from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
+from pre_callbacks import PreCallback
 
 
 class SwarmAnalyzer:
@@ -16,7 +17,7 @@ class SwarmAnalyzer:
         # calculate_on = 1500
         fitness_grep = 'it\:#[0-9]*'
         influence_graph_grep = 'ig\:#[0-9]*'
-        pre_callback = to_symmetric
+        pre_callback = PreCallback.to_symmetric
         all_graph_matrices = {}
         for filename in filenames:
             title, filename = filename
@@ -71,24 +72,31 @@ class SwarmAnalyzer:
     @staticmethod
     def do_it():
         windows_size = [10, 100, 500, 1000]
+        # return SwarmAnalyzer.read_files_and_plot([
+        #     ('FSS1',
+        #      '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
+        #     ('FSS2',
+        #      '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
+        #     ('FSS3',
+        #      '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
+        #     ('FSS4',
+        #      '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original')],
+        #     windows_size=-1,
+        #     calculate_on=1000)/mnt/50_particles_simulations
         return SwarmAnalyzer.read_files_and_plot([
-            ('FSS1',
-             '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
-            ('FSS2',
-             '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
-            ('FSS3',
-             '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original'),
-            ('FSS4',
-             '/home/marcos/PhD/research/pso_influence_graph_communities/fss_F6_original')],
-            windows_size=-1,
+            ('Dynamic',
+             '/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_16'),
+            ('Ring',
+             '/mnt/50_particles_simulations/pso_ring_F6_13'),
+            ('Global',
+             '/mnt/50_particles_simulations/pso_global_F6_16'),
+            ('von Neumann',
+             '/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_16')],
+            windows_size=[500, 1000],
             calculate_on=1000)
-
-            # ('Ring',
-            #  '/home/marcos/PhD/research/pso_influence_graph_communities/100_particles/pso_ring_F6_13'),
-            # ('Global',
-            #  '/home/marcos/PhD/research/pso_influence_graph_communities/100_particles/pso_global_F6_16'),
-            # ('von Neumann',
-            #  '/home/marcos/PhD/research/pso_influence_graph_communities/100_particles/pso_neumann_F6_18')],
-            # windows_size=-1,
-            # calculate_on=1000)
         # return
+
+"""
+execfile("swarm_analyzer.py")
+SwarmAnalyzer.do_it()
+"""

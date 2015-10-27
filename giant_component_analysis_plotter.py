@@ -77,5 +77,5 @@ class GiantComponentDeathPlotter:
         plt.suptitle("Snapshot of the " + str(calculate_on) + "th iteration", fontsize=14)
         plt.savefig('/home/marcos/PhD/research/pso_influence_graph_communities/giant' +
                     str(calculate_on) + '-' +
-                    '_'.join(map(str, windows_size)) + '.pdf', bbox_inches='tight')
+                    '_'.join(map(str, windows_size)) + '.png', bbox_inches='tight')
         plt.close()

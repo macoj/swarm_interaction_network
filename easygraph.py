@@ -68,14 +68,6 @@ class SpectraUndirect(Measure):
         return numpy.linalg.eig(matrix)
 
 
-def to_symmetric(matrix):
-    is_symmetric = numpy.triu(matrix) == numpy.transpose(numpy.tril(matrix))
-    is_symmetric = is_symmetric.min()
-    # here we sum
-    if not is_symmetric:
-        matrix = matrix + numpy.transpose(numpy.triu(matrix)) + numpy.transpose(numpy.tril(matrix))
-    return matrix
-
 
 
 
