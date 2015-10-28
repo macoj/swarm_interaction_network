@@ -42,7 +42,8 @@ class SwarmAnalyzer:
                 y.append(y[len(y)-1])
                 f = interpolate.interp1d(x, y, kind='nearest')
                 ty = map(float, map(f, tx))
-                areas.append(sum(ty * tx)/len(tx))
+                # areas.append(sum(ty * tx)/len(tx))
+                areas.append(sum(ty))
                 del x
                 del y
                 del f
@@ -56,7 +57,18 @@ basename = "/mnt/50_particles_simulations/pso_global_F6_"
 basename = "/mnt/50_particles_simulations/pso_ring_F6_"
 basename = "/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_"
 SwarmAnalyzer.read_files_and_export_hdf(100, basename)
+SwarmAnalyzer.read_hdfs_and_plot(basename)
     """
+
+    @staticmethod
+    def read_hdfs_and_plot(basename):
+        filenames = [basename+"%02d" % i for i in range(1, 30)]
+        windows_size = 1000
+        for filename in filenames:
+            df = pd.read_hdf(filename+"_"+str(windows_size)+".hdf", 'df')
+            Plotter.plot_curve(df, figsize=(18, 6))
+
+
     @staticmethod
     def read_files_and_plot(filenames, windows_size=None, calculate_on=None):
         # windows_size = [10, 40, 50, 60, 70, 80, 90, 100]

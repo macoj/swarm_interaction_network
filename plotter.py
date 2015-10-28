@@ -16,13 +16,13 @@ class Plotter:
         pass
 
     @staticmethod
-    def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None, legends=None):
+    def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None, legends=None, figsize=(3, 2)):
         if pd_data is not None:
             font = {'family': 'normal',
                     'weight': 'normal',
                     'size': 8}
             matplotlib.rc('font', **font)
-            fig = plt.figure()
+            fig = plt.figure(figsize=figsize)
             #ax3 = fig.add_subplot(plot_gridspec[4, 2])
             if type(pd_data) is not list:
                 plt.plot(pd_data['x'], pd_data['y'], linestyle='-', marker='.')
