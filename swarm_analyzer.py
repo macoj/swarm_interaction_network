@@ -33,7 +33,6 @@ class SwarmAnalyzer:
         filenames = [basename+"%02d" % i for i in range(1, 30)]
         for filename in filenames:
             graphs = SwarmAnalyzer.read_file_and_plot(('None', filename), windows_size=windows_size, calculate_on=-1)
-            graphs = graphs[:10]
             areas = []
             delta = 0.001
             tx = np.arange(0, 1 + delta, delta)
