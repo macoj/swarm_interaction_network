@@ -1,9 +1,13 @@
+import sys
 from giant_component_analysis_plotter import GiantComponentDeathPlotter
-
 __author__ = 'marcos'
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
 from pre_callbacks import PreCallback
+from plotter import Plotter
+import pandas as pd
+from scipy import interpolate
+import numpy as np
 
 
 class SwarmAnalyzer:
@@ -21,12 +25,38 @@ class SwarmAnalyzer:
                                                                 influence_graph_grep, pre_callback, windows_size)
         title, filename = filename
         graph_matrices = all_graph_matrices[title]
-        return graph_matrices
+        curves = GiantComponentDeath.get_giant_component_curves_areas(graph_matrices)
+        return curves
+
+    @staticmethod
+    def read_files_and_export_hdf(windows_size, basename):
+        filenames = [basename+"%02d" % i for i in range(1, 30)]
+        for filename in filenames:
+            graphs = SwarmAnalyzer.read_file_and_plot(('None', filename), windows_size=windows_size, calculate_on=-1)
+            graphs = graphs[:10]
+            areas = []
+            delta = 0.001
+            tx = np.arange(0, 1 + delta, delta)
+            for graph in graphs:
+                x, y = list(graph.x), list(graph.y)
+                x.append(1.0)
+                y.append(y[len(y)-1])
+                f = interpolate.interp1d(x, y, kind='nearest')
+                ty = map(float, map(f, tx))
+                areas.append(sum(ty * tx)/len(tx))
+                del x
+                del y
+                del f
+                del ty
+            df = pd.DataFrame({'x': range(windows_size, windows_size+len(areas)), 'y': areas})
+            df.to_hdf(filename+"_"+str(windows_size)+".hdf", 'df')
+            del df
     """
 execfile("swarm_analyzer.py")
-filename = ('Dynamic', '/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_16')
-g = SwarmAnalyzer.read_file_and_plot(filename, windows_size=[1], calculate_on=-1)
-
+basename = "/mnt/50_particles_simulations/pso_global_F6_"
+basename = "/mnt/50_particles_simulations/pso_ring_F6_"
+basename = "/mnt/50_particles_simulations/pso_dynamic_initial_ring_F6_"
+SwarmAnalyzer.read_files_and_export_hdf(100, basename)
     """
     @staticmethod
     def read_files_and_plot(filenames, windows_size=None, calculate_on=None):
@@ -100,6 +130,9 @@ g = SwarmAnalyzer.read_file_and_plot(filename, windows_size=[1], calculate_on=-1
             windows_size=[10, 500, 1000],
             calculate_on=1000)
         # return
+
+if __name__ == "__main__":
+    SwarmAnalyzer.read_files_and_export_hdf(int(sys.argv[1]), sys.argv[2])
 
 """
 execfile("swarm_analyzer.py")
