@@ -73,7 +73,6 @@ class GiantComponentDeath:
         weight_values.append(0)
         weight_values.sort()
         graph_copy = igraph_graph.copy()
-        print 111
         for weight in weight_values:
             GiantComponentDeath.remove_weighted_edges(graph_copy, weight)
             death_evolution_weight.append(weight)
@@ -89,7 +88,6 @@ class GiantComponentDeath:
                             graphs.append((graph[1], size_perc, graph_copy.copy()))
                             graphs_kept[index_graph] = (True, graph[1])
                     index_graph += 1
-        print 111
         # the result dataframe is sorted by the weight, low -> high
         #pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': death_evolution_size})
         pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': number_of_components})
@@ -161,14 +159,10 @@ class GiantComponentDeath:
     @staticmethod
     def get_giant_component_curves_areas(graph_matrices):
         pd_datas = []
-        print 10
         for graph_matrix in graph_matrices:
             title_legend, graph_matrix = graph_matrix
             #graph_matrix = to_symmetric(graph_matrix)
-            print 9
             pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix, normalize=title_legend)
-            print 9
             pd_datas.append(pd_data)
-        print 10
         return pd_datas
 
