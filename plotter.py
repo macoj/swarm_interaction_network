@@ -16,31 +16,54 @@ class Plotter:
         pass
 
     @staticmethod
-    def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None, legends=None, figsize=(3, 2)):
+    def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None,
+                   legends=None, figsize=(3, 2), marker=".", linestyle=None, markersize=10,
+                   linewidth=1, markevery=None, colors=None):
         if pd_data is not None:
             font = {'family': 'normal',
                     'weight': 'normal',
                     'size': 8}
             matplotlib.rc('font', **font)
             fig = plt.figure(figsize=figsize)
+            ls = linestyle
             #ax3 = fig.add_subplot(plot_gridspec[4, 2])
             if type(pd_data) is not list:
-                plt.plot(pd_data['x'], pd_data['y'], linestyle='-', marker='.')
+                plt.plot(pd_data['x'], pd_data['y'], linestyle='-', marker=marker, markevery=markevery)
                 plt.xlim(min(pd_data['x']), max(pd_data['x']))
             else:
                 lines = ["-", "--", "-.", ":"]  # matplotlib.markers.MarkerStyle.markers.keys() #
                 linecycler = cycle(lines)
+                xlim_min = float('inf')
+                xlim_max = float('-inf')
+                colorcycler = None
+                legendcycler = None
                 if legends:
                     legendcycler = cycle(legends)
+                if colors:
+                    colorcycler = cycle(colors)
                 for pd_data_i in pd_data:
                     legend_title = None
                     if legends:
                         legend_title = cycle(legendcycler)
-                    plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=next(linecycler),
-                             marker='.', label=next(legend_title))
+                    if not linestyle:
+                        ls = next(linecycler)
+                    if colorcycler:
+                        plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
+                                 marker=marker, label=next(legend_title),
+                                 markersize=markersize, linewidth=linewidth,
+                                 markevery=markevery, color=next(colorcycler))
+                    else:
+                        plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
+                                 marker=marker, label=next(legend_title),
+                                 markersize=markersize, linewidth=linewidth,
+                                 markevery=markevery)
+                    if markevery:
+                        markevery += 1
                     #plt.legend(loc=2)
                     plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
-                plt.xlim(min(pd_data_i['x']), max(pd_data_i['x']))
+                    xlim_min = min(xlim_min, min(pd_data_i['x']))
+                    xlim_max = max(xlim_max, max(pd_data_i['x']))
+                plt.xlim(xlim_min, xlim_max)
 
             if x_label:
                 plt.xlabel(x_label)

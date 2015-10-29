@@ -49,7 +49,7 @@ class GiantComponentDeath:
         return result
 
     @staticmethod
-    def low_edges_weight_removal(igraph_graph, graphs_keeper_giant_size_threshold=None):
+    def low_edges_weight_removal(igraph_graph, graphs_keeper_giant_size_threshold=None, include_zero=True):
         """ Removes the edges progressively by the weight starting with the ones with the lowest weight and returns
         the size of the giant component after each removal.
 
@@ -70,7 +70,8 @@ class GiantComponentDeath:
         death_evolution_size = []
         number_of_components = []
         weight_values = list(set(igraph_graph.es['weight']))
-        weight_values.append(0)
+        if include_zero:
+            weight_values.append(0)
         weight_values.sort()
         graph_copy = igraph_graph.copy()
         for weight in weight_values:
@@ -129,14 +130,20 @@ class GiantComponentDeath:
         print 'removing all with degree ' + str(degree) + ' - removed ' + str(a)
 
     @staticmethod
-    def create_giant_component_curve(graph_matrix, return_graphs_with_giant_sizes=None, normalize=None):
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
+    def create_giant_component_curve(graph_matrix, return_graphs_with_giant_sizes=None,
+                                     normalize=None, adjusted=False, include_zero=True):
+        # igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_PLUS)
         # create the graph objects as well as the death analysis
-        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(igraph_graph, return_graphs_with_giant_sizes)
+        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(igraph_graph,
+                                                                       return_graphs_with_giant_sizes,
+                                                                       include_zero=include_zero)
         # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
         # normalize
         if normalize:
             pd_data['x'] /= (2 * float(normalize))
+        if adjusted:
+            pd_data['x'] -= min(pd_data.x)
         return pd_data
 
     @staticmethod
@@ -157,12 +164,15 @@ class GiantComponentDeath:
         return pd_datas_1
 
     @staticmethod
-    def get_giant_component_curves_areas(graph_matrices):
+    def get_giant_component_curves_areas(graph_matrices, adjusted=False, include_zero=True):
         pd_datas = []
         for graph_matrix in graph_matrices:
             title_legend, graph_matrix = graph_matrix
             #graph_matrix = to_symmetric(graph_matrix)
-            pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix, normalize=title_legend)
+            pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix,
+                                                                       normalize=title_legend,
+                                                                       adjusted=adjusted,
+                                                                       include_zero=include_zero)
             pd_datas.append(pd_data)
         return pd_datas
 
