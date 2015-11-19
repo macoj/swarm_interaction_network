@@ -17,7 +17,7 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class PSO implements Runnable{
+public class PSO implements Runnable {
 	
     private PrintWriter printWriter;
 	
@@ -80,21 +80,13 @@ public class PSO implements Runnable{
 	
 	enum TOPOLOGY { GLOBAL, RING, CLAN, RANDOM, VON_NEUMANN, BARABASI, PARTNERS, THREESOME_PARTNERS, ORGY_PARTNERS, NSOME_PARTNERS, K_MEANS_BASED, NO_TOPOLOGY, KOHONEN_BASED };
 	
-	enum TOPOLOGY_MECHANISM { NONE, BARABASI_BASED, BARABASI_BASED_DYNAMIC_A, BARABASI_BASED_DYNAMIC_B, BARABASI_BASED_DYNAMIC_C, BARABASI_BASED_DYNAMIC_D, BARABASI_BASED_DYNAMIC_DISSERTACAO, BARABASI_BASED_DYNAMIC_LOG };
+	enum TOPOLOGY_MECHANISM { NONE, BARABASI_BASED, BARABASI_BASED_DYNAMIC_A, BARABASI_BASED_DYNAMIC_B, BARABASI_BASED_DYNAMIC_C, BARABASI_BASED_DYNAMIC_D, DYNAMIC_2011, BARABASI_BASED_DYNAMIC_LOG };
 	
 	static final int swarm_topology_sleep = 1;
 	
 	int particles_failures_threshold;
 	int[] particles_failures_threshold_particular = null;
-	
-	double sphere (double x[]) {
-		double sum = 0.0f;
-		for (int i = 0; i < x.length; i++) {
-			sum += x[i]*x[i];
-		}
-		sum = (double) Math.sqrt(sum);
-		return sum;
-	}
+
 /*
 	F1  : Shifted Elliptic Function 									UNIMODAL
 	F2  : Shifted Rastrigin's Function									MULTIMODAL
@@ -120,7 +112,6 @@ public class PSO implements Runnable{
 	public PSO(String[] args) {
 		
 		int evaluation = 300000;
-		
 		// args[0] is the function
 		if (args.length > 0) {
 			FUNCTION = functionFromInt(Integer.parseInt(args[0]));
@@ -301,83 +292,6 @@ public class PSO implements Runnable{
 		random_number_generator_independent = new Random(random_number_generator_seed_independent);
 	}
 	
-	
-	public int[] k_means(int k) {
-		
-		if (swarm_clusters == null) {
-			swarm_clusters = new int[NUMBER_OF_PARTICLES];
-			if (swarm_centroids == null) {
-				swarm_centroids = new double[k][DIMENSION];
-				for (int cluster = 0; cluster < k; cluster++) {
-					for (int d = 0; d < DIMENSION; d++) {
-						swarm_centroids[cluster][d] = (PARTICLE_INITIAL_RANGE_R - PARTICLE_INITIAL_RANGE_L) * randomDouble() + PARTICLE_INITIAL_RANGE_L;
-					}
-				}
-			}
-		}
-		
-		if (swarm_centroids == null) {
-			// baricentros
-			swarm_centroids = new double[k][DIMENSION];
-			int[] count = new int[k];
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				for (int dimension = 0; dimension < DIMENSION; dimension++) {
-					swarm_centroids[swarm_clusters[particle]][dimension] += particle_position[particle][dimension];
-				}
-				count[swarm_clusters[particle]]++;
-			}
-			
-			for (int cluster = 0; cluster < k; cluster++) {
-				for (int dimension = 0; dimension < DIMENSION; dimension++) {
-					swarm_centroids[cluster][dimension] /= count[cluster];
-				}	
-			}
-		}
-		
-		for (int p = 0; p < swarm_clusters.length; p++) {
-			swarm_clusters[p] = -1;
-		}
-		
-
-		
-		boolean change = false;
-		do {
-			change = false;
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				double distance = Double.MAX_VALUE;
-				int own_cluster = -1;
-				for (int cluster = 0; cluster < k; cluster++) {
-					double current_distance = euclidianDistance(swarm_centroids[cluster], particle_position[particle]);
-					 if (distance > current_distance) {
-						 distance = current_distance;
-						 own_cluster = cluster;
-					 }
-				}
-				if (swarm_clusters[particle] != own_cluster) {
-					change = true;
-				}
-				swarm_clusters[particle] = own_cluster;
-			}
-			// recalcula centroids
-			double[][] new_centroids = new double[k][DIMENSION];
-			int[] count = new int[k];
-			
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				for (int d = 0; d < DIMENSION; d++) {
-					new_centroids[swarm_clusters[particle]][d] += particle_position[particle][d];
-				}
-				count[swarm_clusters[particle]]++;
-			}
-			for (int cluster = 0; cluster < k; cluster++) {
-				for (int d = 0; d < DIMENSION; d++) {
-					swarm_centroids[cluster][d] = new_centroids[cluster][d]/((double)count[cluster]);
-				}	
-			}
-		} while (change == false);
-		
-		return swarm_clusters;
-	}
-	
 	private double euclidianDistance(double[] ds, double[] ds2) {
 		double sum = 0.0f;
 		for (int i = 0; i < ds2.length; i++) {
@@ -386,7 +300,6 @@ public class PSO implements Runnable{
 		sum = Math.sqrt(sum);
 		return sum;
 	}
-
 	
 	public static void main(String[] args) throws FileNotFoundException {
 		/*double a[] = { 1, 1};
@@ -400,17 +313,18 @@ public class PSO implements Runnable{
 		
 	}
         
-        public void setTopology(TOPOLOGY topology){
-            this.swarm_initial_topology = topology;
-        }
-        
-        public void setTopologyMechanism(TOPOLOGY_MECHANISM topologyMechanism){
-            this.swarm_topology_mechanism = topologyMechanism;
-        }
+    public void setTopology(TOPOLOGY topology){
+        this.swarm_initial_topology = topology;
+    }
+    
+    public void setTopologyMechanism(TOPOLOGY_MECHANISM topologyMechanism){
+        this.swarm_topology_mechanism = topologyMechanism;
+    }
 
-        public void setPrinter(PrintWriter printer){
-            this.printWriter = printer;
-        }
+    public void setPrinter(PrintWriter printer){
+        this.printWriter = printer;
+    }
+    
     /**
      *
      * @throws FileNotFoundException
@@ -793,6 +707,7 @@ public class PSO implements Runnable{
 		}
 		return map;
 	}
+	
 	private int[][] getAdjacency(boolean[][] swarm_neighborhood_graph2) {
 		int[][] ret = new int[swarm_neighborhood_graph2.length][swarm_neighborhood_graph2.length];
 		for (int i = 0; i < ret.length; i++) {
@@ -806,6 +721,7 @@ public class PSO implements Runnable{
 		}
 		return ret;
 	}
+	
 	private void updateParticlesNeighboursDistances() {
 		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
 			for (int j = i; j < NUMBER_OF_PARTICLES; j++) {
@@ -826,11 +742,13 @@ public class PSO implements Runnable{
 		sum = Math.sqrt(sum);
 		return sum;
 	}
+	
 	private double cosBetweenVectors(double[] vectorA, double[] vectorB) {
 		double cos = this.scalarProduct(vectorA, vectorB); 
 		cos = cos/(matrixNorma(vectorA)*matrixNorma(vectorB));
 		return cos;
 	}
+	
 	private double scalarProduct(double[] matrixA, double[] matrixB) {
 		double sum = 0.0;
 		
@@ -985,7 +903,6 @@ public class PSO implements Runnable{
 		}
 	}
 
-	
 	private boolean removeNeighbourCarefully(int particle, int i) {
 		boolean removed = false;
 		if (numberOfNeighbours(i) > 2) {
@@ -997,6 +914,7 @@ public class PSO implements Runnable{
 		return removed;
 		
 	}
+	
 	private void updateParticlesDistances() {
 		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
 			for (int j = i + 1; j < NUMBER_OF_PARTICLES; j++) {
@@ -1007,6 +925,7 @@ public class PSO implements Runnable{
 		}
 		
 	}
+	
 	private void printAvgStdDev(double[] run_final_values) {
 		double average = 0.0;
 		double std_dev = 0.0;
@@ -1023,12 +942,14 @@ public class PSO implements Runnable{
 		System.out.println("avg: "+average);
 		System.out.println("std_dev: "+std_dev);
 	}
+	
 	private void printFinals(double[] run_final_values) {
 		for (int run = 0; run < run_final_values.length; run++) {
 			System.out.println("final#"+run+" "+run_final_values[run]);
 		}
 		
 	}
+	
 	private int[] kohonen(int neuronNumber) {
 		boolean changed;
 		
@@ -1140,24 +1061,9 @@ public class PSO implements Runnable{
 	private void updateNeighbourhood() {
 		if (swarm_topology_mechanism != null) {
 			switch (swarm_topology_mechanism) {
-			case BARABASI_BASED_DYNAMIC_A:
-				this.updateNeighbourhood_BA_DYNAMIC_A();
-				break;
-			case BARABASI_BASED_DYNAMIC_B:
-				this.updateNeighbourhood_BA_DYNAMIC_B();
-				break;
-			case BARABASI_BASED_DYNAMIC_C:
-				this.updateNeighbourhood_BA_DYNAMIC_C();
-				break;			
-			case BARABASI_BASED_DYNAMIC_D:
-				this.updateNeighbourhood_BA_DYNAMIC_D();
-				break;
-			case BARABASI_BASED_DYNAMIC_DISSERTACAO:
+			case DYNAMIC_2011:
 				this.updateNeighbourhood_BA_DYNAMIC_DISSERTACAO();
 				break;
-			case BARABASI_BASED_DYNAMIC_LOG:
-				this.updateNeighbourhood_BA_DYNAMIC_LOG();
-				break;			
 			default:
 				break;
 			}
@@ -1165,240 +1071,13 @@ public class PSO implements Runnable{
 		
 	}
 	
-	
-private void updateNeighbourhood_BA_DYNAMIC_LOG() {
-	Random random_number_generator = null;
-	random_number_generator = this.random_number_generator_independent;
-	//random_number_generator = this.random_number_generator;
-	int ranking[] = new int[NUMBER_OF_PARTICLES];
-	int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-	int particle_index_shuffled[] = new int[NUMBER_OF_PARTICLES];
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		ranking[particle] = particle;
-		particle_index_shuffled[particle] = particle;
-	}
-	
-	// shuffle the index shuffled:
-	for (int particle = 0; particle < 2*NUMBER_OF_PARTICLES; particle++) {
-		int particle_a = Math.abs(random_number_generator.nextInt()%NUMBER_OF_PARTICLES);
-		int particle_b = Math.abs(random_number_generator.nextInt()%NUMBER_OF_PARTICLES);
-		int aux = particle_index_shuffled[particle_a];
-		particle_index_shuffled[particle_a] = particle_index_shuffled[particle_b];
-		particle_index_shuffled[particle_b] = aux; 
-	}
-	
-	
-	// a dirty bubble sort
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-				int swap = ranking[neighbour];
-				ranking[neighbour] = ranking[particle];
-				ranking[particle] = swap;
-			}
-		}
-	}
-
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-	}
-	// ranking[0] eh o index da PIOR particula
-	// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-	// ranking_of_particle[i] eh a posicao da particula i no ranking, valor = 0 indica PIOR POSICAO 
-	
-	//random_number_generator = this.random_number_generator_independent;
-	// in the same order of particle updating, the swarm behaviour is different
-	// when different seeds are used. 
-	
-	//// -> esse laco pega uma particula aleatoriamente no enxame!
-	for (int particle_ordered = 0; particle_ordered < ranking_of_particle.length; particle_ordered++) {
-		
-		int particle = particle_index_shuffled[particle_ordered];
-		double r;// = random_number_generator.nextDouble(); 
-		int who = 0;
-		float sum = 0;
-		double power = 1;
-		
-		/*
-		if (particle_failures[particle] < particles_failures_threshold_particular[particle]) {
-			continue;
-		}
-		*/
-		///////// LOG
-		double log_k = 0.01;
-		double p_failures = (double) particle_failures[particle];
-		double p_reconnect  = Math.max(0, Math.log10(log_k*p_failures)); /// min seria sempre 0 ou negativo
-		r = random_number_generator.nextDouble();
-		if (r > p_reconnect) {
-			continue; // nao executa o mecanismo de reconexao
-		}
- 
-					
-		float pa_sum = (float) pa(NUMBER_OF_PARTICLES, power);
-		r = random_number_generator.nextDouble();
-		sum = 0;
-		who = NUMBER_OF_PARTICLES - 1; 	// who = -1; se passar da roulette wheel, significa que o power esta muito grande
-										//			 e a precisao nao eh suficiente, entao a divisao com pa_sum nao eh valida :/  
-		int wheel;
-		for (wheel = 0; wheel < NUMBER_OF_PARTICLES ; wheel++) {
-			// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-			sum += Math.pow(((double) wheel + 1), power) / (pa_sum);
-			if (ranking[wheel] == particle) {
-				continue;
-			}
-			if (sum >= r) {
-				who = ranking[wheel];
-				break;
-			}
-		}
-		
-		if (who == -1) {
-			System.out.println(r+" and sum ="+sum+" and power: "+power);
-			System.exit(1);
-		}
-		
-		//who = chooseByRouletteWheelRankingBased_exponencial(); //chooseByRouletteWheelFitnessBased();
-		// se vai conectar a um melhor, tudo bem.
-		//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
-		//if ((ranking_of_particle[who] < ranking_of_particle[particle]) && (particle_failures[who] < particle_failures[particle])) {
-		
-		if ((particle_failures[who] == 0)/* && (ranking_of_particle[who] > ranking_of_particle[particle])*/) {
-			if (!swarm_neighborhood_graph[who][particle]) {
-						particle_failures[particle] = 0; 
-			}
-		} else {
-			if (swarm_neighborhood_graph[who][particle]) {
-				removeNeighbour(particle, who);
-			}
-		}		
-				
-		if (particle_failures[particle] == 0) {
-			addNeighbour(who, particle);
-		}
-	}
-}
-	
-private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
-	Random random_number_generator = null;
-	random_number_generator = this.random_number_generator_independent;
-	//random_number_generator = this.random_number_generator;
-	int ranking[] = new int[NUMBER_OF_PARTICLES];
-	int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-	int particle_index_shuffled[] = new int[NUMBER_OF_PARTICLES];
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		ranking[particle] = particle;
-		particle_index_shuffled[particle] = particle;
-	}
-	
-	// shuffle the index shuffled:
-	for (int particle = 0; particle < 2*NUMBER_OF_PARTICLES; particle++) {
-		int particle_a = Math.abs(random_number_generator.nextInt()%NUMBER_OF_PARTICLES);
-		int particle_b = Math.abs(random_number_generator.nextInt()%NUMBER_OF_PARTICLES);
-		int aux = particle_index_shuffled[particle_a];
-		particle_index_shuffled[particle_a] = particle_index_shuffled[particle_b];
-		particle_index_shuffled[particle_b] = aux; 
-	}
-	
-	
-	// a dirty bubble sort
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-				int swap = ranking[neighbour];
-				ranking[neighbour] = ranking[particle];
-				ranking[particle] = swap;
-			}
-		}
-	}
-
-	for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-		ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-	}
-	// ranking[0] eh o index da PIOR particula
-	// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-	// ranking_of_particle[i] eh a posicao da particula i no ranking, valor = 0 indica PIOR POSICAO 
-	
-	//random_number_generator = this.random_number_generator_independent;
-	// in the same order of particle updating, the swarm behaviour is different
-	// when different seeds are used. 
-	
-	//// -> esse laco pega uma particula aleatoriamente no enxame!
-	for (int particle_ordered = 0; particle_ordered < ranking_of_particle.length; particle_ordered++) {
-		
-		int particle = particle_index_shuffled[particle_ordered];
-		
-		if (particle_failures[particle] < particles_failures_threshold_particular[particle]) {
-			continue;
-		}
-
-		double r;// = random_number_generator.nextDouble(); 
-		int who = 0;
-		float sum = 0;
-		double power = 1; 
-					
-		float pa_sum = (float) pa(NUMBER_OF_PARTICLES, power);
-		r = random_number_generator.nextDouble();
-		sum = 0;
-		who = NUMBER_OF_PARTICLES - 1; 	// who = -1; se passar da roulette wheel, significa que o power esta muito grande
-										//			 e a precisao nao eh suficiente, entao a divisao com pa_sum nao eh valida :/  
-		int wheel;
-		for (wheel = 0; wheel < NUMBER_OF_PARTICLES ; wheel++) {
-			// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-			sum += Math.pow(((double) wheel + 1), power) / (pa_sum);
-			if (ranking[wheel] == particle) {
-				continue;
-			}
-			if (sum >= r) {
-				who = ranking[wheel];
-				break;
-			}
-		}
-		
-		if (who == -1) {
-			System.out.println(r+" and sum ="+sum+" and power: "+power);
-			System.exit(1);
-		}
-		
-		//who = chooseByRouletteWheelRankingBased_exponencial(); //chooseByRouletteWheelFitnessBased();
-		// se vai conectar a um melhor, tudo bem.
-		//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
-		//if ((ranking_of_particle[who] < ranking_of_particle[particle]) && (particle_failures[who] < particle_failures[particle])) {
-		
-		if ((particle_failures[who] == 0)/* && (ranking_of_particle[who] > ranking_of_particle[particle])*/) {
-			if (!swarm_neighborhood_graph[who][particle]) {
-						particle_failures[particle] = 0; 
-			}
-		} else {
-			if (swarm_neighborhood_graph[who][particle]) {
-				removeNeighbour(particle, who);
-			}
-		}		
-				
-		if (particle_failures[particle] == 0) {
-			addNeighbour(who, particle);
-		}
-	}
-}
-
-	// the order of the particles being updated changes the behaviour of
-	// the swarm. (all the rng have the same seed here)
-	/*
-	it:#0 1500 1561306.5549688472   <- when the same rng is used to shuffle the particle updating order
-	random_number_generator_seed: 1339596216600
-	 */
-	/*
-	it:#0 1500 1374333.8417697118
-	random_number_generator_seed: 1339596216600
-	 */
-	/*
-	it:#0 1500 429.4389155150009
-	random_number_generator_seed: 1339596216600
-	 */
-	private void updateNeighbourhood_BA_DYNAMIC_D() {
-		
+	private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
+		// we do not want to update the neighborhood every time following
+		// the same sequence of particles, so we randomize the index and
+		// update following this random sequence.
 		Random random_number_generator = null;
 		random_number_generator = this.random_number_generator_independent;
-		//random_number_generator = this.random_number_generator;
+		//random_number_generator = this.random_number_generator;   
 		int ranking[] = new int[NUMBER_OF_PARTICLES];
 		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
 		int particle_index_shuffled[] = new int[NUMBER_OF_PARTICLES];
@@ -1416,7 +1095,6 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 			particle_index_shuffled[particle_b] = aux; 
 		}
 		
-		
 		// a dirty bubble sort
 		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
 			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
@@ -1427,29 +1105,19 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 				}
 			}
 		}
-
+	
 		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
 			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
 		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
+		// ranking[0] is the index of the worst particle
+		// ranking[NUMBER_OF_AGENTS - 1] is the index of the best particle
+		// ranking_of_particle[i] is the position of the particle i in the rank; if ranking_of_particle[i] = 0, it means that i is the worst particle 
 		
 		//random_number_generator = this.random_number_generator_independent;
 		// in the same order of particle updating, the swarm behaviour is different
 		// when different seeds are used. 
-		/*
-		it:#0 1500 1561306.5549688472  
-		random_number_generator_seed: 1339596216600
-		 */
-		/*
-		it:#0 1500 77.22749784073
-		random_number_generator_seed: 1339596216600
-		*/
-		/*
-		it:#0 1500 1646246.3367618397
-		random_number_generator_seed: 1339596216600 
-		 */
+		
+		//// -> esse laco pega uma particula aleatoriamente no enxame!
 		for (int particle_ordered = 0; particle_ordered < ranking_of_particle.length; particle_ordered++) {
 			
 			int particle = particle_index_shuffled[particle_ordered];
@@ -1457,16 +1125,12 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 			if (particle_failures[particle] < particles_failures_threshold_particular[particle]) {
 				continue;
 			}
-			//particles_failures_threshold_particular[particle] = particles_failures_threshold_particular[particle] - 1;
-			if (particles_failures_threshold_particular[particle] == 0) {
-				//particles_failures_threshold_particular[particle] = 50;
-			}
-			double r;// = random_number_generator.nextDouble(); 
+	
+			double r;  
 			int who = 0;
 			float sum = 0;
-			double power = 1; //particle_failures_power[particle];
-			//particle_failures_power[particle] += 1.0;
-			
+			double power = 1; 
+						
 			float pa_sum = (float) pa(NUMBER_OF_PARTICLES, power);
 			r = random_number_generator.nextDouble();
 			sum = 0;
@@ -1484,467 +1148,31 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 					break;
 				}
 			}
+			
 			if (who == -1) {
 				System.out.println(r+" and sum ="+sum+" and power: "+power);
+				System.exit(1);
 			}
+			
 			//who = chooseByRouletteWheelRankingBased_exponencial(); //chooseByRouletteWheelFitnessBased();
 			// se vai conectar a um melhor, tudo bem.
 			//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
 			//if ((ranking_of_particle[who] < ranking_of_particle[particle]) && (particle_failures[who] < particle_failures[particle])) {
-			//if ((ranking_of_particle[who] < ranking_of_particle[particle])) {
-			if (particle_failures[who] == 0) {
+			
+			if ((particle_failures[who] == 0)/* && (ranking_of_particle[who] > ranking_of_particle[particle])*/) {
 				if (!swarm_neighborhood_graph[who][particle]) {
-					//if (particle_failures[who] == 0) {
-						//	addNeighbour(particle, who);
 							particle_failures[particle] = 0; 
-					//}
 				}
 			} else {
 				if (swarm_neighborhood_graph[who][particle]) {
 					removeNeighbour(particle, who);
-					//System.out.println("#################################");
 				}
-			}
-			
-			boolean ex_neighbours[];
-			/*
-			if (particle_failures_power[particle] > 10) {
-				int particles_mutated = 0;
-				double mutation_rate = random_number_generator.nextDouble();
-				particle_failures_power[particle] = 1;
-				System.out.println("tryin!");
-				if (mutation_rate < 0.1) {
-					System.out.println("BUM!");
-					particle_failures_power[particle] = 1;
-					particle_failures[particle] = 1;
-					initializeParticle(particle);
-					particles_mutated++;
-					for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-						//if (swarm_neighborhood_graph[particle][neighbour] || swarm_neighborhood_graph[particle_best_neighbour[particle]][neighbour]) {
-						if (swarm_neighborhood_graph[particle][neighbour]) {
-							
-//							for (int n_neighbour = 0; n_neighbour < NUMBER_OF_PARTICLES; n_neighbour++) {
-//								particle_failures_power[particle] = 1;
-//								initializeParticle(neighbour);
-//								particles_mutated++;
-//							}
-							particle_failures_power[particle] = 1;
-							penalizeNeigboursFailures(neighbour, 0);
-							initializeParticle(neighbour);
-							particles_mutated++;
-						}
-					}
-					System.out.println("particles mutated: "+particles_mutated);
-				}
-				
-			}
-			*/
+			}		
 					
 			if (particle_failures[particle] == 0) {
-				boolean g_best_removed = removeNeighbourCarefully(particle, particle_best_neighbour[particle]);
-				//removeNeighbourCarefully(particle, particle_best_neighbour[particle]);
-				double mutation_rate = random_number_generator.nextDouble(); 
-				
-				if (mutation_rate < 0.30) {
-				/*
-					if (mutation_rate < 0.15) {
-						removeAllNeigboursOfCarefullyBut(who, particle);
-					} else {
-						removeAllNeigboursOfCarefullyBut(particle, who);
-					}
-					penalizeNeigboursFailures(who, 0.5);
-					particle_failures[who] = 0;
-					*/
-				}
-								
 				addNeighbour(who, particle);
-				
-				// remove todos os vizinhos da particula
-				//ex_neighbours = removeAllNeigboursOf(particle);
-
-				// para cada ex_vizinho
-				/*
-				int count = 0;
-				for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-					boolean ex_n_neighbours[];
-					if (count > 3) {
-						break;
-					}
-					// ajusta para zero a quantidade de erros
-					if (ex_neighbours[neighbour]) {
-						particle_failures[neighbour] = 0;
-						count ++;
-					}
-					// remove todos os vizinhos
-					ex_n_neighbours = removeAllNeigboursOf(neighbour);
-					// ajusta para zero a quantidade de erros dos vizinhos desse vizinho
-					for (int n_neighbour = 0; n_neighbour < ex_n_neighbours.length; n_neighbour++) {
-						if (ex_n_neighbours[n_neighbour]) {
-							particle_failures[n_neighbour] = 0;
-						} 
-					}
-				}
-				*/
-				setNeigboursFailuresTo(particle, 0);
-				//setNeigboursFaliuresTo(who, 0); // TODO
-				// e reconectar a nova vizinhanca
-				for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-					if (swarm_neighborhood_graph[particle][neighbour]) {
-						penalizeNeigboursFailures(neighbour, 0.5);
-						for (int n_neighbour = 0; n_neighbour < NUMBER_OF_PARTICLES; n_neighbour++) {
-							if (swarm_neighborhood_graph[n_neighbour][neighbour]) {
-							//	penalizeNeigboursFailures(neighbour, 0.75);
-							}
-						}
-						
-						//setNeigboursFaliuresTo(neighbour, 0);
-					}
-					//if (ex_neighbours[neighbour]) {
-//						addNeighbour(neighbour, particle);
-	//				}
-				}
-			if (g_best_removed) {
-				particle_failures[particle_best_neighbour[particle]] = 50;
-			}
-
-				
-			}	
-			/*
-			/// LET's CONNECT TO TWO PARTICLES
-			r = randomDouble();
-			sum = 0;
-			who = -1;
-			for (wheel = (NUMBER_OF_PARTICLES - 1); wheel >= 0 ; wheel--) {
-				// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-				sum += ((float) wheel + 1) / (pa_sum);
-				if (ranking[wheel] == particle) {
-					continue;
-				}
-				if (sum >= r) {
-					who = ranking[wheel];
-					break;
-				}
-			}
-
-			if ((ranking_of_particle[who] < ranking_of_particle[particle])) {
-				if (!swarm_neighborhood_graph[who][particle]) {
-					if (particle_failures[who] == 0) {
-							particle_failures[particle] = 0;
-							addNeighbour(who, particle);
-					}
-				}boolean[][] 
-			} else {
-				removeNeighbour(particle, who);
-			}	
-			*/
-		}
-
-	}
-	
-	
-	private double exponencialGame(double x, double k) {
-		return Math.exp(-k*x);
-	}
-	
-	//exp(-2*$1/100
-	
-	private int chooseByRouletteWheelRankingBased_exponencial() {
-		double r = randomDouble(); 
-		int ranking[] = new int[NUMBER_OF_PARTICLES];
-		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-		int who = 0;
-		double sum = 0;
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking[particle] = particle;
-		}
-		// a dirty bubble sort
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-					int swap = ranking[neighbour];
-					ranking[neighbour] = ranking[particle];
-					ranking[particle] = swap;
-				}
 			}
 		}
-
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
-		r = randomDouble();
-		sum = 0;
-		who = NUMBER_OF_PARTICLES - 1;
-		int wheel;
-		for (wheel = (NUMBER_OF_PARTICLES); wheel > 0; wheel--) {
-			// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTARexp(-2*$1/100)}
-			//sum = ((float) exponencialGame(ranking[wheel]/(NUMBER_OF_PARTICLES/2),2));
-			sum = Math.exp(-2*((double)wheel + 1)/100);
-			
-			if (sum >= r) {
-				who = ranking[NUMBER_OF_PARTICLES - wheel];
-				break;
-			}			
-		}
-
-		return who;
-	}
-
-	
-	private int chooseByRouletteWheelFitnessBased() {
-		double r = randomDouble(); 
-		int ranking[] = new int[NUMBER_OF_PARTICLES];
-		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-		int who = 0;
-		float sum = 0;
-		float pa_sum = 0;
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking[particle] = particle;
-		}
-		for (int particle = 0; particle < particle_best_value.length; particle++) {
-			pa_sum += particle_best_value[particle];
-		}
-		// a dirty bubble sort
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-					int swap = ranking[neighbour];
-					ranking[neighbour] = ranking[particle];
-					ranking[particle] = swap;
-				}
-			}
-		}
-
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
-		r = randomDouble();
-		sum = 0;
-		who = -1;
-		int wheel;
-		for (wheel = (NUMBER_OF_PARTICLES - 1); wheel >= 0 ; wheel--) {
-			// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-			sum += ((float) particle_best_value[ranking[wheel]]) / (pa_sum);
-			
-			if (sum >= r) {
-				who = ranking[wheel];
-				break;
-			}
-			
-		}
-		return who;
-	}
-	
-	private boolean[] removeAllNeigboursOfCarefullyBut(int particle, int who) {
-		boolean[] neighbours = new boolean[NUMBER_OF_PARTICLES];
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			neighbours[neighbour] = swarm_neighborhood_graph[particle][neighbour];
-			if (who == neighbour) 
-				continue;
-			if (swarm_neighborhood_graph[particle][neighbour]) {
-				if (numberOfNeighbours(neighbour) > 1){
-					removeNeighbour(neighbour, particle);
-				}
-			}
-		}
-		return neighbours;
-	}
-	
-	private boolean[] removeAllNeigboursOf(int particle) {
-		boolean[] neighbours = new boolean[NUMBER_OF_PARTICLES];
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			neighbours[neighbour] = swarm_neighborhood_graph[particle][neighbour];
-			if (swarm_neighborhood_graph[particle][neighbour]) {
-				removeNeighbour(neighbour, particle);
-			}
-		}
-		return neighbours;
-	}
-	
-	
-	
-	private void penalizeNeigboursFailures(int particle, double value) {
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			if (swarm_neighborhood_graph[particle][neighbour]) {
-				particle_failures[neighbour] = (int) (((double) particle_failures[neighbour])*value);
-			}
-		}
-	}
-	
-	private void setNeigboursFailuresTo(int particle, int value) {
-		for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-			if (swarm_neighborhood_graph[particle][neighbour]) {
-				particle_failures[neighbour] = 0;
-			}
-		}
-	}
-	
-	private void updateNeighbourhood_BA_DYNAMIC_C() {
-		int ranking[] = new int[NUMBER_OF_PARTICLES];
-		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking[particle] = particle;
-		}
-		// a dirty bubble sort
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-					int swap = ranking[neighbour];
-					ranking[neighbour] = ranking[particle];
-					ranking[particle] = swap;
-				}
-			}
-		}
-
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
-
-		for (int particle = 0; particle < ranking_of_particle.length; particle++) {
-			
-			if (particle_failures[particle] < particles_failures_threshold) {
-				continue;
-			}
-			
-			double r = randomDoubleIndependent(); 
-			int who = 0;
-			float sum = 0;
-			float pa_sum = (float) pa(NUMBER_OF_PARTICLES, 1);
-			r = randomDoubleIndependent();
-			sum = 0;
-			who = -1;
-			int n;
-			//do {
-				for (n = (NUMBER_OF_PARTICLES - 1); n >= 0 ; n--) {
-					// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-					sum += ((float) n + 1) / (pa_sum);
-					if (ranking[n] == particle) {
-						continue;
-					}
-					if (sum >= r) {
-						if (numberOfNeighbours(ranking[n]) >= 20) {
-						//	printf("ops, nao rolan neighbours: %d\n", numberOfNeighbours(ranking[n]));
-							continue;
-						}
-						who = ranking[n];
-						break;
-					}
-				}
-			//} while (who == -1);
-
-
-			// se vai conectar a um melhor, tudo bem.
-			//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
-			//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] < failures[part])) {
-			if (n > -1) {
-				if ((ranking_of_particle[who] < ranking_of_particle[particle])) {
-					if (particle_failures[who] == 0) {
-						if (numberOfNeighbours(who) <= 20) {
-							addNeighbour(particle, who);
-							particle_failures[particle] = 0; 
-						}
-					}
-					//	printf("connecting %d to: %d = ranking, who: %d, n = %d, pbest: %f\n", part, particles_ranking[who], who, n, pbest[who]);
-				} else {
-						removeNeighbour(particle, who);
-				}
-			}
-			if (particle_failures[particle] == 0) {
-				for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-					if (particle == neighbour)
-						continue;
-					if (swarm_neighborhood_graph[particle][neighbour]) {
-						particle_failures[neighbour] /= 2;
-					}
-				}
-			}
-		}
-	
-	}
-	
-	private void updateNeighbourhood_BA_DYNAMIC_B() {
-		int ranking[] = new int[NUMBER_OF_PARTICLES];
-		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking[particle] = particle;
-		}
-		// a dirty bubble sort
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-					int swap = ranking[neighbour];
-					ranking[neighbour] = ranking[particle];
-					ranking[particle] = swap;
-				}
-			}
-		}
-
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
-
-		for (int particle = 0; particle < ranking_of_particle.length; particle++) {
-			
-			if (particle_failures[particle] < particles_failures_threshold) {
-				continue;
-			}
-			
-			double r = randomDoubleIndependent(); 
-			int who = 0;
-			float sum = 0;
-			float pa_sum = (float) pa(NUMBER_OF_PARTICLES, 1);
-			r = randomDoubleIndependent();
-			sum = 0;
-			who = -1;
-			int n;
-			//do {
-				for (n = (NUMBER_OF_PARTICLES - 1); n >= 0 ; n--) {
-					// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-					sum += ((float) n + 1) / (pa_sum);
-					if (ranking[n] == particle) {
-						continue;
-					}
-					if (sum >= r) {
-						if (numberOfNeighbours(ranking[n]) >= 20) {
-						//	printf("ops, nao rolan neighbours: %d\n", numberOfNeighbours(ranking[n]));
-							continue;
-						}
-						who = ranking[n];
-						break;
-					}
-				}
-			//} while (who == -1);
-
-
-			// se vai conectar a um melhor, tudo bem.
-			//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
-			//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] < failures[part])) {
-			if (n > -1) {
-				if ((ranking_of_particle[who] < ranking_of_particle[particle])) {
-					if (particle_failures[who] == 0) {
-						if (numberOfNeighbours(who) <= 20) {
-							addNeighbour(particle, who);
-							particle_failures[particle] = 0; 
-						}
-					}
-					//	printf("connecting %d to: %d = ranking, who: %d, n = %d, pbest: %f\n", part, particles_ranking[who], who, n, pbest[who]);
-				} else {
-						removeNeighbour(particle, who);
-				}
-			}
-		}
-	
 	}
 
 	private int numberOfNeighbours(int i) {
@@ -1955,84 +1183,6 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 			}
 		}
 		return sum;
-	}
-
-	private void updateNeighbourhood_BA_DYNAMIC_A() {
-		/// CRIA O RANKING DAS PARTICULAS - INICIO
-		int ranking[] = new int[NUMBER_OF_PARTICLES];
-		int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking[particle] = particle;
-		}
-		// a dirty bubble sort
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-					int swap = ranking[neighbour];
-					ranking[neighbour] = ranking[particle];
-					ranking[particle] = swap;
-				}
-			}
-		}
-
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-		}
-		// ranking[0] eh o index da PIOR particula
-		// ranking[NUMBER_OF_AGENTS - 1] eh o index da MELHOR particula
-		// ranking_of_particle[i] eh a posicao da particula i no ranking
-
-		for (int a = 0; a < NUMBER_OF_PARTICLES; a++) {
-			if (particle_failures[a] < particles_failures_threshold)
-				continue;
-	
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-					if (neighbour == particle)
-						continue;
-					double r = randomDoubleIndependent();
-					int who = 0;
-					double sum = 0;
-					double pa_sum = (double) pa(NUMBER_OF_PARTICLES, 1);
-					for (int n = (NUMBER_OF_PARTICLES - 1); n >= 0 ; n--) {
-						// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
-						sum += ((float) n + 1) / (pa_sum);
-						if (ranking[n] == particle) {
-							continue;
-						}
-						if (sum >= r) {
-							who = ranking[n];
-							break;
-						}
-					}
-					// se vai conectar a um melhor, tudo bem.
-					//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] == 0)) {
-					//if ((particles_ranking[who] > particles_ranking[part]) && (failures[who] < failures[part])) {
-					if ((ranking_of_particle[who] < ranking_of_particle[particle]) && (particle_failures[who] < particle_failures[particle]) ) {
-						if ((who == neighbour)) {
-							addNeighbour(particle, who);
-						}
-					} else {
-						removeNeighbour(particle, who);
-					}
-				}
-				removeNeighbour(particle, particle_best_neighbour[particle]); // modified
-				particle_failures[a] = 0;
-			}
-		}
-		
-	}
-
-	public int getGBest() {
-		double minval = Double.MAX_VALUE;
-		int gbest = 0;
-		for (int particle = 0; particle < particle_best_value.length; particle++) {
-			if (particle_best_value[particle] < minval) {
-				minval = particle_best_value[particle];
-				gbest = particle;
-			}
-		}
-		return gbest;
 	}
 
 	private void updatePosition() {
@@ -2057,19 +1207,12 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		double phi = c1 + c2;
 		double factor = 2 / Math.abs(2 - phi - Math.sqrt(phi*phi - 4*phi));
 		for (int particle = 0; particle < particle_velocity.length; particle++) {
-			double[] cos_test = new double[DIMENSION];
-			if (particle == 0) {
-				cos_test = particle_velocity[0].clone();
-			}
 			int best_neighbour = particle_best_neighbour[particle];
-			
 			// update particle with constriction factor
 			for (int dimension = 0; dimension < particle_velocity[particle].length; dimension++) {
 				double cognitive = c1*randomDouble()*(particle_best_value_position[particle][dimension] - particle_position[particle][dimension]);
 				double social = c2*randomDouble()*(particle_best_value_position[best_neighbour][dimension] - particle_position[particle][dimension]);
-
 				particle_velocity[particle][dimension] = factor * (particle_velocity[particle][dimension] + cognitive + social);
-				
 				// clamp the particles
 				if (particle_velocity[particle][dimension] > PARTICLE_MAXV) {
 					particle_velocity[particle][dimension] = PARTICLE_MAXV;
@@ -2077,17 +1220,9 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 					particle_velocity[particle][dimension] = -PARTICLE_MAXV;
 				}
 			}
-			if (particle == 0) {
-				//System.out.println("cos 0 = " + this.cosBetweenVectors(cos_test, particle_velocity[0]));
-			}
 		}
 	}
 	
-	
-	
-	
-	
-
 	private double randomDouble() {
 		return this.random_number_generator.nextDouble();
 	}
@@ -2096,7 +1231,21 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		return this.random_number_generator_independent.nextDouble();
 	}
 	
+	public int getGBest() {
+		// assuming here that the problem is minimization! 
+		double minval = Double.MAX_VALUE;
+		int gbest = 0;
+		for (int particle = 0; particle < particle_best_value.length; particle++) {
+			if (particle_best_value[particle] < minval) {
+				minval = particle_best_value[particle];
+				gbest = particle;
+			}
+		}
+		return gbest;
+	}
+	
 	private void findBestNeighbours() {
+		// assuming here that the problem is minimization! 
 		for (int particle = 0; particle < swarm_neighborhood_graph.length; particle++) {
 			
 			double minval = Double.MAX_VALUE;
@@ -2120,15 +1269,15 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 	}
 
 	private void evaluatePositionAndUpdatePersonal() {
-		double zero = 0.000000000000000000000000000001;
+		double zero = 0.00001D;
 		// evaluate function and update pbest
 		for (int particle = 0; particle < particle_position.length; particle++) {
 			
 			double current_fitness = FUNCTION.compute(particle_position[particle]);
+
 			if (current_fitness < particle_best_value[particle]) {
 				double delta = Math.abs(current_fitness -  particle_best_value[particle]);
-				if (delta < 0.00001D) {
-					///System.out.println("DELTA EH PEQUENO!");
+				if (delta < zero) {
 					particle_failures[particle]++;
 				} else {
 					particle_failures[particle] = 0;
@@ -2140,7 +1289,6 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 			} else {
 				particle_failures[particle]++;
 			}
-			//}
 		}	
 	}
 
@@ -2153,6 +1301,7 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		initializeTopology();
 		
 	}
+	
 	private void initializeParticle(int particle) {
 		for (int dimension = 0; dimension < particle_position[particle].length; dimension++) {
 			particle_position[particle][dimension] =  (PARTICLE_INITIAL_RANGE_R - PARTICLE_INITIAL_RANGE_L) * randomDouble() + PARTICLE_INITIAL_RANGE_L;
@@ -2192,7 +1341,6 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 			}		
 			break;
 		case VON_NEUMANN:
-			// TODO: need tests here. Checked: I think it is OK.
 			int columns = swarm_neighborhood_graph.length / 2;	
 			//     |   |   |   |
 			//   - a - b - c - d -
@@ -2309,6 +1457,8 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		//swarm_clusters = null;
 		
 	}
+	
+	
 	private void k_meanNeighbourhoodCreate(int k) {
 		int[] clusters = this.k_means(k);
 		int[] last_connected = new int[clusters.length];
@@ -2353,6 +1503,7 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		}
 	}
 	
+	
 	private double pa(int n, double p) {
 		double sum = 0;
 		int i;
@@ -2365,6 +1516,7 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 	int[][] getInfluenceGraph() {
 		return getInfluenceGraph(1);
 	}
+	
 	
 	int[][] getInfluenceGraph(int k) {
 		int[][] influence = null;
@@ -2405,6 +1557,77 @@ private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
 		}
 		return influence;
 	}
+	
+	public int[] k_means(int k) {
+		if (swarm_clusters == null) {
+			swarm_clusters = new int[NUMBER_OF_PARTICLES];
+			if (swarm_centroids == null) {
+				swarm_centroids = new double[k][DIMENSION];
+				for (int cluster = 0; cluster < k; cluster++) {
+					for (int d = 0; d < DIMENSION; d++) {
+						swarm_centroids[cluster][d] = (PARTICLE_INITIAL_RANGE_R - PARTICLE_INITIAL_RANGE_L) * randomDouble() + PARTICLE_INITIAL_RANGE_L;
+					}
+				}
+			}
+		}
+		
+		if (swarm_centroids == null) {
+			// baricentros
+			swarm_centroids = new double[k][DIMENSION];
+			int[] count = new int[k];
+			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
+				for (int dimension = 0; dimension < DIMENSION; dimension++) {
+					swarm_centroids[swarm_clusters[particle]][dimension] += particle_position[particle][dimension];
+				}
+				count[swarm_clusters[particle]]++;
+			}
+			
+			for (int cluster = 0; cluster < k; cluster++) {
+				for (int dimension = 0; dimension < DIMENSION; dimension++) {
+					swarm_centroids[cluster][dimension] /= count[cluster];
+				}	
+			}
+		}
+		
+		for (int p = 0; p < swarm_clusters.length; p++) {
+			swarm_clusters[p] = -1;
+		}
+		
+		boolean change = false;
+		do {
+			change = false;
+			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
+				double distance = Double.MAX_VALUE;
+				int own_cluster = -1;
+				for (int cluster = 0; cluster < k; cluster++) {
+					double current_distance = euclidianDistance(swarm_centroids[cluster], particle_position[particle]);
+					 if (distance > current_distance) {
+						 distance = current_distance;
+						 own_cluster = cluster;
+					 }
+				}
+				if (swarm_clusters[particle] != own_cluster) {
+					change = true;
+				}
+				swarm_clusters[particle] = own_cluster;
+			}
+			// recalcula centroids
+			double[][] new_centroids = new double[k][DIMENSION];
+			int[] count = new int[k];
+			
+			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
+				for (int d = 0; d < DIMENSION; d++) {
+					new_centroids[swarm_clusters[particle]][d] += particle_position[particle][d];
+				}
+				count[swarm_clusters[particle]]++;
+			}
+			for (int cluster = 0; cluster < k; cluster++) {
+				for (int d = 0; d < DIMENSION; d++) {
+					swarm_centroids[cluster][d] = new_centroids[cluster][d]/((double)count[cluster]);
+				}	
+			}
+		} while (change == false);
+		
+		return swarm_clusters;
+	}
 }
-
-

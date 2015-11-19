@@ -8,7 +8,7 @@ import java.util.Random;
 public class DAPSO {
 	
 	private PSO pso;
-        private PrintWriter printer;
+    private PrintWriter printer;
 	private double[] previousPBest;
 	private double[] currentPBest;
 	private double fTBest;
