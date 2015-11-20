@@ -44,16 +44,11 @@ public class PSO implements Runnable {
 	int particle_failures[];
 	double particle_failures_power[];
 	
-	double particle_fev_1[];
-	double particle_fev_2[];
-	double particle_fev_2_reduced[];
 	double swarm_distance_particles[][];
 	double[][] swarm_centroids = null;
 	double[][] swarm_clusters_kohonen = null;
 	int[] swarm_clusters = null;
 	
-	boolean swarm_viewer_enabled = false;
-	boolean network_science_metrics = false;
 	
 	double PARTICLE_MAXX, PARTICLE_MAXV, PARTICLE_MINX, PARTICLE_INITIAL_RANGE_L, PARTICLE_INITIAL_RANGE_R;
 	//it: 9999 gbest: 40 : 19.71921474112517
@@ -137,7 +132,6 @@ public class PSO implements Runnable {
 		
 		particle_failures_power = new double[NUMBER_OF_PARTICLES];
 		particles_failures_threshold_particular = new int[NUMBER_OF_PARTICLES];
-		network_science_metrics = false;
 		initializeRNG();
 		
 		swarm_influence_graph_weighted = false; // TODO consertar isso!
@@ -175,8 +169,6 @@ public class PSO implements Runnable {
 		swarm_gbest = -1;
 		
 		swarm_number_of_clusters = 3;
-		
-		swarm_viewer_enabled = false;
 		
 		swarm_initial_maximum_neighbors = 3;
 		
