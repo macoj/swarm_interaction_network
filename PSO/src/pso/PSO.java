@@ -1,21 +1,12 @@
 package pso;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.text.DecimalFormat;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Random;
-
 import benchmark_functions.*;
-
-//import org.apache.commons.collections15.Transformer;
-import edu.uci.ics.jung.algorithms.shortestpath.DijkstraDistance;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class PSO implements Runnable {
 	
@@ -149,7 +140,6 @@ public class PSO implements Runnable {
 		network_science_metrics = false;
 		initializeRNG();
 		
-		
 		swarm_influence_graph_weighted = false; // TODO consertar isso!
 		
 		swarm_influence_history_maximum_length = 5;
@@ -180,16 +170,10 @@ public class PSO implements Runnable {
 		
 		//swarm_initial_topology = TOPOLOGY.VON_NEUMANN;
 		swarm_initial_topology = TOPOLOGY.GLOBAL;
-
-		
-		//		swarm_initial_topology = TOPOLOGY.CLAN;
+		//swarm_initial_topology = TOPOLOGY.CLAN;
 		//swarm_initial_topology = TOPOLOGY.NO_TOPOLOGY;
 		swarm_gbest = -1;
 		
-//		swarm_viewer = new SwarmViewer_graphstream();
-		//swarm_viewer = new GraphView();
-		//swarm_fitness_plotter = new Plotter_prefuse();
-		//swarm_fev_plotter = new Plotter_prefuse();
 		swarm_number_of_clusters = 3;
 		
 		swarm_viewer_enabled = false;
@@ -197,9 +181,6 @@ public class PSO implements Runnable {
 		swarm_initial_maximum_neighbors = 3;
 		
 		swarm_distance_particles = new double[NUMBER_OF_PARTICLES][NUMBER_OF_PARTICLES];
-		this.particle_fev_1 = new double[NUMBER_OF_PARTICLES];
-		this.particle_fev_2 = new double[NUMBER_OF_PARTICLES];
-		this.particle_fev_2_reduced = new double[NUMBER_OF_PARTICLES];
 		this.swarm_neigbourhood_graph_jung = new SparseMultigraph<Integer, String>();
 		for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
 			this.swarm_neigbourhood_graph_jung.addVertex((Integer) vertex);
@@ -292,25 +273,9 @@ public class PSO implements Runnable {
 		random_number_generator_independent = new Random(random_number_generator_seed_independent);
 	}
 	
-	private double euclidianDistance(double[] ds, double[] ds2) {
-		double sum = 0.0f;
-		for (int i = 0; i < ds2.length; i++) {
-			sum += Math.pow(ds[i] - ds2[i], 2);
-		}
-		sum = Math.sqrt(sum);
-		return sum;
-	}
-	
 	public static void main(String[] args) throws FileNotFoundException {
-		/*double a[] = { 1, 1};
-		double b[] = { -1, -1};
-		PSO pso = new PSO(args);
-		double scalar = pso.scalarProduct(a, b);
-		System.out.println("cos 0 = "+pso.cosBetweenVectors(a, b));*/
-	
 		PSO pso = new PSO(args);
 		pso.run();
-		
 	}
         
     public void setTopology(TOPOLOGY topology){
@@ -331,278 +296,65 @@ public class PSO implements Runnable {
      */
     @Override
 	public void run(){
-		DecimalFormat decimal_format = new DecimalFormat("#.####");
-		
-//		String filename = "psoResults" + swarm_initial_topology.toString();
-//		if (swarm_topology_mechanism != null){
-//			filename += "_"+ swarm_topology_mechanism.toString();
-//		}
-//		filename += ".txt";
-//                File psoFile = new File(filename);
-//                System.out.println("File being created at " + psoFile.getAbsolutePath() +"...");
-//            
-//                PrintWriter printWriter = new PrintWriter(psoFile)) {
-                Diversity diversity = new Diversity(this, printWriter);
-                DAPSO dapso = new DAPSO(this, printWriter);
-                PsoDD psoDD = new PsoDD(this, printWriter);
-                
-                
-                double run_final_values[] = new double[RUNS];
-                for (int run = 0; run < RUNS; run++) {
-                    this.initializeRNG();
-                    this.initializePSO();
-                    
-                    //this.kohonen(swarm_number_of_clusters);
+    	DecimalFormat decimal_format = new DecimalFormat("#.####");
+        Diversity diversity = new Diversity(this, printWriter);
+        DAPSO dapso = new DAPSO(this, printWriter);
+        PsoDD psoDD = new PsoDD(this, printWriter);
+        
+        double run_final_values[] = new double[RUNS];
+        for (int run = 0; run < RUNS; run++) {
+            this.initializeRNG();
+            this.initializePSO();
 
-                    /// plotters:
-                    //swarm_fitness_plotter.setLabel("Fitness");
-                    //swarm_fitness_plotter.init();
-                    //swarm_fev_plotter.setLabel("evolutionary factor");
-                    //swarm_fev_plotter.init();
-                    
-                    double[] eigenvalues = null;
-                    double[] eigenvaluesADJ = null;
-                    double[] eigenvaluesADJTOP = null;
-                    //this.k_means(swarm_number_of_clusters);
-                    double centroids_sum = -1;
-                    do {
-                        if(current_iteration%100==0)
-                            System.out.println(current_iteration/100 + " de 30");
-                        this.evaluatePositionAndUpdatePersonal();
-                        this.swarm_gbest = this.getGBest();
-                        this.findBestNeighbours();
-                        //this.updateParticlesNeighboursDistances();
-                        //this.updateParticlesDistances();
-                        //this.updateParticlesEvolutionaryState_2(true);
-                        //this.updateParticlesEvolutionaryState_2(false);
-                        //this.updateEvolutionaryState_1();
-                        this.updateNeighbourhood();
-                        this.updateVelocity();
-                        this.updatePosition();
-                        this.updateInfluenceGraph();
-                        
-                        String it = "it:#" + this.current_iteration + " " + particle_best_value[this.swarm_gbest];
-//				System.out.println("it:#" + this.current_iteration+ " " + particle_best_value[this.swarm_gbest]);
-                        printWriter.println(it);
-                        
-                        String igLine = "ig:#" + this.current_iteration + " ";
-//				System.out.print("ig:#" + this.current_iteration + " ");
-                        
-                        printWriter.print(igLine);
-                        
-                        int[][] ig = this.getInfluenceGraph();
-                        for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-                            for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
+            do {
+                this.evaluatePositionAndUpdatePersonal();
+                this.swarm_gbest = this.getGBest();
+                this.findBestNeighbours();
+                this.updateNeighbourhood();
+                this.updateVelocity();
+                this.updatePosition();
+                this.updateInfluenceGraph();
+                
+                String it = "it:#" + this.current_iteration + " " + particle_best_value[this.swarm_gbest];
+                printWriter.println(it);
+
+                String igLine = "ig:#" + this.current_iteration + " ";
+                printWriter.print(igLine);
+                int[][] ig = this.getInfluenceGraph();
+                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+                    for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
 //						System.out.print(ig[i][j]+" ");
-                                printWriter.print(ig[i][j]+" ");
-                            }                            
-                        }
-                        printWriter.println();
-                        printWriter.print("pbest:#" + this.current_iteration + " ");
-                        for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-                            //System.out.print(this.particle_best_value[i] + " ");
-                            
-                            printWriter.print(this.particle_best_value[i] + " ");
-                            
-                        }
-                        
-                        printWriter.println();
-                        
-                        diversity.iterate();
-                        dapso.iterate();
-                        psoDD.iterate();
-                        
-//				PSODD METRIC PRINT
-//				
-//				System.out.println("Iteration: " + this.current_iteration);
-//				System.out.println("Best particle: " + particle_best_value[this.swarm_gbest]);
-//				System.out.println("Previous best particle: " + psoDD.getPreviousFbest());
-//				System.out.println("Current average velocity: " + psoDD.getAvg_particles_velocity());
-//				System.out.println("Previous average velocity: " + psoDD.getPrevious_avg_particles_velocity());
-//				System.out.println("Stagnation Ratio: " + psoDD.getR() +"\n");
-				
-//				DAPSO METRIC PRINT
-                        
-                        
-                        
-                        
-                        //System.out.print("pbest:#" + this.current_iteration + " ");
-                        
-                        
-                        
-                        
-                        //System.out.println();
-                        //              
-//				tesst = this.getInfluenceGraph(this.swarm_influence_history_maximum_length);
-//				for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-//					for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
-//						System.out.print(test[i][j]+" ");
-//					}
-//					//System.out.println();
-//				}
-                        //System.out.println();
-                        
-                        /// particle position
-//				System.out.println();
-                        printWriter.println();
-                        for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-                            //System.out.print("position:#" + this.current_iteration + "#");
-                            
-                            //                      printWriter.print("position:#" + this.current_iteration + "#");
-                            
-                            //System.out.print(i + " ");
-                            //                  printWriter.print(i + " ");
-                            
-                            for (int d = 0; d < DIMENSION; d++) {
-                                //System.out.print(this.particle_position[i][d] + " ");
-                                
-                                //                          printWriter.print(this.particle_position[i][d] + " ");
-                                
-                            }
-                            //System.out.println();
-                            //                  printWriter.println();
-                        }
-                        //System.out.println();
-                        //              printWriter.println();
-                        
-                        {
-                            int ranking[] = new int[NUMBER_OF_PARTICLES];
-                            int ranking_of_particle[] = new int[NUMBER_OF_PARTICLES];
-                            int particle_index_shuffled[] = new int[NUMBER_OF_PARTICLES];
-                            for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-                                ranking[particle] = particle;
-                                particle_index_shuffled[particle] = particle;
-                            }
-                            // a dirty bubble sort
-                            for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-                                for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-                                    if (particle_best_value[ranking[particle]] > particle_best_value[ranking[neighbour]]) {
-                                        int swap = ranking[neighbour];
-                                        ranking[neighbour] = ranking[particle];
-                                        ranking[particle] = swap;
-                                    }
-                                }
-                            }
-                            
-                            for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-                                ranking_of_particle[ranking[particle]] = NUMBER_OF_PARTICLES - particle - 1;
-                            }
-                            
-//					if (this.current_iteration == 10) {
-//						InfluenceGraph_graphview.toPNG(swarm_neighborhood_graph, swarm_influence_graph, ranking_of_particle);
-//						//System.exit(0);
-//					}
-                            
-                        }
-                        
-                        //this.updateInfluenceGraph(iteration, 1); // just a 'k' window
-                        //this.kohonen(swarm_number_of_clusters);
-                        /*
-                        try {
-                        System.out.println("natural conectivity: "+NaturalConnectivity.getInstance().calculate(getAdjacency(this.swarm_neighborhood_graph)));
-                        } catch (Exception e) {
-                        System.out.println("natural conectivity: 0.0");
-                        }
-                        
-                        try {
-                        System.out.println("Algebraic conectivity: "+AlgebraicConnectivity.getInstance().calculate(getAdjacency(this.swarm_neighborhood_graph)));
-                        
-                        } catch (Exception e) {
-                        System.out.println("algebraic conectivity: 0.0");
-                        }
-                        */
-                        
-                        //System.out.println("it:#"+run+" "+ this.current_iteration + " " + decimal_format.format(particle_best_value[swarm_gbest]));
-                        //System.out.println("it:#"+run+" "+ this.current_iteration + " fev1: " + decimal_format.format(swarm_evolutionary_state_1));
-                        //System.out.println("it:#"+run+" "+ this.current_iteration + " fev2: " + decimal_format.format(swarm_evolutionary_state_2));
-                        //System.out.println("it:#"+run+" "+ iteration + " fev2r: " + decimal_format.format(swarm_evolutionary_state_2_reduced));
-                        //topologyViewerSwapGBest(gbest);
-                        //swarm_fitness_plotter.addPoint(iteration, particle_best_value[gbest]);
-                        if (((this.current_iteration+1) % 100) == 0) {
-                            //k_means(10);//	k_meanNeighbourhoodCreate(10);
-                            //initializeTopology();
-                            swarm_clusters = null;
-                            swarm_clusters_kohonen = null;
-                            swarm_centroids = null;
-                            //this.kohonen(swarm_number_of_clusters);
-                            
-                        }
-                        /*
-                        System.out.print("run:#"+run+"it: "+iteration+" deg: ");
-                        for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
-                        System.out.print(numberOfNeighbours(vertex)+" ");
-                        }
-                        System.out.println();
-                        
-                        System.out.print("run:#"+run+"it: "+iteration+" fev_p1: ");
-                        for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
-                        System.out.print(particle_fev_2[vertex]+" ");
-                        }
-                        System.out.println();
-                        
-                        System.out.print("run:#"+run+"it: "+iteration+" fev_p2: ");
-                        for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
-                        System.out.print(particle_fev_2_reduced[vertex]+" ");
-                        }
-                        System.out.println();
-                        */
-                        /*
-                        System.out.println("edge count: "+this.swarm_neigbourhood_graph_jung.getEdgeCount());
-                        Map<Integer, Double> average_distances = getAverageDistances(this.swarm_neigbourhood_graph_jung);
-                        double average_distance = 0.0;
-                        for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
-                        double vertex_average_distance = average_distances.get((Integer) vertex);
-                        System.out.print(vertex_average_distance+" ");
-                        average_distance += vertex_average_distance;
-                        }
-                        average_distance /= (double) NUMBER_OF_PARTICLES;
-                        System.out.println("\naverage_distance: "+average_distance);
-                        
-                        Map<Integer, Double> clustering = Metrics.clusteringCoefficients(this.swarm_neigbourhood_graph_jung);
-                        double average_clustering = 0.0;
-                        for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
-                        double clustering_factor = clustering.get((Integer) vertex);
-                        System.out.print(clustering_factor+" ");
-                        average_clustering += clustering_factor;
-                        }
-                        average_clustering /= (double) NUMBER_OF_PARTICLES;
-                        System.out.println("\naverage_clustering: "+average_clustering);
-                        */
-                        /*
-                        try {
-                        Thread.sleep(50);
-                        } catch (InterruptedException e) {
-                        // TODO Auto-generated catch block
-                        e.printStackTrace();
-                        }
-                        */
-                        //this.updateEvolutionaryState();
-                        //swarm_fev_plotter.addPoint(iteration, swarm_evolutionary_state);
-                        this.current_iteration = this.current_iteration + 1;
-                        try {
-                            Thread.sleep(1);
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(PSO.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    } while (this.current_iteration < MAXITER);
-                    //System.out.println("MAXITER: " + MAXITER);
-                    //System.out.println("it:#"+run+" " + iteration + " " + particle_best_value[this.swarm_gbest]);
-                    run_final_values[run] = particle_best_value[this.swarm_gbest];
-                    System.out.println("The file is ready.");
-                    //System.out.println("random_number_generator_seed: "+random_number_generator_seed);
+                        printWriter.print(ig[i][j]+" ");
+                    }                            
                 }
-                printWriter.close();
-                //printFinals(run_final_values);
-                //printAvgStdDev(run_final_values);
-            
+                printWriter.println();
+                
+                printWriter.print("pbest:#" + this.current_iteration + " ");
+                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+                    printWriter.print(this.particle_best_value[i] + " ");
+                }
+                
+                printWriter.println();
+                
+                diversity.iterate();
+                dapso.iterate();
+                psoDD.iterate();
+                printWriter.println();
+                
+                this.current_iteration = this.current_iteration + 1;
+                /*
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(PSO.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                */
+            } while (this.current_iteration < MAXITER);
+            run_final_values[run] = particle_best_value[this.swarm_gbest];
+        }
+        printWriter.close();
 	}
 
-	private void updateInfluenceGraphHistory(int iteration) {
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			swarm_influence_history[particle][iteration%swarm_influence_history_maximum_length] = particle_best_neighbour[particle];
-		}
-	}
-	
 	private void updateInfluenceGraph() {
 		// updates the history overall
 		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
@@ -621,443 +373,7 @@ public class PSO implements Runnable {
 		}
 		
 	}
-	/*
-	private void updateInfluenceGraph(int iteration, int steps_back) {
-		if (swarm_influence_graph_weighted) {
-			if (swarm_influence_history != null) {
-				for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-					for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
-						swarm_influence_graph[i][j] = 0;
-					}
-				}
-			}
-		}
-		
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			
-			if (swarm_influence_graph_weighted) {
-				if (swarm_influence_history == null) {
-					swarm_influence_graph[particle_best_neighbour[particle]][particle]++;// [i][j] = i sends information to j
-				} else {
-					
-					steps_back++; // 0 is the current iteration, just a trick to the loop above works right
-					
-					if (steps_back < 0) {
-						steps_back = Math.abs(steps_back);
-					} 
-										
-					if ((steps_back > iteration)) {
-						steps_back = iteration;
-					}
-					
-					for (int history = 0; history < steps_back; history++) {
-						int history_step = (iteration - history)%swarm_influence_history_maximum_length;
-						swarm_influence_graph[swarm_influence_history[particle][history_step]][particle]++;
-					}
-				}
-			}	
-		}
-		
-	}
-	*/
 	
-	private int[][] toUndirect(boolean[][] influenceGraph) {
-		int[][] undirect = new int[influenceGraph.length][influenceGraph.length];
-		for (int i = 0; i < influenceGraph.length; i++) {
-			for (int j = 0; j < influenceGraph.length; j++) {
-				if (influenceGraph[i][j] || influenceGraph[j][i]) {
-					undirect[i][j] = 1;
-					undirect[j][i] = 1;
-				} else {
-					undirect[i][j] = 0;
-					undirect[j][i] = 0;
-				}
-			}
-		}
-		return undirect;
-	}
-	
-	private int[][] toUndirect(int[][] influenceGraph) {
-		int[][] undirect = new int[influenceGraph.length][influenceGraph.length];
-		for (int i = 0; i < influenceGraph.length; i++) {
-			for (int j = 0; j < influenceGraph.length; j++) {
-				int value = influenceGraph[i][j] >= influenceGraph[j][i] ? influenceGraph[i][j] : influenceGraph[j][i];
-				undirect[i][j] = value;
-				undirect[j][i] = value;
-			}
-		}
-		return undirect;
-	}
-	
-	private Map<Integer, Double> getAverageDistances(Graph<Integer, String> graph) {
-		DijkstraDistance<Integer,String> dijkstra_distances = new DijkstraDistance<Integer, String>(graph);
-		
-		Map<Integer, Double> map = new HashMap<Integer, Double>();
-		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-			double average_size = 0.0;
-			int neighbourhood_size = 0;
-			Map<Integer, Number> map_distance_from_i = dijkstra_distances.getDistanceMap((Integer) i);
-			for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
-				if (map_distance_from_i.get((Integer) j) != null){
-					average_size += map_distance_from_i.get((Integer) j).doubleValue();
-					neighbourhood_size++;
-				}
-			}
-			map.put((Integer) i, (Double) (average_size/(neighbourhood_size-1)));
-		}
-		return map;
-	}
-	
-	private int[][] getAdjacency(boolean[][] swarm_neighborhood_graph2) {
-		int[][] ret = new int[swarm_neighborhood_graph2.length][swarm_neighborhood_graph2.length];
-		for (int i = 0; i < ret.length; i++) {
-			for (int j = 0; j < ret.length; j++) {
-				if (swarm_neighborhood_graph2[i][j]) {
-					ret[i][j] = 1; 
-				} else {
-					ret[i][j] = 0;
-				}
-			}
-		}
-		return ret;
-	}
-	
-	private void updateParticlesNeighboursDistances() {
-		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-			for (int j = i; j < NUMBER_OF_PARTICLES; j++) {
-				if (swarm_neighborhood_graph[j][i]) {
-					swarm_distance_particles[i][j] = euclidianDistance(particle_position[i], particle_position[j]);
-					swarm_distance_particles[j][i] = swarm_distance_particles[i][j];
-				}
-			}
-			
-		}
-	}
-	
-	private double matrixNorma(double [] matrix) {
-		double sum = 0.0;
-		for (int element = 0; element < matrix.length; element++) {
-			sum += Math.pow(matrix[element], 2.0);
-		}
-		sum = Math.sqrt(sum);
-		return sum;
-	}
-	
-	private double cosBetweenVectors(double[] vectorA, double[] vectorB) {
-		double cos = this.scalarProduct(vectorA, vectorB); 
-		cos = cos/(matrixNorma(vectorA)*matrixNorma(vectorB));
-		return cos;
-	}
-	
-	private double scalarProduct(double[] matrixA, double[] matrixB) {
-		double sum = 0.0;
-		
-		if (matrixA.length == matrixB.length) {
-			for (int element = 0; element < matrixB.length; element++) {
-				sum += matrixA[element]*matrixB[element];
-			}
-		}
-		// (-1, 2) (1, -2)
-		return sum;		
-	}
-	/*
-	 private void updateParticlesEvolutionaryState() {
-		DecimalFormat df = new DecimalFormat("#.##");
-		// we admit that updateParticlesDistances() was called here.
-		int number_of_connections = 0;
-		int number_of_neighbours[] = new int[NUMBER_OF_PARTICLES];
-		this.swarm_evolutionary_state = 0d;
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			double d_g = 0d;
-			double d_min = Double.MAX_VALUE;
-			double d_max = Double.MIN_VALUE;
-			this.particle_fev[particle] = 0.0d;
-			number_of_neighbours[particle] = 0;
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (particle == neighbour)
-					continue;
-				if (swarm_neighborhood_graph[particle][neighbour]) {
-					if (this.swarm_distance_particles[particle][neighbour] > d_max) {
-						d_max = this.swarm_distance_particles[particle][neighbour];
-					} 
-					if (this.swarm_distance_particles[particle][neighbour] < d_min) {
-						d_min = this.swarm_distance_particles[particle][neighbour];
-					}
-					if (particle_best_neighbour[particle] == neighbour) {
-						if (particle_best_neighbour[particle] == particle)
-							System.out.println("QUE ZICA EH ESSA!?!?!?!?");
-						d_g = this.swarm_distance_particles[particle][neighbour];
-					}
-					//this.particle_fev[particle] += this.swarm_distance_particles[particle][neighbour];
-					number_of_neighbours[particle]++;
-					number_of_connections++;
-				}
-			}
-			//this.particle_fev[particle] /= (double) number_of_neighbours[particle];
-			this.particle_fev[particle] = (d_g - d_min)/(d_max - d_min);
-		}
-		
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			this.swarm_evolutionary_state += (this.particle_fev[particle]*((double) number_of_neighbours[particle]))/((double) number_of_connections);
-			//System.out.print(df.format(this.particle_fev[particle])+"*"+number_of_neighbours[particle]+" ");
-			if (this.particle_fev[particle] < 0.01) {
-				//removeNeighbourCarefully(particle, particle_best_neighbour[particle]);
-				particle_failures[particle] += 25;
-				
-			}
-		}
-		//System.out.println();
-		
-	}
-	 */
-	
-	private void updateParticlesEvolutionaryState_2(boolean reduced) {
-		// we admit that updateParticlesDistances() was called here.
-		int number_of_connections = 0;
-		int number_of_neighbours[] = new int[NUMBER_OF_PARTICLES];
-		if (reduced) {
-			this.swarm_evolutionary_state_2_reduced = 0d;
-		} else {
-			this.swarm_evolutionary_state_2 = 0d;
-		}
-		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			int best_neighbour = particle_best_neighbour[particle];
-			double d_g = this.swarm_distance_particles[best_neighbour][particle];
-			double d_min = Double.MAX_VALUE;
-			double d_max = Double.MIN_VALUE;	
-			double fev = 0.0;
-			number_of_neighbours[particle] = 0;
-			for (int neighbour = 0; neighbour < NUMBER_OF_PARTICLES; neighbour++) {
-				if (swarm_neighborhood_graph[particle][neighbour]) {
-					double distance = 0.0;
-					
-					// distancia dessa particula para o melhor vizinho da particula:
-					distance = this.swarm_distance_particles[best_neighbour][neighbour];
-					
-					if (!swarm_neighborhood_graph[best_neighbour][neighbour]) {
-						if (reduced) {
-							distance = d_g + this.swarm_distance_particles[particle][neighbour];
-						}
-					}
-					
-					if (neighbour == best_neighbour) {
-						distance = d_g;
-					}
-					
-					if (distance >= d_max) {
-						d_max = distance;
-					} 
-					
-					if (distance <= d_min) {
-						d_min = distance;
-					}
-					
-					number_of_neighbours[particle]++;
-					number_of_connections++;
-				}
-			}
-			if (d_max == d_min) {
-				fev = 1.0d;
-			} else {
-				fev = (d_g - d_min)/(d_max - d_min);
-			}		
-			if (fev < 0.0) {
-				System.out.println("d_g "+d_g+"d_min"+d_min+"d_max: "+d_max);
-				System.out.println("the best neigh of "+particle+"is "+best_neighbour);;
-				System.exit(0);
-			}
-			
-			if (reduced) {
-				this.particle_fev_2_reduced[particle] = fev;
-			} else {
-				this.particle_fev_2[particle] = fev;
-			}
-		}
-		if (reduced) {
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				this.swarm_evolutionary_state_2_reduced += (this.particle_fev_2_reduced[particle]*((double) number_of_neighbours[particle]))/((double) number_of_connections);
-				//this.swarm_evolutionary_state += (this.particle_fev[particle])/((double) NUMBER_OF_PARTICLES);
-				//System.out.print(df.format(this.particle_fev[particle])+"*"+number_of_neighbours[particle]+" ");
-				//System.out.print(this.particle_fev[particle]+"*"+number_of_neigbours[particle]+" ");
-				if (this.particle_fev_2_reduced[particle] < 0.05) {
-					//removeNeighbourCarefully(particle, particle_best_neighbour[particle]);
-					//System.out.println(df.format(this.particle_fev[particle])+"*"+number_of_neighbours[particle]+" ");
-					//particle_failures[particle] += 10;
-					
-				}
-			}
-		} else {
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				this.swarm_evolutionary_state_2 += (this.particle_fev_2[particle]*((double) number_of_neighbours[particle]))/((double) number_of_connections);
-				//this.swarm_evolutionary_state += (this.particle_fev[particle])/((double) NUMBER_OF_PARTICLES);
-				//System.out.print(df.format(this.particle_fev[particle])+"*"+number_of_neighbours[particle]+" ");
-				//System.out.print(this.particle_fev[particle]+"*"+number_of_neigbours[particle]+" ");
-				if (this.particle_fev_2[particle] < 0.05) {
-					//removeNeighbourCarefully(particle, particle_best_neighbour[particle]);
-					//System.out.println(df.format(this.particle_fev[particle])+"*"+number_of_neighbours[particle]+" ");
-					//particle_failures[particle] += 10;
-					
-				}
-			}
-			
-		}
-	}
-
-	private boolean removeNeighbourCarefully(int particle, int i) {
-		boolean removed = false;
-		if (numberOfNeighbours(i) > 2) {
-			if (numberOfNeighbours(particle) > 2) {
-				removeNeighbour(particle, i);
-				removed = true;
-			}
-		}
-		return removed;
-		
-	}
-	
-	private void updateParticlesDistances() {
-		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-			for (int j = i + 1; j < NUMBER_OF_PARTICLES; j++) {
-				swarm_distance_particles[i][j] = euclidianDistance(particle_position[i], particle_position[j]);
-				swarm_distance_particles[j][i] = swarm_distance_particles[i][j];
-			}
-			
-		}
-		
-	}
-	
-	private void printAvgStdDev(double[] run_final_values) {
-		double average = 0.0;
-		double std_dev = 0.0;
-		for (int run = 0; run < run_final_values.length; run++) {
-			average += run_final_values[run];
-		}
-		average /= (double) run_final_values.length;
-		
-		for (int run = 0; run < run_final_values.length; run++) {
-			std_dev += (run_final_values[run] - average)*(run_final_values[run] - average);
-		}
-		std_dev /= (double) (run_final_values.length - 1);
-		std_dev = Math.sqrt(std_dev);
-		System.out.println("avg: "+average);
-		System.out.println("std_dev: "+std_dev);
-	}
-	
-	private void printFinals(double[] run_final_values) {
-		for (int run = 0; run < run_final_values.length; run++) {
-			System.out.println("final#"+run+" "+run_final_values[run]);
-		}
-		
-	}
-	
-	private int[] kohonen(int neuronNumber) {
-		boolean changed;
-		
-		double learning_factor = 0.01;
-		double initial_neighborhood_size = 1;
-		double initial_learning_factor = 0.1;
-		double time_constant_1 = 1000/Math.log(initial_neighborhood_size);
-		double time_constant_2 = 1000;
-		
-		if (swarm_clusters == null) {
-			swarm_clusters = new int[NUMBER_OF_PARTICLES];
-		}
-		
-		int iteration = 1;
-		if (swarm_clusters_kohonen == null) {
-			swarm_clusters_kohonen = new double[neuronNumber][DIMENSION];
-			// initialize them
-			for (int i = 0; i < swarm_clusters_kohonen.length; i++) {
-				for (int j = 0; j < swarm_clusters_kohonen[i].length; j++) {
-					swarm_clusters_kohonen[i][j] = randomDouble();
-				}
-			}
-		}
-		
-		do {
-			changed = false;
-			learning_factor = initial_learning_factor*Math.exp(-((double) iteration)/time_constant_2);
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				// competition
-				int neuron_winner = getTheNearest(particle_position[particle], swarm_clusters_kohonen);
-				// cooperation
-				
-				// adaptation
-				for (int neuron = 0; neuron < swarm_clusters_kohonen.length; neuron++) {
-					// topological neighborhood
-					double distance_to_winner = euclidianDistance(swarm_clusters_kohonen[neuron], swarm_clusters_kohonen[neuron_winner]);
-					double neihborhood_size = initial_neighborhood_size*Math.exp(-((double) iteration)/time_constant_1);
-					double topological_neighborhood = Math.exp(-(Math.pow(distance_to_winner, 2))/(2*Math.pow(neihborhood_size, 2)));
-					for (int dimension = 0; dimension < swarm_clusters_kohonen[neuron].length; dimension++) {
-						double delta_to_winner = swarm_clusters_kohonen[neuron_winner][dimension] - swarm_clusters_kohonen[neuron][dimension]; 
-						swarm_clusters_kohonen[neuron][dimension] += learning_factor*topological_neighborhood*delta_to_winner;
-					}
-				}
-				if (swarm_clusters[particle] != neuron_winner) {
-					swarm_clusters[particle] = neuron_winner;
-					changed = true;
-				}
-//				
-			} 
-			iteration++;
-/*			System.out.println("another iteration... " + iteration);
-			for (int clusters = 0; clusters < NUMBER_OF_PARTICLES; clusters++) {
-				System.out.print(" " + swarm_clusters[clusters]);
-			}
-			System.out.println();
-*/		} while (changed);
-		
-		return swarm_clusters;
-	}
-
-	private int getTheNearest(double[] ds, double[][] neuronsWeight) {
-		int nearest = 0;
-		double nearest_distance = euclidianDistance(ds, neuronsWeight[0]);
-		for (int i = 1; i < neuronsWeight.length; i++) {
-			double current_distance = euclidianDistance(ds, neuronsWeight[i]);
-			if (current_distance < nearest_distance) {
-				nearest = i;
-				nearest_distance = current_distance;
-			}
-		}
-		return nearest;
-	}
-	
-	private void updateEvolutionaryState_1() {
-		int particle;
-		double d_min = Double.MAX_VALUE;
-		double d_max = Double.MIN_VALUE;
-		double d_g = 0;
-		
-		double[] mean_distance = new double[NUMBER_OF_PARTICLES];
-		
-		for (particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-			int neighbour;	// fazer depois com apenas os vizinhos!
-			// mean_distance[i] = (1/N-1) * sum ( euclidian distance from i to all other particles )
-			mean_distance[particle] = 0.0;
-			for (neighbour = 0; neighbour < NUMBER_OF_PARTICLES; ++neighbour) {
-				if (particle == neighbour) {
-					continue;
-				}
-				mean_distance[particle] += swarm_distance_particles[particle][neighbour];
-			}
-	
-			mean_distance[particle] /= NUMBER_OF_PARTICLES - 1;
-	
-			if (mean_distance[particle] > d_max) {
-				d_max = mean_distance[particle];
-			}
-	
-			if (mean_distance[particle] < d_min) {
-				d_min = mean_distance[particle];
-			}
-		}
-	
-		d_g = mean_distance[swarm_gbest];
-		swarm_evolutionary_state_1 = (d_g - d_min)/(d_max - d_min);
-	
-	}
-
 	private void updateNeighbourhood() {
 		if (swarm_topology_mechanism != null) {
 			switch (swarm_topology_mechanism) {
@@ -1388,98 +704,9 @@ public class PSO implements Runnable {
 				//addNeighbour((i+1)%swarm_neighborhood_graph.length, (i+2)%swarm_neighborhood_graph.length);
 			}
 			break;
-		case K_MEANS_BASED:
-			k_meanNeighbourhoodCreate(swarm_number_of_clusters);
-			break;
-		case KOHONEN_BASED:
-			kohonenNeighbourhoodCreate(swarm_number_of_clusters);
-			break;
 		default:
 			break;
 		}	
-	}
-
-	private void kohonenNeighbourhoodCreate(int k) {
-		swarm_clusters = null;
-		swarm_centroids = null;
-		swarm_clusters_kohonen = null;
-		int[] clusters = this.kohonen(k);
-		int[] counter = new int[clusters.length];
-		int[] last_connected = new int[clusters.length];
-		int[] first_connected = new int[clusters.length];
-		/*
-		for (int i = 0; i < k; i++) {
-			counter[i] = 0;
-		}
-		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-			counter[clusters[i]]++;
-		}
-		for (int i = 0; i < k; i++) {
-			System.out.println(counter[i]);
-		}*/
-		for (int i = 0; i < swarm_neighborhood_graph.length; i++) 	{
-			for (int j = i+1; j < swarm_neighborhood_graph[i].length; j++) {
-				removeNeighbour(i, j);
-				if (i == j) {
-					continue;
-				}
-				
-				if (clusters[i] == clusters[j]) {
-					// GLOBAL
-					/* 
-					addNeighbour(i, j);
-					*/
-					/*
-					// LOCAL
-					if (first_connected[clusters[i]] == 0) {
-						first_connected[clusters[i]] = i;
-					}
-					addNeighbour(i, j);
-					last_connected[clusters[j]] = j;
-					break;
-					*/
-					
-					
-					// global but limited 
-					if (numberOfNeighbours(j) < swarm_initial_maximum_neighbors) {
-						addNeighbour(i, j);
-					}
-				}
-			}
-		}
-		/*
-		// LOCAL
-		for (int cluster = 0; cluster < clusters.length; cluster++) {
-			addNeighbour(first_connected[cluster], last_connected[cluster]);
-		}
-		*/
-		//swarm_centroids = null;
-		//swarm_clusters = null;
-		
-	}
-	
-	
-	private void k_meanNeighbourhoodCreate(int k) {
-		int[] clusters = this.k_means(k);
-		int[] last_connected = new int[clusters.length];
-		int[] first_connected = new int[clusters.length];
-		for (int i = 0; i < swarm_neighborhood_graph.length; i++) 	{
-			for (int j = i+1; j < swarm_neighborhood_graph[i].length; j++) {
-				removeNeighbour(i, j);
-				if (i == j) {
-					continue;
-				}
-				if (clusters[i] == clusters[j]) {
-					/*
-					if (numberOfNeighbours(j) < swarm_initial_maximum_neighbors) {
-						addNeighbour(i, j);
-					}
-					*/
-				}
-			}
-		}
-		swarm_centroids = null;
-		swarm_clusters = null;
 	}
 
 	private void addNeighbour(int i, int j) {
@@ -1556,78 +783,5 @@ public class PSO implements Runnable {
 			}
 		}
 		return influence;
-	}
-	
-	public int[] k_means(int k) {
-		if (swarm_clusters == null) {
-			swarm_clusters = new int[NUMBER_OF_PARTICLES];
-			if (swarm_centroids == null) {
-				swarm_centroids = new double[k][DIMENSION];
-				for (int cluster = 0; cluster < k; cluster++) {
-					for (int d = 0; d < DIMENSION; d++) {
-						swarm_centroids[cluster][d] = (PARTICLE_INITIAL_RANGE_R - PARTICLE_INITIAL_RANGE_L) * randomDouble() + PARTICLE_INITIAL_RANGE_L;
-					}
-				}
-			}
-		}
-		
-		if (swarm_centroids == null) {
-			// baricentros
-			swarm_centroids = new double[k][DIMENSION];
-			int[] count = new int[k];
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				for (int dimension = 0; dimension < DIMENSION; dimension++) {
-					swarm_centroids[swarm_clusters[particle]][dimension] += particle_position[particle][dimension];
-				}
-				count[swarm_clusters[particle]]++;
-			}
-			
-			for (int cluster = 0; cluster < k; cluster++) {
-				for (int dimension = 0; dimension < DIMENSION; dimension++) {
-					swarm_centroids[cluster][dimension] /= count[cluster];
-				}	
-			}
-		}
-		
-		for (int p = 0; p < swarm_clusters.length; p++) {
-			swarm_clusters[p] = -1;
-		}
-		
-		boolean change = false;
-		do {
-			change = false;
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				double distance = Double.MAX_VALUE;
-				int own_cluster = -1;
-				for (int cluster = 0; cluster < k; cluster++) {
-					double current_distance = euclidianDistance(swarm_centroids[cluster], particle_position[particle]);
-					 if (distance > current_distance) {
-						 distance = current_distance;
-						 own_cluster = cluster;
-					 }
-				}
-				if (swarm_clusters[particle] != own_cluster) {
-					change = true;
-				}
-				swarm_clusters[particle] = own_cluster;
-			}
-			// recalcula centroids
-			double[][] new_centroids = new double[k][DIMENSION];
-			int[] count = new int[k];
-			
-			for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
-				for (int d = 0; d < DIMENSION; d++) {
-					new_centroids[swarm_clusters[particle]][d] += particle_position[particle][d];
-				}
-				count[swarm_clusters[particle]]++;
-			}
-			for (int cluster = 0; cluster < k; cluster++) {
-				for (int d = 0; d < DIMENSION; d++) {
-					swarm_centroids[cluster][d] = new_centroids[cluster][d]/((double)count[cluster]);
-				}	
-			}
-		} while (change == false);
-		
-		return swarm_clusters;
 	}
 }

@@ -19,7 +19,7 @@ public class DAPSO {
 	
 	public DAPSO(PSO pso, PrintWriter printer) {
 		this.pso = pso;
-                this.printer = printer;
+        this.printer = printer;
 		previousPBest = pso.particle_best_value;
 		currentPBest = pso.particle_best_value;
 		evoFactor = new double[pso.NUMBER_OF_PARTICLES];
