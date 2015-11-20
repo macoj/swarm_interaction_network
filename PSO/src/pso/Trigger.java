@@ -1,4 +1,8 @@
 package pso;
+/**
+*
+* @author Bruno Andrade
+*/
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -6,10 +10,6 @@ import java.io.PrintWriter;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-/**
- *
- * @author Bruno Andrade
- */
 public class Trigger {
 
 	static String[] arg = new String[1];

@@ -1,10 +1,20 @@
 package pso;
+/**
+*
+* @author Bruno Andrade
+*/
+
 import java.io.PrintWriter;
 import java.util.LinkedList;
 
-// Implementation of the Chukiat Worasucheep metric for Stagnation Detection
+// "A Particle Swarm Optimization with stagnation detection and dispersion"
+// Evolutionary Computation, 2008. CEC 2008. (IEEE World Congress on Computational Intelligence). IEEE Congress on
+// Worasucheep, C.
 
-public class PsoDD {
+/*
+ NOT CHECKED 
+*/
+public class AnalysisWorasucheep {
 	
 	private PSO pso;
 	private PrintWriter printer;
@@ -17,7 +27,7 @@ public class PsoDD {
 	private final int WINDOW_SIZE = 500;
 	private final int CONVERGENCE_CHECK = 1;
 	
-        public PsoDD(PSO pso, PrintWriter printer){
+        public AnalysisWorasucheep(PSO pso, PrintWriter printer){
 		this.pso = pso;
 		this.printer = printer;
 		ratio = Double.NaN;

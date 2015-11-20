@@ -1,11 +1,20 @@
 package pso;
+/**
+*
+* @author Bruno Andrade
+*/
 
 import java.io.PrintWriter;
 import java.util.Random;
 
-// Implementation of PSO with Dynamic Adaptation (paper: A modified particle swarm optimizer with dynamic adaptation)
+// "A modified particle swarm optimizer with dynamic adaptation" 
+// Applied Mathematics and Computation, Volume 189, Issue 2, 15 June 2007, Pages 1205-1213 
+// Xueming Yang, Jinsha Yuan, Jiangye Yuan, Huina Mao 
 
-public class DAPSO {
+/*
+ NOT CHECKED 
+*/
+public class AnalysisYang {
 	
 	private PSO pso;
     private PrintWriter printer;
@@ -17,7 +26,7 @@ public class DAPSO {
 	private double aggregFactor;
 	private double[] inertiaWeights;
 	
-	public DAPSO(PSO pso, PrintWriter printer) {
+	public AnalysisYang(PSO pso, PrintWriter printer) {
 		this.pso = pso;
         this.printer = printer;
 		previousPBest = pso.particle_best_value;
@@ -71,9 +80,8 @@ public class DAPSO {
 	}
 	
 	private void calculateAggregFactor(){
-		
 		aggregFactor = Math.min(fTBest, averageFitnessOfAll)/ Math.max(fTBest, averageFitnessOfAll);
-                printer.println("Aggregation Factor:#"+ this.pso.current_iteration + " " + aggregFactor);
+        printer.println("Aggregation Factor:#"+ this.pso.current_iteration + " " + aggregFactor);
 	}
 	
 	private void calculateInertiaWeight(){

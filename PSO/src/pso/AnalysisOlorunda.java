@@ -1,12 +1,19 @@
 package pso;
+/**
+*
+* @author Bruno Andrade
+*/
 
 import java.io.PrintWriter;
 
-/**
- *
- * @author Bruno Andrade
- */
-public class Diversity {
+// "Measuring exploration/exploitation in particle swarms using swarm diversity"
+// Evolutionary Computation, 2008. CEC 2008. (IEEE World Congress on Computational Intelligence). IEEE Congress on
+// Olorunda, O. ; Engelbrecht A.P.
+
+/*
+ NOT CHECKED 
+*/
+public class AnalysisOlorunda {
 
 	private PSO pso;
 	private PrintWriter printer;
@@ -16,7 +23,7 @@ public class Diversity {
 	private double avgOfAvg;
 	private double[] center; // To define what is the swarm center
 
-	public Diversity(PSO pso, PrintWriter printer) {
+	public AnalysisOlorunda(PSO pso, PrintWriter printer) {
 		this.pso = pso;
 		this.printer = printer;        
 		center = new double[pso.DIMENSION];

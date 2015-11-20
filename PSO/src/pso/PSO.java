@@ -102,7 +102,7 @@ public class PSO implements Runnable {
 */
 	public PSO(String[] args) {
 		
-		int evaluation = 300000;
+		int evaluation = 1000000;
 		// args[0] is the function
 		if (args.length > 0) {
 			FUNCTION = functionFromInt(Integer.parseInt(args[0]));
@@ -297,9 +297,9 @@ public class PSO implements Runnable {
     @Override
 	public void run(){
     	DecimalFormat decimal_format = new DecimalFormat("#.####");
-        Diversity diversity = new Diversity(this, printWriter);
-        DAPSO dapso = new DAPSO(this, printWriter);
-        PsoDD psoDD = new PsoDD(this, printWriter);
+        AnalysisOlorunda diversity = new AnalysisOlorunda(this, printWriter);
+        AnalysisYang dapso = new AnalysisYang(this, printWriter);
+        AnalysisWorasucheep psoDD = new AnalysisWorasucheep(this, printWriter);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -333,12 +333,11 @@ public class PSO implements Runnable {
                 for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
                     printWriter.print(this.particle_best_value[i] + " ");
                 }
-                
                 printWriter.println();
                 
-                diversity.iterate();
-                dapso.iterate();
-                psoDD.iterate();
+                //diversity.iterate();
+                //dapso.iterate();
+                //psoDD.iterate();
                 printWriter.println();
                 
                 this.current_iteration = this.current_iteration + 1;
