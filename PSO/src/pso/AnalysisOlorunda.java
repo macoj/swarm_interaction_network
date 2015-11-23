@@ -30,14 +30,16 @@ public class AnalysisOlorunda {
 	private double average_distance_around_center;
 	private double normalized_average_distance_around_center;
 	private double average_distance_among_particles;
-	private double[] spatial_swarm_center; 
+	private double[] position_swarm_center; 
+	private double[] velocity_swarm_center;
 	private double[] distances_to_center;
 	private double[][] distances_among_particles;
 
 	public AnalysisOlorunda(PSO pso, PrintWriter printer) {
 		this.pso = pso;
 		this.printer = printer;        
-		this.spatial_swarm_center = new double[pso.DIMENSION];
+		this.position_swarm_center = new double[pso.DIMENSION];
+		this.velocity_swarm_center = new double[pso.DIMENSION];
 		this.distances_to_center = new double[pso.NUMBER_OF_PARTICLES];
 		this.distances_among_particles = new double[pso.NUMBER_OF_PARTICLES][pso.NUMBER_OF_PARTICLES];
 	}
@@ -89,7 +91,7 @@ public class AnalysisOlorunda {
 
 	private void evaluateDistancesToCenter() {
 		for (int particle = 0; particle < pso.NUMBER_OF_PARTICLES; particle++) {
-			distances_to_center[particle] = euclidianDistance(pso.particle_position[particle], spatial_swarm_center);
+			distances_to_center[particle] = euclidianDistance(pso.particle_position[particle], position_swarm_center);
 		}
 	}
 
@@ -109,31 +111,59 @@ public class AnalysisOlorunda {
 		for (int particle = 0; particle < pso.NUMBER_OF_PARTICLES; particle++) {
 			sum += average_distance_around_particle[particle];
 		}
-
 		average_distance_among_particles = sum/((float) pso.NUMBER_OF_PARTICLES);
-
 		printer.println("average_of_average_around_all_particles:#"+ this.pso.current_iteration + " " + average_distance_among_particles);
-
 	}
 	
-	private void evaluateSpatialSwarmCenter(){
-		double sum;
-		for(int d = 0; d < pso.DIMENSION; d++){
-			sum = 0.0;
-			for(int particle = 0; particle < pso.NUMBER_OF_PARTICLES; particle++){
-				sum += pso.particle_position[particle][d];
+	private void evaluateCoherence() {
+		double coherence;
+		double swarm_center_speed = 0d;
+		double average_particle_speed = 0d;
+		
+		// speed of the center of the swarm:
+		for (int d = 0; d < pso.DIMENSION; d++) {
+			swarm_center_speed += Math.pow(velocity_swarm_center[d], 2);  // apparently we should multiply by NUMBER_OF_PARTICLES
+		}
+		swarm_center_speed = Math.sqrt(swarm_center_speed) / ((float) pso.NUMBER_OF_PARTICLES);
+		
+		// average speed of the particles
+		for (int i = 0; i < pso.NUMBER_OF_PARTICLES; i++) {
+			double speed_i = 0d;
+			for (int d = 0; d < pso.DIMENSION; d++) {
+				speed_i += Math.pow(pso.particle_velocity[i][d], 2);  
 			}
-			spatial_swarm_center[d] = sum/((float) pso.NUMBER_OF_PARTICLES);
+			speed_i = Math.sqrt(speed_i) ;
+			average_particle_speed += speed_i; 
+		}
+		average_particle_speed = average_particle_speed / ((float) pso.NUMBER_OF_PARTICLES); 
+		coherence = swarm_center_speed / average_particle_speed; 
+		// if particles are moving, but the center is not, coherence tends to zero. 
+		printer.println("coherence:#"+ this.pso.current_iteration + " " + coherence);
+	}
+	
+	private void evaluateSwarmCenter(){
+		double position_dimension;
+		double velocity_dimension;
+		for(int d = 0; d < pso.DIMENSION; d++){
+			position_dimension = 0.0;
+			velocity_dimension = 0.0;
+			for(int particle = 0; particle < pso.NUMBER_OF_PARTICLES; particle++){
+				position_dimension += pso.particle_position[particle][d];
+				velocity_dimension += pso.particle_velocity[particle][d];
+			}
+			position_swarm_center[d] = position_dimension/((float) pso.NUMBER_OF_PARTICLES);
+			velocity_swarm_center[d] = velocity_dimension/((float) pso.NUMBER_OF_PARTICLES);
 		}
 	}
 
 	public void iterate(){
-		evaluateSpatialSwarmCenter();
+		evaluateSwarmCenter();
 		evaluateDistancesToCenter();
 		evaluateDiameter();
 		evaluateRadius();
 		evaluateAverageDistanceAroundCenter();
 		evaluateAverageOfAverage();
+		evaluateCoherence();
 	}
 }
 
