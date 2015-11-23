@@ -5,7 +5,6 @@ package pso;
 */
 
 import java.io.PrintWriter;
-import java.util.Random;
 /*
 CHECKS:
 	OK (Marcos)
@@ -93,15 +92,7 @@ public class AnalysisYang {
 		return inertiaWeights;
 	}
 
-	private void calculateEvolutonarySpeedFactor(){
-		// we do not use this and will not. 
-		for (int i=0; i < pso.NUMBER_OF_PARTICLES; i++) {
-			evoFactor[i] = Math.min(previousPBest[i], currentPBest[i])/ Math.max(previousPBest[i], currentPBest[i]);
-			evoFactor[i] = Math.abs(evoFactor[i]);
-		}
-	}
-	
-	private void calculateAggregationDegree(){
+	private void evaluateAggregationDegree(){
 		// s = | min(F_tbest, Fbar_t) / max(F_tbest, Fbar_t) | 
 		aggregationFactor = Math.min(fTBest, averageFitness)/ Math.max(fTBest, averageFitness);
 		aggregationFactor = Math.abs(aggregationFactor);
@@ -136,7 +127,6 @@ public class AnalysisYang {
 		updatePBest();
 		updateAverageFitness();
 		updateFTBest();
-		calculateEvolutonarySpeedFactor();
-		calculateAggregationDegree();
+		evaluateAggregationDegree();
 	}
 }
