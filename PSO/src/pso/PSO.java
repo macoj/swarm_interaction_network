@@ -2,7 +2,6 @@ package pso;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.text.DecimalFormat;
 import java.util.Random;
 import benchmark_functions.*;
 import edu.uci.ics.jung.graph.Graph;
@@ -11,15 +10,8 @@ import edu.uci.ics.jung.graph.SparseMultigraph;
 public class PSO implements Runnable {
 	
     private PrintWriter printWriter;
-	
-	double swarm_evolutionary_state_1;
-	double swarm_evolutionary_state_2;
-	double swarm_evolutionary_state_2_reduced;
-	
 	public int swarm_gbest;
-	
 	int current_iteration;
-	
 	boolean swarm_neighborhood_graph[][];
 	int swarm_influence_graph[][] = null;
 	int swarm_influence_history[][] = null;
@@ -30,11 +22,10 @@ public class PSO implements Runnable {
 
 	Graph<Integer, String> swarm_neigbourhood_graph_jung;
 	
-	TOPOLOGY rr;
 	TOPOLOGY swarm_initial_topology;
 	TOPOLOGY_MECHANISM swarm_topology_mechanism;
-	
 	double swarm_random_topology_p; 
+	int swarm_number_of_clusters;
 	
 	double particle_position[][];
 	double particle_velocity[][];
@@ -50,80 +41,63 @@ public class PSO implements Runnable {
 	double[][] swarm_clusters_kohonen = null;
 	int[] swarm_clusters = null;
 	
-	
 	double PARTICLE_MAXX, PARTICLE_MAXV, PARTICLE_MINX, PARTICLE_INITIAL_RANGE_L, PARTICLE_INITIAL_RANGE_R;
-	//it: 9999 gbest: 40 : 19.71921474112517
 	int DIMENSION, NUMBER_OF_PARTICLES, MAXITER, RUNS;
-	int swarm_number_of_clusters;
+	
 	Random random_number_generator;
 	long random_number_generator_seed;
-	
 	Random random_number_generator_independent;
 	long random_number_generator_seed_independent;
 	
-	
-	int swarm_initial_maximum_neighbors;
 	Function FUNCTION;
 	
 	enum TOPOLOGY { GLOBAL, RING, CLAN, RANDOM, VON_NEUMANN, BARABASI, PARTNERS, THREESOME_PARTNERS, ORGY_PARTNERS, NSOME_PARTNERS, K_MEANS_BASED, NO_TOPOLOGY, KOHONEN_BASED };
 	
 	enum TOPOLOGY_MECHANISM { NONE, BARABASI_BASED, BARABASI_BASED_DYNAMIC_A, BARABASI_BASED_DYNAMIC_B, BARABASI_BASED_DYNAMIC_C, BARABASI_BASED_DYNAMIC_D, DYNAMIC_2011, BARABASI_BASED_DYNAMIC_LOG };
 	
-	static final int swarm_topology_sleep = 1;
-	
 	int particles_failures_threshold;
 	int[] particles_failures_threshold_particular = null;
 
-/*
-	F1  : Shifted Elliptic Function 									UNIMODAL
-	F2  : Shifted Rastrigin's Function									MULTIMODAL
-	F3  : Shifted Ackley's Function										MULTIMODAL
-	F4  : Single-group Shifted and m-rotated Elliptic Function 			UNIMODAL
-	F5  : Single-group Shifted and m-rotated Rastrigin's Function		MULTIMODAL
-	F6  : Single-group Shifted and m-rotated Ackley's Function			MULTIMODAL		FUCKIN' BETTER! (a inicializacao deve ter muitas cores! -- Mulligan?)
-	F7  : Single-group Shifted m-dimensional Schwefel's Problem 1.2 	UNIMODAL		WORSE
-	F8  : Single-group Shifted m-dimensional Rosenbrock's Function		MULTIMODAL
-	F9  : D/2m-group Shifted and m-rotated Elliptic Function 			UNIMODAL
-	F10 : D/2m-group Shifted and m-rotated Rastrigin's Function			MULTIMODAL
-	F11 : D/2m-group Shifted and m-rotated Ackley's Function			MULTIMODAL		SLIGHTLY BETTER
-	F12 : D/2m-group Shifted m-dimensional Schwefel's Problem 1.2 		UNIMODAL
-	F13 : D/2m-group Shifted m-dimensional Rosenbrock's Function		MULTIMODAL
-	F14 : D/m-group Shifted and m-rotated Elliptic Function 			UNIMODAL
-	F15 : D/m-group Shifted and m-rotated Rastrigin's Function			MULTIMODAL
-	F16 : D/m-group Shifted and m-rotated Ackley's Function				MULTIMODAL		SLIGHTLY BETTER
-	F17 : D/m-group Shifted m-dimensional Schwefel's Problem 1.2 		UNIMODAL
-	F18 : D/m-group Shifted m-dimensional Rosenbrock's Function			MULTIMODAL
-	F19 : D/m-group Shifted Schwefel's Problem 1.2 						UNIMODAL
-	F20 : D/m-group Shifted Rosenbrock's Function						MULTIMODAL
-*/
 	public PSO(String[] args) {
-		
-		int evaluation = 1000000;
-		// args[0] is the function
+		//// PARAMETERS:
+		// > SWARM TOPOLOGY MECHANISM
+		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.DYNAMIC_2011;
+		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.NONE;
+		// > SWARM INITIAL TOPOLOGY
+		//swarm_initial_topology = TOPOLOGY.RING;
+		//swarm_initial_topology = TOPOLOGY.VON_NEUMANN;
+		swarm_initial_topology = TOPOLOGY.GLOBAL;
+		//swarm_initial_topology = TOPOLOGY.CLAN;
+		//swarm_initial_topology = TOPOLOGY.RANDOM;
+		//swarm_random_topology_p = 0.2;
+		//swarm_initial_topology = TOPOLOGY.NO_TOPOLOGY;
+		//swarm_initial_topology = TOPOLOGY.NSOME_PARTNERS;
+		//swarm_number_of_clusters = 3;
+		// > DYNAMIC TOPOLOGY FAILURES THRESHOLD
+		particles_failures_threshold = 50;
+		// > BENCHMARK FUNCTION
 		if (args.length > 0) {
 			FUNCTION = functionFromInt(Integer.parseInt(args[0]));
-			
 		} else {
 			FUNCTION = new F6();	// it uses F6 otherwise
 		}
+		// > DIMENSIONS
 		DIMENSION = 1000;
-		NUMBER_OF_PARTICLES = 100; 
+		// > NUMBER OF PARTICLES
+		NUMBER_OF_PARTICLES = 100;
+		// > NUMBER OF FITNESS EVALUATIONS 		
+		int evaluation = 1000000;
 		MAXITER = evaluation / NUMBER_OF_PARTICLES;
-		//MAXITER=50;
+		// > NUMBER OF RUNS
 		RUNS = 1;
+		
 		PARTICLE_MAXX = FUNCTION.getMax();
 		PARTICLE_MINX = FUNCTION.getMin();
-		
 		PARTICLE_MAXV = 0.5f*(PARTICLE_MAXX - PARTICLE_MINX);
-		   
 		PARTICLE_INITIAL_RANGE_L = PARTICLE_MINX;
 		PARTICLE_INITIAL_RANGE_R = PARTICLE_MAXX;
 		
-		particles_failures_threshold = 50;
-		current_iteration = 0;
-		
 		swarm_neighborhood_graph = new boolean[NUMBER_OF_PARTICLES][NUMBER_OF_PARTICLES];
-
 		particle_position = new double[NUMBER_OF_PARTICLES][DIMENSION];
 		particle_velocity = new double[NUMBER_OF_PARTICLES][DIMENSION];
 		particle_best_value_position = new double[NUMBER_OF_PARTICLES][DIMENSION];
@@ -149,40 +123,38 @@ public class PSO implements Runnable {
 				swarm_influence_history[i][j] = 0;
 			}
 		}
-
-		//swarm_initial_topology = TOPOLOGY.K_MEANS_BASED;
-		//swarm_initial_topology = TOPOLOGY.KOHONEN_BASED;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.BARABASI_BASED_DYNAMIC_D;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.BARABASI_BASED_DYNAMIC_A;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.BARABASI_BASED_DYNAMIC_C;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.BARABASI_BASED_DYNAMIC_DISSERTACAO;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.BARABASI_BASED_DYNAMIC_LOG;
-		//it: 1499 gbest: 72 : 5.866975361772289E8
-		
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.NONE;
-		//swarm_initial_topology = TOPOLOGY.RING;
-		//swarm_initial_topology = TOPOLOGY.RANDOM;
-		//swarm_random_topology_p = 0.2;
-		
-		//swarm_initial_topology = TOPOLOGY.VON_NEUMANN;
-		swarm_initial_topology = TOPOLOGY.GLOBAL;
-		//swarm_initial_topology = TOPOLOGY.CLAN;
-		//swarm_initial_topology = TOPOLOGY.NO_TOPOLOGY;
-		swarm_gbest = -1;
-		
-		swarm_number_of_clusters = 3;
-		
-		swarm_initial_maximum_neighbors = 3;
-		
 		swarm_distance_particles = new double[NUMBER_OF_PARTICLES][NUMBER_OF_PARTICLES];
 		this.swarm_neigbourhood_graph_jung = new SparseMultigraph<Integer, String>();
 		for (int vertex = 0; vertex < NUMBER_OF_PARTICLES; vertex++) {
 			this.swarm_neigbourhood_graph_jung.addVertex((Integer) vertex);
 		}
-		
+		swarm_gbest = -1;
+		current_iteration = 0;
 	}
 	
 	private Function functionFromInt(int parseInt) {
+		/*
+		F1  : Shifted Elliptic Function 									UNIMODAL
+		F2  : Shifted Rastrigin's Function									MULTIMODAL
+		F3  : Shifted Ackley's Function										MULTIMODAL
+		F4  : Single-group Shifted and m-rotated Elliptic Function 			UNIMODAL
+		F5  : Single-group Shifted and m-rotated Rastrigin's Function		MULTIMODAL
+		F6  : Single-group Shifted and m-rotated Ackley's Function			MULTIMODAL	
+		F7  : Single-group Shifted m-dimensional Schwefel's Problem 1.2 	UNIMODAL	
+		F8  : Single-group Shifted m-dimensional Rosenbrock's Function		MULTIMODAL
+		F9  : D/2m-group Shifted and m-rotated Elliptic Function 			UNIMODAL
+		F10 : D/2m-group Shifted and m-rotated Rastrigin's Function			MULTIMODAL
+		F11 : D/2m-group Shifted and m-rotated Ackley's Function			MULTIMODAL	
+		F12 : D/2m-group Shifted m-dimensional Schwefel's Problem 1.2 		UNIMODAL
+		F13 : D/2m-group Shifted m-dimensional Rosenbrock's Function		MULTIMODAL
+		F14 : D/m-group Shifted and m-rotated Elliptic Function 			UNIMODAL
+		F15 : D/m-group Shifted and m-rotated Rastrigin's Function			MULTIMODAL
+		F16 : D/m-group Shifted and m-rotated Ackley's Function				MULTIMODAL	
+		F17 : D/m-group Shifted m-dimensional Schwefel's Problem 1.2 		UNIMODAL
+		F18 : D/m-group Shifted m-dimensional Rosenbrock's Function			MULTIMODAL
+		F19 : D/m-group Shifted Schwefel's Problem 1.2 						UNIMODAL
+		F20 : D/m-group Shifted Rosenbrock's Function						MULTIMODAL
+	*/
 		Function func_return = null;
 		switch (parseInt) {
 		case 1:
@@ -251,19 +223,9 @@ public class PSO implements Runnable {
 	}
 	
 	private void initializeRNG() {
-		//it:#0 1500 2013336.6304360947
-		//random_number_generator_seed: 1339596216600
-		//it:#0 1500 1482251.7006799742
-		//random_number_generator_seed: 1339596216600
-		//it:#0 1500 1482251.7006799742
-		//random_number_generator_seed: 1339596216600
-		random_number_generator_seed = (long) 1353096711862L;
-		//1353096711862
-		//it:#0 1278 2358.9153
 		random_number_generator_seed = System.currentTimeMillis();
 		random_number_generator = new Random(random_number_generator_seed);
 		random_number_generator_seed_independent = System.currentTimeMillis();
-		//random_number_generator_seed_independent = (long) 1353375901830L; // random_number_generator_seed;
 		random_number_generator_independent = new Random(random_number_generator_seed_independent);
 	}
 	
@@ -290,10 +252,10 @@ public class PSO implements Runnable {
      */
     @Override
 	public void run(){
-    	DecimalFormat decimal_format = new DecimalFormat("#.####");
+//    	DecimalFormat decimal_format = new DecimalFormat("#.####");
         AnalysisOlorunda diversity = new AnalysisOlorunda(this, printWriter);
-        AnalysisYang dapso = new AnalysisYang(this, printWriter);
-        AnalysisWorasucheep psoDD = new AnalysisWorasucheep(this, printWriter);
+        AnalysisYang aggregation = new AnalysisYang(this, printWriter);
+        AnalysisWorasucheep r = new AnalysisWorasucheep(this, printWriter);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -308,31 +270,30 @@ public class PSO implements Runnable {
                 this.updateVelocity();
                 this.updatePosition();
                 this.updateInfluenceGraph();
-                
+                // we now print:
+                // > fitness
                 String it = "it:#" + this.current_iteration + " " + particle_best_value[this.swarm_gbest];
                 printWriter.println(it);
-
+                // > influence graph
                 String igLine = "ig:#" + this.current_iteration + " ";
                 printWriter.print(igLine);
                 int[][] ig = this.getInfluenceGraph();
                 for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
                     for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
-//						System.out.print(ig[i][j]+" ");
                         printWriter.print(ig[i][j]+" ");
                     }                            
                 }
                 printWriter.println();
-                
+                // > best personal values
                 printWriter.print("pbest:#" + this.current_iteration + " ");
                 for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
                     printWriter.print(this.particle_best_value[i] + " ");
                 }
                 printWriter.println();
-                
-                //diversity.iterate();
-                //dapso.iterate();
-                //psoDD.iterate();
-                printWriter.println();
+                // > diversity metrics
+                diversity.iterate();
+                aggregation.iterate();
+                r.iterate();
                 
                 this.current_iteration = this.current_iteration + 1;
                 /*
@@ -354,24 +315,21 @@ public class PSO implements Runnable {
 			// the particle received information from these particles in the last iterations...
 			swarm_influence_history[particle][this.current_iteration%swarm_influence_history_maximum_length] = particle_best_neighbour[particle];
 		}
-		
 		for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
 			for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
 				swarm_influence_graph[i][j] = 0;
 			}
 		}
-		
 		for (int particle = 0; particle < NUMBER_OF_PARTICLES; particle++) {
 			swarm_influence_graph[particle_best_neighbour[particle]][particle]++;// [i][j] = i sends information to j
 		}
-		
 	}
 	
 	private void updateNeighbourhood() {
 		if (swarm_topology_mechanism != null) {
 			switch (swarm_topology_mechanism) {
 			case DYNAMIC_2011:
-				this.updateNeighbourhood_BA_DYNAMIC_DISSERTACAO();
+				this.updateNeighbourhood_2011();
 				break;
 			default:
 				break;
@@ -380,7 +338,7 @@ public class PSO implements Runnable {
 		
 	}
 	
-	private void updateNeighbourhood_BA_DYNAMIC_DISSERTACAO() {
+	private void updateNeighbourhood_2011() {
 		// we do not want to update the neighborhood every time following
 		// the same sequence of particles, so we randomize the index and
 		// update following this random sequence.
@@ -420,13 +378,8 @@ public class PSO implements Runnable {
 		}
 		// ranking[0] is the index of the worst particle
 		// ranking[NUMBER_OF_AGENTS - 1] is the index of the best particle
-		// ranking_of_particle[i] is the position of the particle i in the rank; if ranking_of_particle[i] = 0, it means that i is the worst particle 
-		
-		//random_number_generator = this.random_number_generator_independent;
-		// in the same order of particle updating, the swarm behaviour is different
-		// when different seeds are used. 
-		
-		//// -> esse laco pega uma particula aleatoriamente no enxame!
+		// ranking_of_particle[i] is the position of the particle i in the rank; 
+		//  so if ranking_of_particle[i] = 0, it means that i is the worst particle 
 		for (int particle_ordered = 0; particle_ordered < ranking_of_particle.length; particle_ordered++) {
 			
 			int particle = particle_index_shuffled[particle_ordered];
@@ -443,11 +396,9 @@ public class PSO implements Runnable {
 			float pa_sum = (float) pa(NUMBER_OF_PARTICLES, power);
 			r = random_number_generator.nextDouble();
 			sum = 0;
-			who = NUMBER_OF_PARTICLES - 1; 	// who = -1; se passar da roulette wheel, significa que o power esta muito grande
-											//			 e a precisao nao eh suficiente, entao a divisao com pa_sum nao eh valida :/  
-			int wheel;
-			for (wheel = 0; wheel < NUMBER_OF_PARTICLES ; wheel++) {
-				// ESCOLHE PELA ROULETTE WHEEL UM PARA SE CONECTAR
+			who = NUMBER_OF_PARTICLES - 1; 	  
+			for (int wheel = 0; wheel < NUMBER_OF_PARTICLES ; wheel++) {
+				// chooses the one to be connected with using a roulette wheel
 				sum += Math.pow(((double) wheel + 1), power) / (pa_sum);
 				if (ranking[wheel] == particle) {
 					continue;
@@ -470,7 +421,7 @@ public class PSO implements Runnable {
 			
 			if ((particle_failures[who] == 0)/* && (ranking_of_particle[who] > ranking_of_particle[particle])*/) {
 				if (!swarm_neighborhood_graph[who][particle]) {
-							particle_failures[particle] = 0; 
+					particle_failures[particle] = 0; 
 				}
 			} else {
 				if (swarm_neighborhood_graph[who][particle]) {
@@ -482,16 +433,6 @@ public class PSO implements Runnable {
 				addNeighbour(who, particle);
 			}
 		}
-	}
-
-	private int numberOfNeighbours(int i) {
-		int sum = 0;
-		for (int neighbour = 0; neighbour < swarm_neighborhood_graph[i].length; neighbour++) {
-			if (swarm_neighborhood_graph[i][neighbour]) {
-				sum++;
-			}
-		}
-		return sum;
 	}
 
 	private void updatePosition() {
@@ -536,6 +477,7 @@ public class PSO implements Runnable {
 		return this.random_number_generator.nextDouble();
 	}
 	
+	@SuppressWarnings("unused")
 	private double randomDoubleIndependent() {
 		return this.random_number_generator_independent.nextDouble();
 	}
@@ -661,7 +603,6 @@ public class PSO implements Runnable {
 			//   - e - f - g - h -
 			//     |   |   |   |
 			for (int j = 0; j < swarm_neighborhood_graph.length; j++) {
-				int line = j / columns;
 				addNeighbour(j, (j+1)%columns + (j/columns)*columns);
 				addNeighbour(j, ((j+1)%columns + (j/columns + 1)*columns)%swarm_neighborhood_graph.length);
 			}
