@@ -25,5 +25,11 @@ Compute an "evolutionary factor" f as defined by
 		f = (d_g - d_min)/(d_max - d_min)
 */
 public class AnalysisZhan {
-
+//	private void evaluateEvolutonarySpeedFactor(){
+//		// we do not use this and will not. 
+//		for (int i=0; i < pso.NUMBER_OF_PARTICLES; i++) {
+//			evoFactor[i] = Math.min(previousPBest[i], currentPBest[i])/ Math.max(previousPBest[i], currentPBest[i]);
+//			evoFactor[i] = Math.abs(evoFactor[i]);
+//		}
+//	}
 }

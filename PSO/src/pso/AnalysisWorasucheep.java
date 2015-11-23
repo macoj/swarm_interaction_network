@@ -8,7 +8,7 @@ import java.io.PrintWriter;
 import java.util.LinkedList;
 /*
  CHECKS:
-	OK 
+	OK (Marcos)
 */
 
 
@@ -16,6 +16,14 @@ import java.util.LinkedList;
 // Evolutionary Computation, 2008. CEC 2008. (IEEE World Congress on Computational Intelligence). IEEE Congress on
 // Worasucheep, C.
 
+/*
+To measure the stagnation in PSO, [5] takes into consideration also the velocities
+and defines the improvement ratio as:
+	R = (1 - fc/fp)/(1 - vc/vp),
+where fc is the current fitness value of the best particle, fp is the previous and vc
+is the current average velocity of all particles, while vp is the previously recorded
+one. Stagnation is detected when R drops under a preset value 'e'.
+ */
 public class AnalysisWorasucheep {
 	
 	private PSO pso;
@@ -62,6 +70,8 @@ public class AnalysisWorasucheep {
 			double vp = getAverageVelocityFromWindow();
 			ratio = (1 - fc/fp)/(1 - vc/vp);
 			ratio = Math.abs(ratio);
+			String rLine = "R:#" + this.pso.current_iteration + " " + ratio;
+			printer.println(rLine + "\n");
 		}
 	}
 
@@ -122,14 +132,11 @@ public class AnalysisWorasucheep {
 		return averageVelocityByWindow;
 	}
 	
-	public void iterate(){
+	public void iterate() {
 		this.evaluateParticlesAverageVelocity();
 		this.updateBestSwarmFitness();
-		String rLine = "R:#" + this.pso.current_iteration + " " + ratio;
-		printer.println(rLine + "\n");
 		if (pso.current_iteration%CONVERGENCE_CHECK == 0) {
 			this.evaluateRatio();
 		}
-				
 	}
 }
