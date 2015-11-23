@@ -24,7 +24,7 @@ where fc is the current fitness value of the best particle, fp is the previous a
 is the current average velocity of all particles, while vp is the previously recorded
 one. Stagnation is detected when R drops under a preset value 'e'.
  */
-public class AnalysisWorasucheep {
+public class AnalysisWorasucheep  implements Analysis {
 	
 	private PSO pso;
 	private PrintWriter printer;

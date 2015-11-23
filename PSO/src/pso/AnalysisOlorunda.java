@@ -21,7 +21,7 @@ CHECKS:
      swarm center and the particle in the swarm which is furthest 
      away from it.
  */
-public class AnalysisOlorunda {
+public class AnalysisOlorunda implements Analysis {
 
 	private PSO pso;
 	private PrintWriter printer;

@@ -24,7 +24,13 @@ di's, and determine the maximum and minimum distances dmax and dmin.
 Compute an "evolutionary factor" f as defined by
 		f = (d_g - d_min)/(d_max - d_min)
 */
-public class AnalysisZhan {
+public class AnalysisZhan implements Analysis {
+
+	@Override
+	public void iterate() {
+		// TODO Auto-generated method stub
+		
+	}
 //	private void evaluateEvolutonarySpeedFactor(){
 //		// we do not use this and will not. 
 //		for (int i=0; i < pso.NUMBER_OF_PARTICLES; i++) {

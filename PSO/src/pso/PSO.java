@@ -252,10 +252,13 @@ public class PSO implements Runnable {
      */
     @Override
 	public void run(){
+    	if (printWriter == null) {
+        	printWriter =  new PrintWriter(System.out);
+        }
 //    	DecimalFormat decimal_format = new DecimalFormat("#.####");
-        AnalysisOlorunda diversity = new AnalysisOlorunda(this, printWriter);
-        AnalysisYang aggregation = new AnalysisYang(this, printWriter);
-        AnalysisWorasucheep r = new AnalysisWorasucheep(this, printWriter);
+        Analysis diversity = new AnalysisOlorunda(this, printWriter);
+        Analysis aggregation = new AnalysisYang(this, printWriter);
+        Analysis r = new AnalysisWorasucheep(this, printWriter);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -634,7 +637,6 @@ public class PSO implements Runnable {
 							addNeighbour((i+p_i)%swarm_neighborhood_graph.length, (i+p_j)%swarm_neighborhood_graph.length);
 						}
 					}
-					
 					//addNeighbour(i, (i+p_i)%swarm_neighborhood_graph.length);
 				}
 				//addNeighbour(i, (i+1)%swarm_neighborhood_graph.length);

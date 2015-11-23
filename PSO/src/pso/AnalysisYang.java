@@ -36,7 +36,7 @@ speed and aggregation degree using the following formula:
 	up to the tth iteration. Compared with that in [8], the formula of aggregation degree factor 
 	in this paper can faster response to evolving state.
  */
-public class AnalysisYang {
+public class AnalysisYang implements Analysis {
 	
 	private PSO pso;
     private PrintWriter printer;
