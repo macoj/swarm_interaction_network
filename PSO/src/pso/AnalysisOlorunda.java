@@ -5,14 +5,15 @@ package pso;
 */
 
 import java.io.PrintWriter;
+/*
+CHECKS:
+	NONE 
+*/
+
 
 // "Measuring exploration/exploitation in particle swarms using swarm diversity"
 // Evolutionary Computation, 2008. CEC 2008. (IEEE World Congress on Computational Intelligence). IEEE Congress on
 // Olorunda, O. ; Engelbrecht A.P.
-
-/*
- NOT CHECKED 
-*/
 public class AnalysisOlorunda {
 
 	private PSO pso;

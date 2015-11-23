@@ -1,5 +1,11 @@
 package pso;
 
+/*
+CHECKS:
+	NONE 
+*/
+
+
 // "Adaptive Particle Swarm Optimization"
 // Zhi-Hui Zhan, Jun Zhang, Yun Li, and Henry Shu-Hung Chung
 /*
