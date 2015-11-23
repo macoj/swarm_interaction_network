@@ -38,6 +38,7 @@ public class PSO implements Runnable {
 	
 	double particle_position[][];
 	double particle_velocity[][];
+	double particle_current_fitness[];
 	double particle_best_value_position[][];
 	double particle_best_value[];
 	int particle_best_neighbour[];
@@ -127,6 +128,7 @@ public class PSO implements Runnable {
 		particle_velocity = new double[NUMBER_OF_PARTICLES][DIMENSION];
 		particle_best_value_position = new double[NUMBER_OF_PARTICLES][DIMENSION];
 		particle_best_value = new double[NUMBER_OF_PARTICLES];
+		particle_current_fitness = new double[NUMBER_OF_PARTICLES];
 		particle_best_neighbour = new int[NUMBER_OF_PARTICLES];
 		particle_failures = new int[NUMBER_OF_PARTICLES];
 		
@@ -300,8 +302,8 @@ public class PSO implements Runnable {
 
             do {
                 this.evaluatePositionAndUpdatePersonal();
-                this.swarm_gbest = this.getGBest();
-                this.findBestNeighbours();
+                this.updateGBest();
+                this.updateNBest();
                 this.updateNeighbourhood();
                 this.updateVelocity();
                 this.updatePosition();
@@ -538,7 +540,13 @@ public class PSO implements Runnable {
 		return this.random_number_generator_independent.nextDouble();
 	}
 	
-	public int getGBest() {
+	public int updateGBest() {
+		// assuming here that the problem is minimization!
+		this.swarm_gbest = this.findGBest();
+		return this.swarm_gbest;
+	}
+	
+	public int findGBest() {
 		// assuming here that the problem is minimization! 
 		double minval = Double.MAX_VALUE;
 		int gbest = 0;
@@ -551,7 +559,7 @@ public class PSO implements Runnable {
 		return gbest;
 	}
 	
-	private void findBestNeighbours() {
+	private void updateNBest() {
 		// assuming here that the problem is minimization! 
 		for (int particle = 0; particle < swarm_neighborhood_graph.length; particle++) {
 			
@@ -576,19 +584,16 @@ public class PSO implements Runnable {
 	}
 
 	private void evaluatePositionAndUpdatePersonal() {
-		double zero = 0.00001D;
-		// evaluate function and update pbest
+		double zero = 0.000001D;
 		for (int particle = 0; particle < particle_position.length; particle++) {
-			
-			double current_fitness = FUNCTION.compute(particle_position[particle]);
-
-			if (current_fitness < particle_best_value[particle]) {
-				double delta = Math.abs(current_fitness -  particle_best_value[particle]);
+			particle_current_fitness[particle] = FUNCTION.compute(particle_position[particle]); 
+			if (particle_current_fitness[particle] < particle_best_value[particle]) {
+				double delta = Math.abs(particle_current_fitness[particle] -  particle_best_value[particle]);
 				if (delta < zero) {
 					particle_failures[particle]++;
 				} else {
 					particle_failures[particle] = 0;
-					particle_best_value[particle] = current_fitness;
+					particle_best_value[particle] = particle_current_fitness[particle];
 					for (int dimension = 0; dimension < particle_best_value_position[particle].length; dimension++) {
 						particle_best_value_position[particle][dimension] = particle_position[particle][dimension];
 					}
@@ -620,6 +625,7 @@ public class PSO implements Runnable {
 			}
 		}
 		particle_best_value[particle] = Double.MAX_VALUE;
+		particle_current_fitness[particle] = particle_best_value[particle];
 		particle_failures[particle] = 0;
 		particle_failures_power[particle] = -0.9;
 		particles_failures_threshold_particular[particle] = particles_failures_threshold;
