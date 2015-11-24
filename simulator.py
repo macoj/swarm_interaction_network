@@ -74,13 +74,10 @@ class Simulator:
          0: NONE 1: DYNAMIC_2011
         """
         commands = []
-        topologies = [("global", 0), ("ring", 1), ("vonneumann", 4)]
+        topologies = [("global", 0), ("ring", 1), ("vonneumann", 3)]
         runs = 30
-        runs = 2
         functions = range(1, 21)
-        functions = range(1, 3)
         evaluations = 100000
-        evaluations = 1000
         dimensions = 1000
         particles = 100
         for topology in topologies:
@@ -97,9 +94,6 @@ class Simulator:
         return commands
 """
 execfile("simulator.py")
-commands = ["java -jar PSO/jar/pso.jar > t%02d.teste " % i for i in range(50)]
-commands = ["sleep %d" % ((i+3)%4) for i in range(10)]
 Simulator.execute(Simulator.pso(), number_of_processes=4, delay_between=0)
 Simulator.pso()
-
 """
