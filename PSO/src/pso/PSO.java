@@ -53,44 +53,45 @@ public class PSO implements Runnable {
 	
 	enum TOPOLOGY { GLOBAL, RING, CLAN, RANDOM, VON_NEUMANN, BARABASI, PARTNERS, THREESOME_PARTNERS, ORGY_PARTNERS, NSOME_PARTNERS, K_MEANS_BASED, NO_TOPOLOGY, KOHONEN_BASED };
 	
-	enum TOPOLOGY_MECHANISM { NONE, BARABASI_BASED, BARABASI_BASED_DYNAMIC_A, BARABASI_BASED_DYNAMIC_B, BARABASI_BASED_DYNAMIC_C, BARABASI_BASED_DYNAMIC_D, DYNAMIC_2011, BARABASI_BASED_DYNAMIC_LOG };
+	enum TOPOLOGY_MECHANISM { NONE, DYNAMIC_2011 };
 	
 	int particles_failures_threshold;
 	int[] particles_failures_threshold_particular = null;
 
 	public PSO(String[] args) {
 		//// PARAMETERS:
-		// > SWARM TOPOLOGY MECHANISM
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.DYNAMIC_2011;
-		//swarm_topology_mechanism = TOPOLOGY_MECHANISM.NONE;
-		// > SWARM INITIAL TOPOLOGY
-		//swarm_initial_topology = TOPOLOGY.RING;
-		//swarm_initial_topology = TOPOLOGY.VON_NEUMANN;
-		swarm_initial_topology = TOPOLOGY.GLOBAL;
-		//swarm_initial_topology = TOPOLOGY.CLAN;
-		//swarm_initial_topology = TOPOLOGY.RANDOM;
-		//swarm_random_topology_p = 0.2;
-		//swarm_initial_topology = TOPOLOGY.NO_TOPOLOGY;
-		//swarm_initial_topology = TOPOLOGY.NSOME_PARTNERS;
-		//swarm_number_of_clusters = 3;
-		// > DYNAMIC TOPOLOGY FAILURES THRESHOLD
-		particles_failures_threshold = 50;
-		// > BENCHMARK FUNCTION
-		if (args.length > 0) {
-			FUNCTION = functionFromInt(Integer.parseInt(args[0]));
-		} else {
+		if (args.length == 0) {
+			// > SWARM TOPOLOGY MECHANISM
+			//swarm_topology_mechanism = TOPOLOGY_MECHANISM.DYNAMIC_2011;
+			//swarm_topology_mechanism = TOPOLOGY_MECHANISM.NONE;
+			// > SWARM INITIAL TOPOLOGY
+			//swarm_initial_topology = TOPOLOGY.RING;
+			//swarm_initial_topology = TOPOLOGY.VON_NEUMANN;
+			swarm_initial_topology = TOPOLOGY.GLOBAL;
+			//swarm_initial_topology = TOPOLOGY.CLAN;
+			//swarm_initial_topology = TOPOLOGY.RANDOM;
+			//swarm_random_topology_p = 0.2;
+			//swarm_initial_topology = TOPOLOGY.NO_TOPOLOGY;
+			//swarm_initial_topology = TOPOLOGY.NSOME_PARTNERS;
+			//swarm_number_of_clusters = 3;
+			// > DYNAMIC TOPOLOGY FAILURES THRESHOLD
+			particles_failures_threshold = 50;
+			// > BENCHMARK FUNCTION
 			FUNCTION = new F6();	// it uses F6 otherwise
+			// > DIMENSIONS
+			DIMENSION = 1000;
+			// > NUMBER OF PARTICLES
+			NUMBER_OF_PARTICLES = 100;
+			// > NUMBER OF FITNESS EVALUATIONS 		
+			int evaluation = 1000000;
+			MAXITER = evaluation / NUMBER_OF_PARTICLES;
+			// > NUMBER OF RUNS
+			RUNS = 1;
+		} else {
+			if (!setParameters(args)) {
+				System.exit(1);
+			}
 		}
-		// > DIMENSIONS
-		DIMENSION = 1000;
-		// > NUMBER OF PARTICLES
-		NUMBER_OF_PARTICLES = 100;
-		// > NUMBER OF FITNESS EVALUATIONS 		
-		int evaluation = 1000000;
-		MAXITER = evaluation / NUMBER_OF_PARTICLES;
-		// > NUMBER OF RUNS
-		RUNS = 1;
-		
 		PARTICLE_MAXX = FUNCTION.getMax();
 		PARTICLE_MINX = FUNCTION.getMin();
 		PARTICLE_MAXV = 0.5f*(PARTICLE_MAXX - PARTICLE_MINX);
@@ -132,6 +133,56 @@ public class PSO implements Runnable {
 		current_iteration = 0;
 	}
 	
+	private boolean setParameters(String[] args) {
+		if (args.length >= 7) {
+			// > NUMBER OF RUNS
+			RUNS = Integer.parseInt(args[0]);
+			// > NUMBER OF PARTICLES
+			NUMBER_OF_PARTICLES = Integer.parseInt(args[1]);
+			// > NUMBER OF FITNESS EVALUATIONS 		
+			MAXITER = Integer.parseInt(args[2]) / NUMBER_OF_PARTICLES;
+			// > DIMENSIONS
+			DIMENSION = Integer.parseInt(args[3]);
+			// > BENCHMARK FUNCTION
+			FUNCTION = functionFromInt(Integer.parseInt(args[4]));
+			// > SWARM TOPOLOGY 
+			swarm_initial_topology = TOPOLOGY.values()[Integer.parseInt(args[5])];
+			// > SWARM TOPOLOGY MECHANISM
+			swarm_topology_mechanism = TOPOLOGY_MECHANISM.values()[Integer.parseInt(args[6])]; 
+			//swarm_initial_topology = TOPOLOGY.RANDOM;
+			//swarm_random_topology_p = 0.2;
+			//swarm_initial_topology = TOPOLOGY.NSOME_PARTNERS;
+			//swarm_number_of_clusters = 3;
+			// > DYNAMIC TOPOLOGY FAILURES THRESHOLD
+			particles_failures_threshold = 50;
+			return true;
+		} else {
+			System.out.print("PSO.jar runs particles evaluations dimensions function topology mechanism [mechanism_parameter]");
+			// > NUMBER OF RUNS
+			// > NUMBER OF PARTICLES
+			// > NUMBER OF FITNESS EVALUATIONS 		
+			// > DIMENSIONS
+			// > BENCHMARK FUNCTION
+			// > SWARM TOPOLOGY MECHANISM
+			System.out.print("\n> TOPOLOGY\n ");
+			int index = 0;
+			for (TOPOLOGY t : TOPOLOGY.values()) {
+				System.out.print(index++ + ": " + t.toString() + " ");
+			}
+			System.out.print("\n> MECHANISM\n ");
+			index = 0;
+			for (TOPOLOGY_MECHANISM t : TOPOLOGY_MECHANISM.values()) {
+				System.out.print(index + ": " + t.toString() + " ");
+			}
+			System.out.print("\n");
+//			enum TOPOLOGY { GLOBAL, RING, CLAN, RANDOM, VON_NEUMANN, BARABASI, PARTNERS, THREESOME_PARTNERS, ORGY_PARTNERS, NSOME_PARTNERS, K_MEANS_BASED, NO_TOPOLOGY, KOHONEN_BASED };
+//			
+//			enum TOPOLOGY_MECHANISM { NONE, BARABASI_BASED, BARABASI_BASED_DYNAMIC_A, BARABASI_BASED_DYNAMIC_B, BARABASI_BASED_DYNAMIC_C, BARABASI_BASED_DYNAMIC_D, DYNAMIC_2011, BARABASI_BASED_DYNAMIC_LOG };
+
+			return false;
+		}
+	}
+
 	private Function functionFromInt(int parseInt) {
 		/*
 		F1  : Shifted Elliptic Function 									UNIMODAL
@@ -258,7 +309,7 @@ public class PSO implements Runnable {
 //    	DecimalFormat decimal_format = new DecimalFormat("#.####");
         Analysis diversity = new AnalysisOlorunda(this, printWriter);
         Analysis aggregation = new AnalysisYang(this, printWriter);
-        Analysis r = new AnalysisWorasucheep(this, printWriter);
+        Analysis ratio = new AnalysisWorasucheep(this, printWriter);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -296,7 +347,7 @@ public class PSO implements Runnable {
                 // > diversity metrics
                 diversity.iterate();
                 aggregation.iterate();
-                r.iterate();
+                ratio.iterate();
                 
                 this.current_iteration = this.current_iteration + 1;
                 /*
