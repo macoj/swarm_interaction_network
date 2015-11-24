@@ -96,7 +96,7 @@ public class AnalysisYang implements Analysis {
 		// s = | min(F_tbest, Fbar_t) / max(F_tbest, Fbar_t) | 
 		aggregationFactor = Math.min(fTBest, averageFitness)/ Math.max(fTBest, averageFitness);
 		aggregationFactor = Math.abs(aggregationFactor);
-        printer.println("Aggregation Factor:#"+ this.pso.current_iteration + " " + aggregationFactor);
+        printer.println("aggregation_factor:#"+ this.pso.current_iteration + " " + aggregationFactor);
 	}
 	
 	private void updatePBest(){

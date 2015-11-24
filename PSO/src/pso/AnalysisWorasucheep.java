@@ -70,7 +70,7 @@ public class AnalysisWorasucheep  implements Analysis {
 			double vp = getAverageVelocityFromWindow();
 			ratio = (1 - fc/fp)/(1 - vc/vp);
 			ratio = Math.abs(ratio);
-			String rLine = "R:#" + this.pso.current_iteration + " " + ratio;
+			String rLine = "r:#" + this.pso.current_iteration + " " + ratio;
 			printer.println(rLine + "\n");
 		}
 	}
