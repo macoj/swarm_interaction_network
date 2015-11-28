@@ -139,38 +139,38 @@ class GiantComponentDeath:
                                                                        return_graphs_with_giant_sizes,
                                                                        include_zero=include_zero)
         # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
-        # normalize
+        # the weights leading to the destruction of the graph can be normalized.
+        # when there is a time window tw, the maximum weight of an edge is equal
+        # to 2*tw, this is the case of two particles sharing information all the
+        # time.
         if normalize:
-            pd_data['x'] /= (2 * float(normalize))
+            pd_data['x'] /= normalize
         if adjusted:
             pd_data['x'] -= min(pd_data.x)
         return pd_data
 
     @staticmethod
-    def create_giant_component_curves(all_graph_matrices):
+    def create_giant_component_curves(all_graph_matrices, normalize=None):
         pd_datas_1 = {}
         for title in all_graph_matrices:
-            return_graphs_with_giant_sizes = [1.0, 0.9, 0.7, 0.5, 0.3]
+            # return_graphs_with_giant_sizes = [1.0, 0.9, 0.7, 0.5, 0.3]
             pd_datas_1[title] = {}
-            for graph_matrix in all_graph_matrices[title]:
-                title_legend, graph_matrix = graph_matrix
-                #graph_matrix = to_symmetric(graph_matrix)
-                pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix,
-                                                                           return_graphs_with_giant_sizes=
-                                                                           return_graphs_with_giant_sizes,
-                                                                           normalize=title_legend)
-                pd_datas_1[title][title_legend] = pd_data
+            for time_window in all_graph_matrices[title]:
+                for _, graph_matrix in all_graph_matrices[title][time_window]:
+                    pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix, normalize=normalize)
+                    pd_datas_1[title][time_window] = pd_data
         # now we plot... pd_datas_1
         return pd_datas_1
 
     @staticmethod
-    def get_giant_component_curves_areas(graph_matrices, adjusted=False, include_zero=True):
+    def get_giant_component_curves_areas(graph_matrices, adjusted=False, include_zero=True, weight_normalize=None):
         pd_datas = []
         for graph_matrix in graph_matrices:
-            title_legend, graph_matrix = graph_matrix
-            #graph_matrix = to_symmetric(graph_matrix)
+            # print graph_matrix
+            # print graph_matrices[graph_matrix]
+            iteration, graph_matrix = graph_matrix
             pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix,
-                                                                       normalize=title_legend,
+                                                                       normalize=weight_normalize,
                                                                        adjusted=adjusted,
                                                                        include_zero=include_zero)
             pd_datas.append(pd_data)
