@@ -2,7 +2,7 @@ __author__ = 'marcos'
 import numpy as np
 
 
-class PreCallback:
+class Callback:
     def __init__(self):
         pass
 
