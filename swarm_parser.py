@@ -52,7 +52,8 @@ class SwarmParser:
                                informations_grep=None,
                                window_size=-1,
                                pre_callback=None,
-                               pos_callback=None):
+                               pos_callback=None,
+                               calculate_on=-1):
         """
         """
         input_file = open(filename, 'r')
@@ -73,7 +74,8 @@ class SwarmParser:
                                                                               informations_grep)
             information_index, information = information
             if information:
-                informations[information_index].append((iteration, information))
+                if calculate_on == -1 or iteration == calculate_on:
+                    informations[information_index].append((iteration, information))
             if matrix_line:
                 current_matrix = SwarmParser.read_matrix_from_line(matrix_line)
                 if pre_callback:
@@ -87,12 +89,15 @@ class SwarmParser:
                 else:
                     window[matrix_count % window_size] = current_matrix
                     current_accumulated = SwarmParser.sum_matrices(window)
-                if pos_callback:
-                    current_accumulated = pos_callback(current_accumulated)
-                graphs.append((iteration, current_accumulated))
-                matrix_count += 1
+                    matrix_count += 1
+                if calculate_on == -1 or iteration == calculate_on:
+                    if pos_callback:
+                        current_accumulated = pos_callback(current_accumulated)
+                    graphs.append((iteration, current_accumulated))
+                    if iteration == calculate_on:
+                        break
         input_file.close()
-        return dict(graphs), informations
+        return graphs, informations
     """
 execfile("swarm_parser.py")
 t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", influence_graph_grep="ig\:#", window_size=500, informations_grep=["radius\:#", "it\:#"])
@@ -100,20 +105,28 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
 
     @staticmethod
     def read_files_and_measures(title_filenames, influence_graph_grep=None, informations_grep=None,
-                                window_size=-1, pre_callback=None, pos_callback=None):
+                                windows_size=-1, pre_callback=None, pos_callback=None, calculate_on=-1):
         all_graph_matrices = {}
         all_informations = {}
+        windows = type(windows_size) == list
+        if not windows:
+            windows_size = [windows_size]
         for filename in title_filenames:
-            print filename
             title, filename = filename
-            graphs, informations = SwarmParser.read_file_and_measures(filename,
-                                                                      influence_graph_grep=influence_graph_grep,
-                                                                      informations_grep=informations_grep,
-                                                                      window_size=window_size,
-                                                                      pre_callback=pre_callback,
-                                                                      pos_callback=pos_callback)
-            all_graph_matrices[title] = graphs
-            all_informations[title] = informations
+            all_graph_matrices[title] = {}
+            all_informations[title] = {}
+            for window_size in windows_size:
+                graphs, informations = SwarmParser.read_file_and_measures(filename,
+                                                                          influence_graph_grep=influence_graph_grep,
+                                                                          informations_grep=informations_grep,
+                                                                          window_size=window_size,
+                                                                          pre_callback=pre_callback,
+                                                                          pos_callback=pos_callback,
+                                                                          calculate_on=calculate_on)
+                if graphs:
+                    all_graph_matrices[title][window_size] = graphs
+                if informations:
+                    all_informations[title][window_size] = informations
         return all_graph_matrices, all_informations
 
     @staticmethod
