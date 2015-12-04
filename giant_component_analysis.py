@@ -165,12 +165,18 @@ class GiantComponentDeath:
     @staticmethod
     def get_giant_component_curves_areas(graph_matrices, adjusted=False, include_zero=True, weight_normalize=None):
         pd_datas = []
+        normalize_index = 0
         for graph_matrix in graph_matrices:
             # print graph_matrix
             # print graph_matrices[graph_matrix]
             iteration, graph_matrix = graph_matrix
+            if type(weight_normalize) == list:
+                normalize_c = weight_normalize[normalize_index]
+                normalize_index += 1
+            else:
+                normalize_c = weight_normalize
             pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix,
-                                                                       normalize=weight_normalize,
+                                                                       normalize=normalize_c,
                                                                        adjusted=adjusted,
                                                                        include_zero=include_zero)
             pd_datas.append(pd_data)
