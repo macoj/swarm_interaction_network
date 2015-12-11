@@ -23,8 +23,10 @@ class SwarmAnalyzer:
                                                                     pos_callback=pos_callback,
                                                                     windows_size=[window_size])
         graph_matrices = all_graph_matrices[''][window_size]
-        weight_normalize = 2.0 * window_size
-        curves = GiantComponentDeath.get_giant_component_curves_areas(graph_matrices, adjusted=True, include_zero=False,
+        # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
+        # tw, then the maximum is 2*t, threfore:
+        weight_normalize = [2.0*i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
+        curves = GiantComponentDeath.create_giant_component_curves(graph_matrices, adjusted=True, include_zero=False,
                                                                       weight_normalize=weight_normalize)
         return curves
 
@@ -57,6 +59,92 @@ class SwarmAnalyzer:
     execfile("swarm_analyzer.py")
     filename = "/mnt/pso_100_particles/global_F06_00"
     df = SwarmAnalyzer.get_giant_component_destruction_area(filename, 100)
+    """
+
+    @staticmethod
+    def get_swarm_informations_from_file(filename, informations_grep):
+        _, informations = SwarmParser.read_files_and_measures([('', filename)], informations_grep=informations_grep)
+        informations = informations[''][-1]  # there is no window here!
+        # let's get the longest information sequence
+        max_information_length = float("-inf")
+        max_information_key = None
+        for information_grep in informations:
+            if len(informations[information_grep]) > max_information_length:
+                max_information_length = len(informations[information_grep])
+                max_information_key = information_grep
+        iterations = [iteration for (iteration, _) in informations[max_information_key]]
+        iterations.sort()
+        df = pd.DataFrame({'x': iterations})
+        global t
+        t = informations
+        for information_grep in informations:
+            dict_information = dict(informations[information_grep])
+            df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
+        return df
+    """
+execfile("swarm_analyzer.py")
+filename = "/mnt/pso_100_particles/ring_F06_06.teste"
+
+measures = ["radius:#", "aggregation_factor:#", "coherence:#", "r:#", "it:#", "diameter:#", "average_around_center:#", "average_of_average_around_all_particles:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_around_center:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+
+df = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
+dfs = [{'y': df[k]/max(df[k]), 'x': df['x']} for k in measures if k != "it:#"]
+dfs = [{'y': df[k]/max(df[k]), 'x': df['x']} for k in measures]
+
+legends = [k for k in measures if k != "it:#"]
+legends = measures
+
+
+delta = 0.001
+number_particles = 100
+normalization = number_particles*len(np.arange(0, 1 + delta, delta))
+dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 100)
+dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+legends += ['auc100']
+dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 200)
+dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+legends += ['auc200']
+
+
+
+Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1, ylim=(0, 1.0))
+execfile("swarm_analyzer.py")
+
+for i in range(1, 31):
+    filename = "/mnt/pso_100_particles/global_F06_%02d" % i
+    delta = 0.001
+    number_particles = 100
+    normalization = number_particles*len(np.arange(0, 1 + delta, delta))
+    dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 50)
+    dfs = [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    legends = ['auc50']
+    # dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 100)
+    # dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    # legends += ['auc100']
+    # dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 200)
+    # dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    # legends += ['auc200']
+    # dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 300)
+    # dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    # legends += ['auc300']
+    # dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 400)
+    # dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    # legends += ['auc400']
+    # dfa = SwarmAnalyzer.get_giant_component_destruction_area(filename, 500)
+    # dfs += [{'y': dfa['y']/normalization, 'x': dfa['x']}]
+    # legends += ['auc500']
+    measures = ["it:#"]
+    measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+    df = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
+    dfs += [{'y': df[k]/max(df[k]), 'x': df['x']} for k in measures]
+    legends += measures
+    Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(25,8), grid=True, linewidth=1, output_filename=filename+"_.png", ylim=(0, 1.0))
+
+
     """
 
     @staticmethod
@@ -100,13 +188,20 @@ class SwarmAnalyzer:
         graph_matrices, _ = SwarmParser.read_files_and_measures(filenames, influence_graph_grep=influence_graph_grep,
                                                                 pos_callback=pre_callback, windows_size=windows_size,
                                                                 calculate_on=calculate_on)
-        pd_datas = GiantComponentDeath.create_giant_component_curves(graph_matrices)
-        GiantComponentDeathPlotter.create_giant_component_death_curve(calculate_on, pd_datas, windows_size)
+        normalize = [2*i for i in windows_size]
+        pd_datas = {}
+        for title in graph_matrices:
+            graphs = [graph_matrices[title][i] for i in windows_size]
+            graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
+            curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
+                                                                                weight_normalize=normalize)
+            pd_datas[title] = dict(zip(windows_size, curves_areas))
+        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0))
     """
     execfile("swarm_analyzer.py")
     filename = [('global', "/mnt/pso_100_particles/global_F06_00"), ('g1', "/mnt/pso_100_particles/global_F06_01"), \
     ('g2', "/mnt/pso_100_particles/global_F06_02"), ('g3', "/mnt/pso_100_particles/global_F06_03")]
-    df = SwarmAnalyzer.read_files_and_plot(filename, windows_size=[100, 200, 300, 400], calculate_on=900)
+    df = SwarmAnalyzer.read_files_and_plot(filename, windows_size=[50, 100, 1000], calculate_on=999)
     """
     #create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
     #create_heatmap_plot(all_graph_matrices, calculate_on)
@@ -471,5 +566,5 @@ for basename in basenames:
         xs.append(tw)
     curves.append({'x': xs, 'y': ys})
 Plotter.plot_curve(curves, figsize=(23,7), legends=['d', 'g', 'r'], x_label="Time Window", markersize=7, linewidth=2, alpha=0.7, grid=True, x_scale='log', y_scale='linear')
-
     """
+

@@ -24,7 +24,7 @@ class GiantComponentDeath:
         removals = 0
         while graph_copy.vcount() > 0:
             removals += 1
-            highest_degree = GiantComponentDeath.remove_nodes_with_highest_degree(graph_copy)
+            # highest_degree = GiantComponentDeath.remove_nodes_with_highest_degree(graph_copy)
             total_nodes = float(graph_copy.vcount())
             print str(total_nodes)
             if total_nodes > 0:
@@ -150,26 +150,16 @@ class GiantComponentDeath:
         return pd_data
 
     @staticmethod
-    def create_giant_component_curves(all_graph_matrices, normalize=None):
-        pd_datas_1 = {}
-        for title in all_graph_matrices:
-            # return_graphs_with_giant_sizes = [1.0, 0.9, 0.7, 0.5, 0.3]
-            pd_datas_1[title] = {}
-            for time_window in all_graph_matrices[title]:
-                for _, graph_matrix in all_graph_matrices[title][time_window]:
-                    pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix, normalize=normalize)
-                    pd_datas_1[title][time_window] = pd_data
-        # now we plot... pd_datas_1
-        return pd_datas_1
-
-    @staticmethod
-    def get_giant_component_curves_areas(graph_matrices, adjusted=False, include_zero=True, weight_normalize=None):
+    def create_giant_component_curves(graph_matrices, adjusted=False, include_zero=True, weight_normalize=None):
         pd_datas = []
         normalize_index = 0
+        if type(graph_matrices) == dict:
+            graph_matrices = graph_matrices.values()
         for graph_matrix in graph_matrices:
-            # print graph_matrix
-            # print graph_matrices[graph_matrix]
-            iteration, graph_matrix = graph_matrix
+            print graph_matrix
+            if type(graph_matrix) == tuple:
+                _, graph_matrix = graph_matrix
+                print graph_matrix
             if type(weight_normalize) == list:
                 normalize_c = weight_normalize[normalize_index]
                 normalize_index += 1
