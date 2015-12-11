@@ -73,7 +73,7 @@ class SwarmParser:
                                                                               influence_graph_grep,
                                                                               informations_grep)
             information_index, information = information
-            if information:
+            if information is not None:
                 if calculate_on == -1 or iteration == calculate_on:
                     informations[information_index].append((iteration, information))
             if matrix_line:
@@ -87,7 +87,7 @@ class SwarmParser:
                         accumulated_matrix = accumulated_matrix + current_matrix
                     current_accumulated = accumulated_matrix
                 else:
-                    window[matrix_count % window_size] = current_matrix
+                    window[matrix_count % window_size] = current_matrix  # we can do that because order does not matter
                     current_accumulated = SwarmParser.sum_matrices(window)
                     matrix_count += 1
                 if calculate_on == -1 or iteration == calculate_on:
@@ -108,8 +108,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
                                 windows_size=-1, pre_callback=None, pos_callback=None, calculate_on=-1):
         all_graph_matrices = {}
         all_informations = {}
-        windows = type(windows_size) == list
-        if not windows:
+        if type(windows_size) != list:
             windows_size = [windows_size]
         for filename in title_filenames:
             title, filename = filename
@@ -134,7 +133,9 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
         iteration_grep = "^[0-9]* "
         graph_line, information, information_grep = None, None, None
         iteration = -1
-        line, times = re.subn(influence_graph_grep, "", line)
+        times = 0
+        if influence_graph_grep:
+            line, times = re.subn("^"+influence_graph_grep, "", line)
         if times != 0:
             iteration_find = re.findall(iteration_grep, line)
             if iteration_find:
@@ -143,7 +144,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
             graph_line = line
         elif informations_grep:
             for information_grep in informations_grep:
-                line, times = re.subn(information_grep, "", line)
+                line, times = re.subn("^"+information_grep, "", line)
                 if times != 0:
                     break
             if times != 0:
