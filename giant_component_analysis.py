@@ -156,10 +156,8 @@ class GiantComponentDeath:
         if type(graph_matrices) == dict:
             graph_matrices = graph_matrices.values()
         for graph_matrix in graph_matrices:
-            print graph_matrix
             if type(graph_matrix) == tuple:
                 _, graph_matrix = graph_matrix
-                print graph_matrix
             if type(weight_normalize) == list:
                 normalize_c = weight_normalize[normalize_index]
                 normalize_index += 1
