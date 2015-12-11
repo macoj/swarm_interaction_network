@@ -11,7 +11,7 @@ class GiantComponentDeathPlotter:
         pass
 
     @staticmethod
-    def create_giant_component_death_curve(calculate_on, pd_datas_1, windows_size):
+    def giant_component_death_curve(calculate_on, pd_datas_1, windows_size, xlim=None, ylim=None):
         font = {'family': 'normal',
                 'weight': 'normal',
                 'size': 8}
@@ -21,19 +21,19 @@ class GiantComponentDeathPlotter:
         plot_gridspec = gridspec.GridSpec(3, 3, width_ratios=[1, 0.001, 1], height_ratios=[1, 0.001, 1])
         pd_datas = pd_datas_1
         graphs_index = 0
-        xlim = [numpy.inf, 0]
-        ylim = [numpy.inf, 0]
         ylabel = "Giant component size"
         ylabel = "Number of components"
         xlabel = "Normalized edge weight"
         markers = ['D', 's', '|', 'x', '_', '^', 'd', 'h', '+', '*', ',', 'o', '.', '1', 'p', '3', '2', '4', 'H', 'v', '8', '<', '>']
         markers = ['D', 's', 'x', '^', 'd', 'h', '+', '*', ',', 'o', '.', '1', 'p', '3', '2', '4', 'H', 'v', '8', '<', '>']
+        x_lim = [numpy.inf, 0]
+        y_lim = [numpy.inf, 0]
         for title in pd_datas:
             for title_legend in pd_datas[title]:
-                xlim[0] = min(xlim[0], min(pd_datas[title][title_legend]['x']))
-                xlim[1] = max(xlim[1], max(pd_datas[title][title_legend]['x']))
-                ylim[0] = min(ylim[0], min(pd_datas[title][title_legend]['y']))
-                ylim[1] = max(ylim[1], max(pd_datas[title][title_legend]['y']))
+                x_lim[0] = min(x_lim[0], min(pd_datas[title][title_legend]['x']))
+                x_lim[1] = max(x_lim[1], max(pd_datas[title][title_legend]['x']))
+                y_lim[0] = min(y_lim[0], min(pd_datas[title][title_legend]['y']))
+                y_lim[1] = max(y_lim[1], max(pd_datas[title][title_legend]['y']))
         for title in pd_datas:
             x = graphs_index / (len(pd_datas) / 2)
             y = graphs_index % (len(pd_datas) / 2)
@@ -58,8 +58,14 @@ class GiantComponentDeathPlotter:
                          marker=next(markercycler),
                          label=title_legend,
                          markersize=4)
-            plt.ylim(ylim[0], ylim[1])
-            plt.xlim(xlim[0], xlim[1])
+            if not xlim:
+                plt.xlim(x_lim[0], x_lim[1])
+            else:
+                plt.xlim(*xlim)
+            if not ylim:
+                plt.ylim(y_lim[0], y_lim[1])
+            else:
+                plt.ylim(*ylim)
             plt.title(title)
             graphs_index += 1
         plt.legend(loc=4)
