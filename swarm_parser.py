@@ -53,7 +53,8 @@ class SwarmParser:
                                window_size=-1,
                                pre_callback=None,
                                pos_callback=None,
-                               calculate_on=-1):
+                               calculate_on=-1,
+                               until=-1):
         """
         """
         input_file = open(filename, 'r')
@@ -96,6 +97,8 @@ class SwarmParser:
                     graphs.append((iteration, current_accumulated))
                     if iteration == calculate_on:
                         break
+                    if until != -1 and iteration >= until:
+                        break
         input_file.close()
         return graphs, informations
     """
@@ -105,7 +108,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
 
     @staticmethod
     def read_files_and_measures(title_filenames, influence_graph_grep=None, informations_grep=None,
-                                windows_size=-1, pre_callback=None, pos_callback=None, calculate_on=-1):
+                                windows_size=-1, pre_callback=None, pos_callback=None, calculate_on=-1, until=-1):
         all_graph_matrices = {}
         all_informations = {}
         if type(windows_size) != list:
@@ -121,7 +124,8 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
                                                                           window_size=window_size,
                                                                           pre_callback=pre_callback,
                                                                           pos_callback=pos_callback,
-                                                                          calculate_on=calculate_on)
+                                                                          calculate_on=calculate_on,
+                                                                          until=until)
                 if graphs:
                     all_graph_matrices[title][window_size] = graphs
                 if informations:
