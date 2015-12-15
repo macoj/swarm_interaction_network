@@ -86,6 +86,8 @@ class Simulator:
                              (particles, evaluations, dimensions, function, topology[1],
                              topology[0], function, r) for r in range(runs)]
         # dynamic topology
+        topologies = [("ring", 1)]
+        functions = range(10, 21)
         for topology in topologies:
             for function in functions:
                     commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 1 > dynamic%s_F%02d_%02d.teste " %
@@ -94,6 +96,7 @@ class Simulator:
         return commands
 """
 execfile("simulator.py")
-Simulator.execute(Simulator.pso(), number_of_processes=4, delay_between=0)
+Simulator.execute(Simulator.pso(), number_of_processes=10, delay_between=5)
 Simulator.pso()
+range(10, 21)
 """
