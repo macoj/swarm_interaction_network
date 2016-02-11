@@ -213,8 +213,8 @@ Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(20
     # gets the last graph in 'graphs' and plot the degree distribution of it
     #return graph_matrix
 
-if __name__ == "__main__":
-    SwarmAnalyzer.read_files_and_export_hdf(int(sys.argv[1]), sys.argv[2])
+#if __name__ == "__main__":
+#    SwarmAnalyzer.read_files_and_export_hdf(int(sys.argv[1]), sys.argv[2])
 
 """
 execfile("swarm_analyzer.py")
