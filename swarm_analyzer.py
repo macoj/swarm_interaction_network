@@ -68,6 +68,45 @@ class SwarmAnalyzer:
     """
 
     @staticmethod
+    def generate_swarm_analysis_df_from_file(filename, informations_grep=None, tws=None, normalize=False):
+        if tws is None:
+            tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
+            # tws = [100, 200, 300]
+        if informations_grep is None:
+            informations_grep = ["radius:#", "diameter:#", "average_around_center:#", "it:#", "coherence:#",
+                                 "normalized_average_around_center:#", "aggregation_factor:#",
+                                 "average_of_average_around_all_particles:#"]
+        df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, informations_grep)
+        if normalize:
+            df_columns = {k: dict(zip(df_info['x'], df_info[k]/max(df_info[k]))) for k in informations_grep}
+        else:
+            df_columns = {k: dict(zip(df_info['x'], df_info[k])) for k in informations_grep}
+        for tw in tws:
+            auc = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=tw)
+            df_columns[tw] = dict(zip(auc['x'], auc['y']))
+        keys = []
+        for k in df_columns:
+            keys += df_columns[k].keys()
+        keys = list(set(keys))
+        keys.sort()
+        df = {'x': keys}
+        for k in df_columns:
+            df[k] = [df_columns[k][x] if x in df_columns[k] else None for x in keys]
+        real_df = pd.DataFrame(df)
+        real_df.index = real_df['x']
+        del real_df['x']
+        return real_df
+    """
+    execfile("swarm_analyzer.py")
+    import time
+    filename = "./data/100_particles/ring_F06_06.teste"
+    print time.localtime()
+    df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
+    print time.localtime()
+
+    """
+
+    @staticmethod
     def get_swarm_informations_from_file(filename, informations_grep):
         _, informations = SwarmParser.read_files_and_measures([('', filename)], informations_grep=informations_grep)
         informations = informations[''][-1]  # there is no window here!
@@ -91,17 +130,17 @@ class SwarmAnalyzer:
 execfile("swarm_analyzer.py")
 # plotting measures vs. fitness:
 filename = "./data/100_particles/ring_F06_06.teste"
-measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
-            "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+
 df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
 dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
 Plotter.plot_curve(dfs, legends=measures, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1, ylim=(0, 1.0))
 
 
-    # plotting measures vs. fitness vs. AUC:
+# plotting measures vs. fitness vs. AUC:
 filename = "./data/100_particles/ring_F06_06.teste"
-measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
-            "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+
 df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
 dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
 
