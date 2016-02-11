@@ -88,31 +88,44 @@ class SwarmAnalyzer:
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
         return df
     """
-    execfile("swarm_analyzer.py")
-    # plotting measures vs. fitness:
-    filename = "/mnt/pso_100_particles/ring_F06_06.teste"
-    measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
-                "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
-    df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
-    dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
-    Plotter.plot_curve(dfs, legends=measures, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1, ylim=(0, 1.0))
+execfile("swarm_analyzer.py")
+# plotting measures vs. fitness:
+filename = "./data/100_particles/ring_F06_06.teste"
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
+            "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
+dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
+Plotter.plot_curve(dfs, legends=measures, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1, ylim=(0, 1.0))
 
 
     # plotting measures vs. fitness vs. AUC:
-    filename = "/mnt/pso_100_particles/ring_F06_06.teste"
-    measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
-                "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
-    df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
-    dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
+filename = "./data/100_particles/ring_F06_06.teste"
+measures = ["radius:#", "aggregation_factor:#", "it:#", "average_of_average_around_all_particles:#", \
+            "normalized_average_around_center:#", "average_of_average_around_all_particles:#"]
+df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures)
+dfs = [{'y': df_info[k]/max(df_info[k]), 'x': df_info['x']} for k in measures]
 
-    auc_100 = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=100, until=1000)
-    auc_200 = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=200, until=1000)
-
-    dfs += [{'y': auc_100['y'], 'x': auc_100['x']}]
-    dfs += [{'y': auc_200['y'], 'x': auc_200['x']}]
-    legends = measures + ['auc100', 'auc200']
-    Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1, ylim=(0, 1.0))
+auc_100 = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=100, until=10000)
+print time.localtime()
+auc_200 = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=200, until=10000)
+print time.localtime()
+measures = []
+dfs = []
+dfs += [{'y': auc_100['y'], 'x': auc_100['x']}]
+dfs.append(SwarmAnalyzer.difference_n(auc_100, 2))
+dfs.append(SwarmAnalyzer.difference_n(auc_200, 2))
+# dfs += [{'y': auc_200['y'], 'x': auc_200['x']}]
+# legends = measures + ['auc100', 'auc200']
+legends = measures + ['auc100', 'auc200']
+Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1)
     """
+
+    @staticmethod
+    def difference_n(df, n):
+        array = np.array(df['y'])
+        array = array[:len(array)-n] - array[n:]
+        data = {'y': list(array), 'x': list(df['x'][:len(df['x']) - n])}
+        return data
 
     @staticmethod
     def get_giant_component_destruction_area_from_files(basename, window_size, runs=30):
