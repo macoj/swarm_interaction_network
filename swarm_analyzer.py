@@ -1,3 +1,5 @@
+import time
+
 __author__ = 'marcos'
 import sys
 import pandas as pd
@@ -76,14 +78,22 @@ class SwarmAnalyzer:
             informations_grep = ["radius:#", "diameter:#", "average_around_center:#", "it:#", "coherence:#",
                                  "normalized_average_around_center:#", "aggregation_factor:#",
                                  "average_of_average_around_all_particles:#"]
+        print "Generating swarm analysis dataframe from '%s'" % filename
+        print " > information parsing: %s" % str(informations_grep)
         df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, informations_grep)
         if normalize:
             df_columns = {k: dict(zip(df_info['x'], df_info[k]/max(df_info[k]))) for k in informations_grep}
         else:
             df_columns = {k: dict(zip(df_info['x'], df_info[k])) for k in informations_grep}
+        print "  > OK"
+        print " > calculating AUC for tw: %s" % str(tws)
         for tw in tws:
+            print "  > tw: %d (%s)" % (tw, time.strftime("%H:%M:%S-%d/%m/%y"))
             auc = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=tw)
+            print "   > OK"
             df_columns[tw] = dict(zip(auc['x'], auc['y']))
+        print "  > OK"
+        print " > creating data frame"
         keys = []
         for k in df_columns:
             keys += df_columns[k].keys()
@@ -97,12 +107,29 @@ class SwarmAnalyzer:
         del real_df['x']
         return real_df
     """
-    execfile("swarm_analyzer.py")
-    import time
-    filename = "./data/100_particles/ring_F06_06.teste"
-    print time.localtime()
-    df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
-    print time.localtime()
+execfile("swarm_analyzer.py")
+import time
+filename = "./data/100_particles/ring_F06_06.teste"
+df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
+
+    """
+
+    @staticmethod
+    def create_swarm_analysis_df_file_from_file(filename, output_hdf, informations_grep=None, tws=None,
+                                                normalize=False):
+        df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename, informations_grep, tws, normalize)
+        df.to_hdf(output_hdf, 'df')
+    """
+execfile("swarm_analyzer.py")
+import time
+base_name = './data/100_particles/'
+topology = 'ring'
+function = 6
+suffix = '.teste'
+filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(30)]
+for filename in filenames:
+    print time.strftime(">> %H:%M:%S-%d/%m/%y")
+    df = SwarmAnalyzer.create_swarm_analysis_df_file_from_file(filename, filename+'.hdf')
 
     """
 
