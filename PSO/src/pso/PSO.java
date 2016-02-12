@@ -307,6 +307,7 @@ public class PSO implements Runnable {
         Analysis diversity = new AnalysisOlorunda(this, printWriter);
         Analysis aggregation = new AnalysisYang(this, printWriter);
         Analysis ratio = new AnalysisWorasucheep(this, printWriter);
+        Analysis distance = new AnalysisDistance(this, printWriter);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -345,7 +346,9 @@ public class PSO implements Runnable {
                 diversity.iterate();
                 aggregation.iterate();
                 ratio.iterate();
-                
+                // > position of particles
+                distance.iterate();
+
                 this.current_iteration = this.current_iteration + 1;
                 /*
                 try {
