@@ -1,4 +1,5 @@
 import time
+import igraph
 
 __author__ = 'marcos'
 import sys
@@ -70,6 +71,93 @@ class SwarmAnalyzer:
     """
 
     @staticmethod
+    def get_number_of_components_of_graph(graph, min_weight=None, pre_callback=None):
+        if pre_callback:
+            graph = pre_callback(graph)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph.tolist(), mode=igraph.ADJ_PLUS)
+        if min_weight is not None:
+            GiantComponentDeath.remove_weighted_edges(igraph_graph, min_weight)
+        components = len(igraph_graph.components())
+        return components
+
+
+    @staticmethod
+    def get_number_of_components(filename, window_size, min_weight, **kargs):
+        influence_graph_grep = 'ig\:#'
+        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*window_size,
+                                                                                 pre_callback=Callback.to_symmetric)
+        all_graph_matrices, _ = SwarmParser.read_files_and_measures([('', filename)],
+                                                                    influence_graph_grep=influence_graph_grep,
+                                                                    pos_callback=pos_callback,
+                                                                    windows_size=[window_size], **kargs)
+        return all_graph_matrices[''][window_size]
+    """
+execfile("swarm_analyzer.py")
+filename = "./data/100_particles/vonneumann_F06_06.teste"
+ws = list(np.arange(0, 1.01, 0.2))
+tws = range(1, 1001, 100)
+components = np.zeros((len(ws), len(tws)))
+for i in range(len(ws)):
+    for j in range(len(tws)):
+        w = ws[i]
+        tw = tws[j]
+        components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)[0][1]
+        print i, j
+
+
+    execfile("swarm_analyzer.py")
+    execfile("plotter.py")
+
+    filename = "./data/100_particles/vonneumann_F06_06.teste"
+    window_size = 100
+    until = 5000
+    curves = []
+    ws = [0.9, 0.7, 0.5]
+    for w in ws:
+        components = SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=until)
+        curve = {}
+        curve['x'] = []
+        curve['y'] = []
+        for x, y in components:
+            curve['x'].append(x)
+            curve['y'].append(y)
+        curves.append(curve)
+
+    filename = "./data/100_particles/ring_F06_06.teste"
+    curves_2 = []
+    for w in ws:
+        components = SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=until)
+        curve = {}
+        curve['x'] = []
+        curve['y'] = []
+        for x, y in components:
+            curve['x'].append(x)
+            curve['y'].append(y)
+        curves_2.append(curve)
+    legends = [str(w) for w in ws]
+
+    # smoothing the curves: getting points every 15 iterations
+    curvess1 = []
+    for c in curves:
+        curve = {}
+        curve['x'] = [c['x'][i] for i in range(0, len(c['x']), 15)]
+        curve['y'] = [c['y'][i] for i in range(0, len(c['y']), 15)]
+        curvess1.append(curve)
+
+    curvess2 = []
+    for c in curves_2:
+        curve = {}
+        curve['x'] = [c['x'][i] for i in range(0, len(c['x']), 15)]
+        curve['y'] = [c['y'][i] for i in range(0, len(c['y']), 15)]
+        curvess2.append(curve)
+
+    Plotter.plot_curve(curvess, legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=10, markevery=17, alpha=0.9, tight_layout=[], figsize=(5,4), grid=True, linewidth=0.7, xlim=(window_size, 1400), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations")
+    #Plotter.plot_subplot_curve([curves, curves_2], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations")
+    Plotter.plot_subplot_curve([curvess1, curvess2], colors=["#e41a1c", "#4daf4a", "#377eb8"], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markevery=2, markersize=6, font_size=13, tight_layout=[], figsize=(13, 4), grid=True, linewidth=1.2, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components_2.pdf")
+    Plotter.plot_subplot_curve([curves, curves_2], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components.pdf")
+    """
+
+    @staticmethod
     def generate_swarm_analysis_df_from_file(filename, informations_grep=None, tws=None, normalize=False):
         if tws is None:
             tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
@@ -111,7 +199,6 @@ execfile("swarm_analyzer.py")
 import time
 filename = "./data/100_particles/ring_F06_06.teste"
 df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
-
     """
 
     @staticmethod
@@ -123,10 +210,10 @@ df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
 execfile("swarm_analyzer.py")
 import time
 base_name = './data/100_particles/'
-topology = 'ring'
+topology = 'vonneumann'
 function = 6
 suffix = '.teste'
-filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(30)]
+filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(21, 30)]
 for filename in filenames:
     print time.strftime(">> %H:%M:%S-%d/%m/%y")
     df = SwarmAnalyzer.create_swarm_analysis_df_file_from_file(filename, filename+'.hdf')
@@ -134,8 +221,60 @@ for filename in filenames:
     """
 
     @staticmethod
-    def get_swarm_informations_from_file(filename, informations_grep):
-        _, informations = SwarmParser.read_files_and_measures([('', filename)], informations_grep=informations_grep)
+    def analyze_analysis_df_file(filename):
+        df = pd.read_hdf(filename, 'df')
+    """
+    execfile("swarm_analyzer.py")
+
+    filename = "./data/100_particles/ring_F06_00.teste.hdf"
+    df = pd.read_hdf(filename, 'df')
+    measures = ['aggregation_factor:#', 'average_around_center:#', 'average_of_average_around_all_particles:#', 'coherence:#', 'diameter:#', 'normalized_average_around_center:#', 'radius:#']
+    titles = ['Aggregation\nfactor', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Coherence', 'Diameter', 'Normalized\naverage\naround center', 'Radius']
+
+    execfile("plotter.py")
+    Plotter.plot_heatmap(df[measures].corr(), output_filename="correlation_measures.pdf", titles=titles, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+    measures = ['aggregation_factor:#', 'average_of_average_around_all_particles:#', 'coherence:#', 'normalized_average_around_center:#', 'radius:#']
+
+    measures += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+
+    titles = ['Aggregation\nfactor', 'Average of\naverage\nall particles', 'Coherence', 'Normalized\naverage\naround center', 'Radius']
+    titles += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+
+    Plotter.plot_heatmap(df[measures].corr(), titles=titles, ordered=False, tight_layout=[], figsize=(12,10), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+
+    filename = "./data/100_particles/dynamicring_F06_00.teste.hdf"
+    for i in range(30):
+        filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        df = pd.read_hdf(filename, 'df')
+        df.columns = map(str, df.columns)
+        #df = df.tail(len(df)).head(1000)
+        measures = ['coherence:#', 'aggregation_factor:#',  'average_of_average_around_all_particles:#', 'normalized_average_around_center:#', 'radius:#']
+        measures += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+        titles_y = ['Coherence','Aggregation\nfactor',  'Average of\naverage\nall particles', 'Normalized\naverage\naround center', 'Radius']
+        titles_x = [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+        only_measures = df[measures].corr()
+        only_measures.columns = map(str, only_measures.columns)
+        for tw in tws:
+            del only_measures[tw]
+        only_measures = only_measures.tail(len(tws))
+        Plotter.plot_heatmap(only_measures.transpose(), main_title="Global topology", output_filename="correlations_global2_%02d.png" % i, ordered=False, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+    filename = "./data/100_particles/dynamicring_F06_00.teste.hdf"
+    filename = "./data/100_particles/ring_F06_00.teste.hdf"
+    filename = "./data/100_particles/global_F06_00.teste.hdf"
+    df = pd.read_hdf(filename, 'df')
+    df.columns = map(str, df.columns)
+    tws = [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+    titles = map(str, tws)
+    Plotter.plot_heatmap(df[tws].corr(), titles=tws, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+    """
+
+    @staticmethod
+    def get_swarm_informations_from_file(filename, informations_grep, information_map=float, **kargs):
+        _, informations = SwarmParser.read_files_and_measures([('', filename)], informations_grep=informations_grep,
+                                                              information_map=information_map, **kargs)
         informations = informations[''][-1]  # there is no window here!
         # let's get the longest information sequence
         max_information_length = float("-inf")
@@ -147,8 +286,6 @@ for filename in filenames:
         iterations = [iteration for (iteration, _) in informations[max_information_key]]
         iterations.sort()
         df = pd.DataFrame({'x': iterations})
-        global t
-        t = informations
         for information_grep in informations:
             dict_information = dict(informations[information_grep])
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
@@ -184,7 +321,86 @@ dfs.append(SwarmAnalyzer.difference_n(auc_200, 2))
 # legends = measures + ['auc100', 'auc200']
 legends = measures + ['auc100', 'auc200']
 Plotter.plot_curve(dfs, legends=legends, markersize=0, markevery=10, figsize=(20,6), grid=True, linewidth=1)
+
+
+execfile("swarm_analyzer.py")
+execfile("swarm_parser.py")
+execfile("plotter.py")
+
+measures = ["distance:#"]
+filename = "./global_F06_00.position"
+pre_callback = Callback.to_symmetric
+for iter in [999]:
+#for iter in [5, 50, 100, 250, 500, 750, 999]:
+    graphs, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep="ig\:#", window_size=iter, calculate_on=iter, pos_callback=pre_callback)
+
+    graph_1_ = graphs[0][1]
+    df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, measures, information_map=lambda x: x, calculate_on=iter)
+
+    graph_2_ = SwarmParser.read_matrix_from_line(list(df_info.irow(0))[1])
+    graph_1 = [graph_1_[i][j] for i in range(len(graph_1_)) for j in range(i, len(graph_1_)) if i != j] # np.reshape(graph_1_, (1, 10000))
+    graph_2 = [graph_2_[i][j] for i in range(len(graph_2_)) for j in range(i, len(graph_2_)) if i != j] # np.reshape(graph_2_, (1, 10000))
+
+    graph_1 = np.array(graph_1)
+    graph_2 = np.array(graph_2)
+
+    graphs, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep="ig\:#", window_size=iter, calculate_on=iter)
+    igraph_graph = igraph.Graph.Weighted_Adjacency(graphs[0][1].tolist(), mode=igraph.ADJ_PLUS)
+    max_weight = max(igraph_graph.es['weight'])
+    for w in igraph_graph.es:
+        w['weight'] = max_weight - w['weight']
+    distances = {}
+    for i in igraph_graph.vs:
+        if i not in distances:
+            distances[i.index] = {}
+        for j in igraph_graph.vs:
+            distances[i.index][j.index] = igraph_graph.shortest_paths(source=i, target=j, weights='weight')[0][0]
+    indices = distances.keys()
+    indices.sort()
+    final_distances = [[distances[i][j] if distances[i][j] != float('inf') else 100.0 for j in indices] for i in indices]
+    final_distances = np.array(final_distances)
+    graph_3 = [final_distances[i][j] for i in range(len(final_distances)) for j in range(i, len(final_distances)) if i != j]  # np.reshape(final_distances, (1, 10000))
+    graph_3 = np.array(graph_3)
+
+    import pandas as pd
+    # df = pd.DataFrame({'x': graph_1[0]/max(graph_1[0]), 'y': graph_2[0]/max(graph_2[0])})
+    #df = pd.DataFrame({'x': graph_1[0]/max(graph_1[0]), 'y': graph_3[0]/float(max(graph_3[0]))})
+    df = pd.DataFrame({'x': graph_2/float(max(graph_2)), 'y': graph_3/float(max(graph_3))})
+    xlabel = "Geodesic distance"
+    ylabel = "Euclidean distance"
+    title = "Global"
+    Plotter.plot_curve(df, linewidth=0, figsize=(5, 3.8), tight_layout=[], annotate=(0.15, 0.84, "$R=%0.2f$" % (df.corr()['y']['x'])), font_size=11, alpha=0.6, output_filename="global_%04d.pdf" % iter, marker='.', colors='#de2d26', grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
+    # print "%03d:  %f" % (iter, df.corr()['y']['x'])
+
+
+Plotter.plot_curve(df, linewidth=0, figsize=(5, 4), tight_layout=[], alpha=0.6, marker='.', annotate=(0.15, 0.84, "$R=%0.2f$" % (df.corr()['y']['x'])), font_size=11, colors='#de2d26', grid=True, markersize=6, title="Global", x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
+
+graph_1 = graph_1_
+import igraph
+igraph_graph = igraph.Graph.Weighted_Adjacency(graph_1_.tolist(), mode=igraph.ADJ_PLUS)
+import igraph
+igraph_graph = igraph.Graph.Weighted_Adjacency(graph_1_.tolist(), mode=igraph.ADJ_PLUS)
+distances = {}
+for i in igraph_graph.vs:
+    if i not in distances:
+        distances[i.index] = {}
+    for j in igraph_graph.vs:
+        distances[i.index][j.index] = igraph_graph.shortest_paths(source=i, target=j, weights='weight')
+        break
+
+max_weight = max(igraph_graph.es['weight'])
+for w in igraph_graph.es:
+    w['weight'] = max_weight - w['weight']
+
+
+indices = distances.keys()
+indices.sort()
+final_distances = [[distances[i][j] if distances[i][j] != float('inf') else 100.0 for j in indices] for i in indices]
+final_distances = np.array(final_distances)
+graph_3 = np.reshape(final_distances, (1, 10000))
+
     """
+
 
     @staticmethod
     def difference_n(df, n):
