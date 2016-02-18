@@ -74,7 +74,7 @@ class SwarmAnalyzer:
     def get_number_of_components_of_graph(graph, min_weight=None, pre_callback=None):
         if pre_callback:
             graph = pre_callback(graph)
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph.tolist(), mode=igraph.ADJ_PLUS)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph.tolist(), mode=igraph.ADJ_MAX)
         if min_weight is not None:
             GiantComponentDeath.remove_weighted_edges(igraph_graph, min_weight)
         components = len(igraph_graph.components())
@@ -84,24 +84,24 @@ class SwarmAnalyzer:
     @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
         influence_graph_grep = 'ig\:#'
-        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*window_size,
+        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*2*window_size,
                                                                                  pre_callback=Callback.to_symmetric)
-        all_graph_matrices, _ = SwarmParser.read_files_and_measures([('', filename)],
-                                                                    influence_graph_grep=influence_graph_grep,
-                                                                    pos_callback=pos_callback,
-                                                                    windows_size=[window_size], **kargs)
-        return all_graph_matrices[''][window_size]
+        all_graph_matrices, _ = SwarmParser.read_file_and_measures(filename,
+                                                                   influence_graph_grep=influence_graph_grep,
+                                                                   pos_callback=pos_callback,
+                                                                   window_size=window_size, **kargs)
+        return all_graph_matrices[0][1]
     """
 execfile("swarm_analyzer.py")
-filename = "./data/100_particles/vonneumann_F06_06.teste"
-ws = list(np.arange(0, 1.01, 0.2))
-tws = range(1, 1001, 100)
+filename = "./data/100_particles/dynamicring_F06_06.teste"
+ws = list(np.arange(0, 1.01, 0.01))
+tws = range(1, 1001, 10) + [1000]
 components = np.zeros((len(ws), len(tws)))
 for i in range(len(ws)):
     for j in range(len(tws)):
         w = ws[i]
         tw = tws[j]
-        components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)[0][1]
+        components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)
         print i, j
 
 
@@ -113,6 +113,9 @@ for i in range(len(ws)):
     until = 5000
     curves = []
     ws = [0.9, 0.7, 0.5]
+    w = 0
+    SwarmAnalyzer.get_number_of_components(filename, window_size, w, calculate_on=1000)
+
     for w in ws:
         components = SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=until)
         curve = {}
@@ -225,25 +228,112 @@ for filename in filenames:
         df = pd.read_hdf(filename, 'df')
     """
     execfile("swarm_analyzer.py")
-
-    filename = "./data/100_particles/ring_F06_00.teste.hdf"
-    df = pd.read_hdf(filename, 'df')
-    measures = ['aggregation_factor:#', 'average_around_center:#', 'average_of_average_around_all_particles:#', 'coherence:#', 'diameter:#', 'normalized_average_around_center:#', 'radius:#']
-    titles = ['Aggregation\nfactor', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Coherence', 'Diameter', 'Normalized\naverage\naround center', 'Radius']
-
     execfile("plotter.py")
-    Plotter.plot_heatmap(df[measures].corr(), output_filename="correlation_measures.pdf", titles=titles, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+    # for each
+    i = 0
+    for i in range(1):
+        filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        df = pd.read_hdf(filename, 'df').head(2000)
+        df.to_hdf
+        k = 50
+        tw = 50
+        x = df.index[k:len(df)]
+        y = [sum(df[tw][n-k:n])/k for n in range(k, len(df))]
+        curves = [{'x': x, 'y': y}]
+        a = np.array(df['it:#'])
 
-    measures = ['aggregation_factor:#', 'average_of_average_around_all_particles:#', 'coherence:#', 'normalized_average_around_center:#', 'radius:#']
+        b = a[:len(a)-1] - a[1:len(a)]
+        b /= max(b)
+        a = np.array(df['it:#']/max(df['it:#']))
+        curves += [{'x': df.index, 'y': a}]
+        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
 
-    measures += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+        # curves += [{'x': df.index[1:], 'y': b}]
+        for m in measures:
+            ddx = df.index[k:len(df)]
+            ddy = [sum(df[m][n-k:n])/k for n in range(k, len(df))]
+            ddy /= max(ddy)
+            curves += [{'x': ddx, 'y': ddy}]
+        #Plotter.plot_curve(curves, legends=['auc', 'it']+measures, figsize=(15,4), markersize=3, output_filename="auc_smoothed_dynamic_%02d.png" % i, ylim=(0, 1.0), grid=True)
+        Plotter.plot_curve(curves, legends=['auc', 'it']+measures, figsize=(15,4), markersize=3, ylim=(0, 1.0), grid=True)
 
-    titles = ['Aggregation\nfactor', 'Average of\naverage\nall particles', 'Coherence', 'Normalized\naverage\naround center', 'Radius']
-    titles += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+    execfile("swarm_analyzer.py")
+    execfile("plotter.py")
+    # for each
+    for i in range(30):
+        filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
+        df = pd.read_hdf(filename, 'df')
+        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+        titles = [ 'Aggregation\nfactor', 'Coherence', 'Normalized\naverage\naround center', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Diameter', 'Radius']
+        Plotter.plot_heatmap(df[measures].corr(), output_filename="correlation_measures_vonneumann_%02d.png" % i, titles=titles, ordered=False, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
 
-    Plotter.plot_heatmap(df[measures].corr(), titles=titles, ordered=False, tight_layout=[], figsize=(12,10), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
 
+    # the average and std dev
+    all = None
+    each = []
+    for i in range(30):
+        filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/ring_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/dynamicring_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
+        df = pd.read_hdf(filename, 'df')
+        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+        titles = [ 'Aggregation\nfactor', 'Coherence', 'Normalized\naverage\naround center', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Diameter', 'Radius']
+        each.append(df[measures].corr())
+    avg = sum(each)/30
+    std_dev = [np.power(i - avg, 2) for i in each]
+    avg_array = np.array(avg)
+    std_dev = np.array(np.power(sum(std_dev)/30.0, 0.5))
+    labels = []
+    for i in range(len(avg_array)):
+        labels_i = []
+        for j in range(len(avg_array[i])):
+            labels_i.append("%0.2f\n(%0.2f)" % (avg_array[i][j], std_dev[i][j]))
+        labels.append(labels_i)
+    df = pd.DataFrame(labels)
+    df.columns = avg.columns
+    df.index = avg.index
+    titles = ["%d" % i for i in range(1, len(titles) + 2)]
+    Plotter.plot_heatmap(avg, output_filename="correlation_measures_vonneumann_.pdf", values_on_text=df, titles=titles, ordered=False, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=14)
 
+    # the average and std dev (with amortization)
+    all = None
+    each = []
+    for i in range(30):
+        print i
+        filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/ring_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/dynamicring_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
+        df = pd.read_hdf(filename, 'df')
+        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+        titles = [ 'Aggregation\nfactor', 'Coherence', 'Normalized\naverage\naround center', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Diameter', 'Radius']
+        curves = {}
+        k = 20
+        for m in measures:
+            ddy = [sum(df[m][n-k:n])/k for n in range(k, len(df))]
+            ddy /= max(ddy)
+            curves[m] =  ddy
+        df = pd.DataFrame(curves)
+        each.append(df[measures].corr())
+    avg = sum(each)/30
+    std_dev = [np.power(i - avg, 2) for i in each]
+    avg_array = np.array(avg)
+    std_dev = np.array(np.power(sum(std_dev)/30.0, 0.5))
+    labels = []
+    for i in range(len(avg_array)):
+        labels_i = []
+        for j in range(len(avg_array[i])):
+            labels_i.append("%0.2f\n(%0.2f)" % (avg_array[i][j], std_dev[i][j]))
+        labels.append(labels_i)
+    df = pd.DataFrame(labels)
+    df.columns = avg.columns
+    df.index = avg.index
+    titles = ["%d" % i for i in range(1, len(titles) + 2)]
+    #Plotter.plot_heatmap(avg, output_filename="correlation_measures_vonneumann_.pdf", values_on_text=df, titles=titles, ordered=False, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=14)
+    Plotter.plot_heatmap(avg, values_on_text=df, titles=titles, ordered=False, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=14)
+
+    # only some measures and AUC of a run
     filename = "./data/100_particles/dynamicring_F06_00.teste.hdf"
     for i in range(30):
         filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
@@ -261,6 +351,90 @@ for filename in filenames:
         only_measures = only_measures.tail(len(tws))
         Plotter.plot_heatmap(only_measures.transpose(), main_title="Global topology", output_filename="correlations_global2_%02d.png" % i, ordered=False, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
 
+    # average/std dev some measures and AUC of runs
+    for maximum in [2000]: #[1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]:
+        each = []
+        for i in range(30):
+            filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+            df = pd.read_hdf(filename, 'df')
+            df.columns = map(str, df.columns)
+            df = df.tail(len(df)).head(maximum) #### remeber this!
+            measures = ['coherence:#', 'aggregation_factor:#',  'average_of_average_around_all_particles:#', 'normalized_average_around_center:#', 'radius:#']
+            measures += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+            titles_y = ['Coherence','Aggregation\nfactor',  'Average of\naverage\nall particles', 'Normalized\naverage\naround center', 'Radius']
+                    #1: aggregation factor, 2: coherence, 3: normalized average around center, 4: average around center, 5: average of average all particles, 6: diameter, 7: radius
+            titles_y = [1, 2, 3,
+            titles_x = [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+            only_measures = df[measures].corr()
+            only_measures.columns = map(str, only_measures.columns)
+            for tw in titles_x:
+                del only_measures[tw]
+            only_measures = only_measures.tail(len(titles_x))
+            each.append(only_measures.transpose())
+        avg = sum(each)/30
+        std_dev = [np.power(i - avg, 2) for i in each]
+        avg_array = np.array(avg)
+        std_dev = np.array(np.power(sum(std_dev)/30.0, 0.5))
+        labels = []
+        for i in range(len(avg_array)):
+            labels_i = []
+            for j in range(len(avg_array[i])):
+                labels_i.append("%0.2f\n(%0.2f)" % (avg_array[i][j], std_dev[i][j]))
+            labels.append(labels_i)
+        df = pd.DataFrame(labels)
+        df.columns = avg.columns
+        df.index = avg.index
+        titles = ["%d" % i for i in range(1, len(titles) + 2)]
+        Plotter.plot_heatmap(avg, values_on_text=df, main_title="Global topology", ordered=False, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+        #Plotter.plot_heatmap(avg, values_on_text=df, main_title="Global topology", ordered=False, output_filename="correlations_global_it%d.png" % maximum, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+    # average/std dev some measures and AUC of runs with amortization
+    for maximum in [2000]: #[1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000]:
+        each = []
+        for i in range(30):
+            filename = "./data/100_particles/dynamicring_F06_%02d.teste.hdf" % i
+            df = pd.read_hdf(filename, 'df')
+            df.columns = map(str, df.columns)
+            df = df.tail(len(df)).head(maximum) #### remeber this!
+            measures = ['coherence:#', 'aggregation_factor:#',  'average_of_average_around_all_particles:#', 'normalized_average_around_center:#', 'radius:#']
+            measures += [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+            titles_y = ['Coherence','Aggregation\nfactor',  'Average of\naverage\nall particles', 'Normalized\naverage\naround center', 'Radius']
+            titles_x = [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
+            curves = {}
+            k = 100
+            for m in measures:
+                ddy = [sum(df[m][n-k:n])/k for n in range(k, len(df))]
+                ddy /= max(ddy)
+                curves[m] =  ddy
+            df = pd.DataFrame(curves)
+            only_measures = df[measures].corr()
+            only_measures.columns = map(str, only_measures.columns)
+            for tw in titles_x:
+                del only_measures[tw]
+            only_measures = only_measures.tail(len(titles_x))
+            each.append(only_measures.transpose())
+        avg = sum(each)/30
+        std_dev = [np.power(i - avg, 2) for i in each]
+        avg_array = np.array(avg)
+        std_dev = np.array(np.power(sum(std_dev)/30.0, 0.5))
+        labels = []
+        for i in range(len(avg_array)):
+            labels_i = []
+            for j in range(len(avg_array[i])):
+                labels_i.append("%0.2f\n(%0.2f)" % (avg_array[i][j], std_dev[i][j]))
+            labels.append(labels_i)
+        df = pd.DataFrame(labels)
+        df.columns = avg.columns
+        df.index = avg.index
+        titles = ["%d" % i for i in range(1, len(titles) + 2)]
+        Plotter.plot_heatmap(avg, values_on_text=df, main_title="Global topology", ordered=False, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+        #Plotter.plot_heatmap(avg, values_on_text=df, main_title="Global topology", ordered=False, output_filename="correlations_global_it%d.png" % maximum, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+
+
+    Plotter.plot_heatmap(avg, values_on_text=df, main_title="Global topology", output_filename="correlations_global.pdf", ordered=False, titles_x=titles_x, titles_y=titles_y, tight_layout=[], figsize=(9,3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+
+
     filename = "./data/100_particles/dynamicring_F06_00.teste.hdf"
     filename = "./data/100_particles/ring_F06_00.teste.hdf"
     filename = "./data/100_particles/global_F06_00.teste.hdf"
@@ -268,7 +442,41 @@ for filename in filenames:
     df.columns = map(str, df.columns)
     tws = [u'10', u'25', u'50', u'75', u'100', u'200', u'300', u'400', u'500', u'1000']
     titles = map(str, tws)
-    Plotter.plot_heatmap(df[tws].corr(), titles=tws, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+    Plotter.plot_heatmap(df[tws].corr(), titles=tws, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.Spectral, values_on=True, font_size=11)
+
+    execfile("plotter.py")
+    df = pd.read_hdf("components_global.hdf", 'df')
+    df = pd.read_hdf("components_ring.hdf", 'df')
+    df = pd.read_hdf("components_dynamicring.hdf", 'df')
+    components = np.array(df)#/100
+    ws = list(np.arange(0, 1.01, 0.01))
+    yticks = range(0, len(ws), 10)
+    titles_y = map(str, [ws[i] for i in yticks])
+    tws = range(1, 1001, 10) + [1000]
+    xticks = range(0, len(tws), 10)
+    titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
+    yticks.reverse()
+
+    titles_x = None
+    titles_y = None
+    xticks = [0]
+    yticks = [0]
+
+    #for i in range(len(ws)):
+    #for j in range(len(tws)):
+    #components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)[0][1]
+#    Plotter.plot_heatmap(np.flipud(components), vmin=components.min(), vmax=components.max(), figsize=(5,3.5), ordered=False, titles_x=titles_x, set_xticks=xticks, titles_y=titles_y, set_yticks=yticks, grid=False, y_label="Time window", x_label="Filter", cmap=plt.cm.Spectral_r)
+    ws = range(10)
+    tws = range(10)
+    components = np.zeros((len(ws), len(tws)))
+    for i in range(len(ws)):
+        for j in range(len(tws)):
+            components[i][j] = j + i*len(tws)
+
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), output_filename="ring.png", vmin=components.min(), vmax=components.max(), figsize=(7, 5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), output_filename="ring.png", vmin=components.min(), vmax=components.max(), tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), subplot_adjust=[0.08, 0.135], font_size=16, output_filename="heatmap_ring.pdf", vmin=components.min(), vmax=components.max(), tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    Plotter.plot_heatmap(np.rot90(components,2), vmin=0, vmax=1, figsize=(6,3.5), ordered=False, titles_x=titles_x, set_xticks=xticks, titles_y=titles_y, set_yticks=yticks, grid=False, x_label="Time window", y_label="Filter", cmap=plt.cm.Spectral_r)
     """
 
     @staticmethod
@@ -330,8 +538,8 @@ execfile("plotter.py")
 measures = ["distance:#"]
 filename = "./global_F06_00.position"
 pre_callback = Callback.to_symmetric
-for iter in [999]:
-#for iter in [5, 50, 100, 250, 500, 750, 999]:
+# for iter in [999]:
+for iter in [5, 50, 100, 250, 500, 750, 999]:
     graphs, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep="ig\:#", window_size=iter, calculate_on=iter, pos_callback=pre_callback)
 
     graph_1_ = graphs[0][1]
@@ -369,7 +577,9 @@ for iter in [999]:
     xlabel = "Geodesic distance"
     ylabel = "Euclidean distance"
     title = "Global"
-    Plotter.plot_curve(df, linewidth=0, figsize=(5, 3.8), tight_layout=[], annotate=(0.15, 0.84, "$R=%0.2f$" % (df.corr()['y']['x'])), font_size=11, alpha=0.6, output_filename="global_%04d.pdf" % iter, marker='.', colors='#de2d26', grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
+    output_filename="global_%04d.pdf" % iter
+    output_filename = None
+    Plotter.plot_curve(df, linewidth=0, figsize=(5, 3.8), tight_layout=[], output_filename=output_filename, annotate=(0.15, 0.84, "$R=%0.2f$" % (df.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors='#de2d26', grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
     # print "%03d:  %f" % (iter, df.corr()['y']['x'])
 
 
