@@ -74,7 +74,7 @@ class SwarmAnalyzer:
     def get_number_of_components_of_graph(graph, min_weight=None, pre_callback=None):
         if pre_callback:
             graph = pre_callback(graph)
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph.tolist(), mode=igraph.ADJ_PLUS)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph.tolist(), mode=igraph.ADJ_MAX)
         if min_weight is not None:
             GiantComponentDeath.remove_weighted_edges(igraph_graph, min_weight)
         components = len(igraph_graph.components())
@@ -84,13 +84,13 @@ class SwarmAnalyzer:
     @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
         influence_graph_grep = 'ig\:#'
-        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*window_size,
+        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*2*window_size,
                                                                                  pre_callback=Callback.to_symmetric)
-        all_graph_matrices, _ = SwarmParser.read_files_and_measures([('', filename)],
-                                                                    influence_graph_grep=influence_graph_grep,
-                                                                    pos_callback=pos_callback,
-                                                                    windows_size=[window_size], **kargs)
-        return all_graph_matrices[''][window_size]
+        all_graph_matrices, _ = SwarmParser.read_file_and_measures(filename,
+                                                                   influence_graph_grep=influence_graph_grep,
+                                                                   pos_callback=pos_callback,
+                                                                   window_size=window_size, **kargs)
+        return all_graph_matrices
     """
 execfile("swarm_analyzer.py")
 filename = "./data/100_particles/vonneumann_F06_06.teste"
