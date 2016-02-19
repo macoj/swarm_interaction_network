@@ -228,6 +228,12 @@ for filename in filenames:
         df = pd.read_hdf(filename, 'df')
     """
     execfile("swarm_analyzer.py")
+
+    filename = "./data/100_particles/ring_F06_00.teste.hdf"
+    df = pd.read_hdf(filename, 'df')
+    measures = ['aggregation_factor:#', 'average_around_center:#', 'average_of_average_around_all_particles:#', 'coherence:#', 'diameter:#', 'normalized_average_around_center:#', 'radius:#']
+    titles = ['Aggregation\nfactor', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Coherence', 'Diameter', 'Normalized\naverage\naround center', 'Radius']
+
     execfile("plotter.py")
     # for each
     i = 0
@@ -267,6 +273,7 @@ for filename in filenames:
         titles = [ 'Aggregation\nfactor', 'Coherence', 'Normalized\naverage\naround center', 'Average\naround\ncenter', 'Average of\naverage\nall particles', 'Diameter', 'Radius']
         Plotter.plot_heatmap(df[measures].corr(), output_filename="correlation_measures_vonneumann_%02d.png" % i, titles=titles, ordered=False, tight_layout=[], figsize=(7,6), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
 
+    Plotter.plot_heatmap(df[measures].corr(), titles=titles, ordered=False, tight_layout=[], figsize=(12,10), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
 
     # the average and std dev
     all = None
