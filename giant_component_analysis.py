@@ -146,7 +146,7 @@ class GiantComponentDeath:
         if normalize:
             pd_data['x'] /= normalize
         if adjusted:
-            pd_data['x'] -= min(pd_data.x)
+            pd_data['x'] -= min(pd_data.x)  # to have zero (we admit that the min value is positive)
         return pd_data
 
     @staticmethod
