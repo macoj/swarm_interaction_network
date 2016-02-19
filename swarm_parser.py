@@ -50,6 +50,7 @@ class SwarmParser:
     def read_file_and_measures(filename,
                                influence_graph_grep=None,
                                informations_grep=None,
+                               information_map=float,
                                window_size=-1,
                                pre_callback=None,
                                pos_callback=None,
@@ -72,7 +73,8 @@ class SwarmParser:
             # we add fitnesses and influence graphs in ig_line and fitnesses
             matrix_line, information, iteration = SwarmParser.grep_line_infos(line,
                                                                               influence_graph_grep,
-                                                                              informations_grep)
+                                                                              informations_grep,
+                                                                              information_map=information_map)
             information_index, information = information
             if information is not None:
                 if calculate_on == -1 or iteration == calculate_on:
@@ -108,7 +110,8 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
 
     @staticmethod
     def read_files_and_measures(title_filenames, influence_graph_grep=None, informations_grep=None,
-                                windows_size=-1, pre_callback=None, pos_callback=None, calculate_on=-1, until=-1):
+                                information_map=float, windows_size=-1, pre_callback=None, pos_callback=None,
+                                calculate_on=-1, until=-1):
         all_graph_matrices = {}
         all_informations = {}
         if type(windows_size) != list:
@@ -121,6 +124,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
                 graphs, informations = SwarmParser.read_file_and_measures(filename,
                                                                           influence_graph_grep=influence_graph_grep,
                                                                           informations_grep=informations_grep,
+                                                                          information_map=information_map,
                                                                           window_size=window_size,
                                                                           pre_callback=pre_callback,
                                                                           pos_callback=pos_callback,
@@ -133,7 +137,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
         return all_graph_matrices, all_informations
 
     @staticmethod
-    def grep_line_infos(line, influence_graph_grep, informations_grep):
+    def grep_line_infos(line, influence_graph_grep, informations_grep, information_map=float):
         iteration_grep = "^[0-9]* "
         graph_line, information, information_grep = None, None, None
         iteration = -1
@@ -156,7 +160,7 @@ t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", i
                 if iteration_find:
                     iteration = int(iteration_find[0].strip())
                 line, _ = re.subn(iteration_grep, "", line)
-                information = float(line.strip())
+                information = information_map(line.strip())
             else:
                 information_grep, information = None, None
         return graph_line, (information_grep, information), iteration
