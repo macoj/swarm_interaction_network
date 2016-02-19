@@ -1,4 +1,7 @@
+from hgext.convert.git import submodule
+
 __author__ = 'marcos'
+import numpy as np
 import matplotlib
 import numpy
 import pandas as pd
@@ -375,6 +378,154 @@ class Plotter:
         if main_title:
             if pd_data_1 is not None:
                 main_title = main_title + '\n(' + str(last_data_1).strip() + ')'
+            plt.suptitle(main_title)
+        if output_filename:
+            plt.savefig(output_filename)
+            #plt.clf()
+            plt.close()
+        else:
+            plt.show()
+
+
+
+    @staticmethod
+    def plot_heatmap(matrix=None, matrixdf=None, main_title=None, output_filename=None, titles=None, ordered=False,
+                     font_size=9, font_family='normal', font_weight='normal', figsize=None, tight_layout=None,
+                     titles_x=None, titles_y=None, values_on=False, values_on_text=None, vmin=-1.0, vmax=1.0,
+                     grid=False, x_label=None, y_label=None, set_yticks=None, set_xticks=None, subplot_adjust=None,
+                     **kargs):
+        assert (matrix is not None or matrixdf is not None), "Give me matrix or matrixdf!"
+        if matrix is not None:
+            matrixdf = pd.DataFrame(matrix)
+        font = {'family': font_family,
+                'weight': font_weight,
+                'size': font_size}
+        matplotlib.rc('font', **font)
+        # look at raw data
+        #axi = plt.imshow(matrixdf,interpolation='nearest')
+        #ax = axi.get_axes()
+
+        #plt.clean_axis(ax)
+
+        # row clusters
+        if ordered:
+            row_pairwise_dists = squareform(pdist(matrixdf))
+            row_clusters = linkage(row_pairwise_dists, method='complete')
+            row_dendogram = dendrogram(row_clusters, no_plot=True, count_sort='ascending')
+
+        # calculate pairwise distances for columns
+        if ordered:
+            col_pairwise_dists = squareform(pdist(matrixdf.T))
+            col_clusters = linkage(col_pairwise_dists, method='complete')
+            col_dendogram = dendrogram(col_clusters, no_plot=True, count_sort='ascending')
+
+        # plot the results
+        if figsize is not None:
+            fig = plt.figure(figsize=figsize)
+        else:
+            fig = plt.figure()
+        #plot_gridspec = gridspec.GridSpec(3,2, wspace=0.05,
+        #  hspace=0.05, width_ratios=[0.25,1],height_ratios=[0.25,1,0.25])
+        # plot_gridspec = gridspec.GridSpec(5, 5, width_ratios=[0.15, 0.15, 0.2, 0.2, 0.2])
+        ### heatmap ###
+        heatmap_subplot = fig.add_subplot(111)
+        if titles and not titles_x:
+            titles_x = titles
+        if titles and not titles_y:
+            titles_y = titles
+        if ordered:
+            axi = heatmap_subplot.matshow(matrixdf.ix[row_dendogram['leaves'], col_dendogram['leaves']],
+                                          interpolation='nearest', aspect='auto', origin='lower', vmin=vmin, vmax=vmax,
+                                          **kargs)
+            if titles_x:
+                heatmap_subplot.set_xticklabels([titles_x[i] for i in col_dendogram['leaves']], rotation=90)
+            if titles_y:
+                heatmap_subplot.set_yticklabels([titles_y[i] for i in row_dendogram['leaves']])
+        else:
+            axi = heatmap_subplot.matshow(matrixdf, interpolation='nearest', aspect='auto', origin='lower',
+                                          vmin=vmin, vmax=vmax, **kargs)
+            if titles_x:
+                heatmap_subplot.set_xticklabels(titles_x, rotation=90)
+                heatmap_subplot.tick_params(labelbottom='on', labeltop='off')
+            if titles_y:
+                heatmap_subplot.set_yticklabels(titles_y)
+        if set_xticks:
+            heatmap_subplot.set_xticks(set_xticks)
+        else:
+            heatmap_subplot.set_xticks(range(len(matrixdf.columns)))
+        if set_yticks:
+            heatmap_subplot.set_yticks(set_yticks)
+        else:
+            heatmap_subplot.set_yticks(range(len(matrixdf)))
+        plt.colorbar(axi)
+        values_on_text_format = '{:s}'
+        if values_on_text is None:
+            values_on_text = matrixdf
+            values_on_text_format = '{:0.2f}'
+        if values_on:
+            if ordered:
+                for (i, j), z in np.ndenumerate(values_on_text.ix[row_dendogram['leaves'], col_dendogram['leaves']]):
+                    heatmap_subplot.text(j, i, values_on_text_format.format(z), ha='center', va='center', weight='medium')
+            else:
+                for (i, j), z in np.ndenumerate(values_on_text):
+                    heatmap_subplot.text(j, i, values_on_text_format.format(z), ha='center', va='center', weight='medium')
+        if tight_layout is not None:
+            if not tight_layout:
+                plt.tight_layout()
+            else:
+                plt.tight_layout(rect=tight_layout)
+        #fig.tight_layout()
+        #
+        # if pd_data_2 is not None:
+        #     title = ''
+        #     if type(pd_data_2) == tuple:  # not so pythonic
+        #         title = pd_data_2[0]
+        #         pd_data_2 = pd_data_2[1]
+        #     ax3 = fig.add_subplot(plot_gridspec[4, 2])
+        #     plt.plot(pd_data_2['x'], pd_data_2['y'], linestyle='-', marker='.')
+        #     plt.xlim(min(pd_data_2['x']), max(pd_data_2['x']))
+        #     #plt.ylim(0, 1.1)
+        #     plt.title(title)
+        #
+        # if data_hist_1 is not None:
+        #     title = ''
+        #     if type(data_hist_1) == tuple:  # not so pythonic
+        #         title = data_hist_1[0]
+        #         data_hist_1 = data_hist_1[1]
+        #     #binwidth = 1
+        #     ax3 = fig.add_subplot(plot_gridspec[4, 3])
+        #     #min_bin = numpy.min(data_hist_1)
+        #     #max_bin = numpy.max(data_hist_1)
+        #     #bins = range(min_bin,max_bin+binwidth,binwidth)
+        #     ax3.hist(data_hist_1,  facecolor='blue', alpha=0.45)
+        #     #plt.xticks(numpy.unique(data_hist_1))
+        #     plt.tick_params(axis='both', which='major', labelsize=5)
+        #     plt.tick_params(axis='both', which='minor', labelsize=5)
+        #     plt.title(title)
+        #
+        # if data_hist_2 is not None:
+        #     title = ''
+        #     if type(data_hist_2) == tuple:  # not so pythonic
+        #         title = data_hist_2[0]
+        #         data_hist_2 = data_hist_2[1]
+        #     if data_hist_2:
+        #         ax3 = fig.add_subplot(plot_gridspec[4, 4])
+        #         #bins = range(min_bin,max_bin+binwidth,binwidth)
+        #         ax3.hist(data_hist_2,  facecolor='blue', alpha=0.45)
+        #         #plt.xticks(numpy.unique(data_hist_1))
+        #         plt.tick_params(axis='both', which='major', labelsize=5)
+        #         plt.tick_params(axis='both', which='minor', labelsize=5)
+        #         plt.title(title)
+        #
+        if subplot_adjust:
+            plt.subplots_adjust(*subplot_adjust)
+        if grid:
+            plt.grid()
+        if x_label:
+            plt.xlabel(x_label)
+        if y_label:
+            plt.ylabel(y_label)
+        if main_title:
             plt.suptitle(main_title)
         if output_filename:
             plt.savefig(output_filename)
