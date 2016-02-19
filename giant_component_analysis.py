@@ -133,7 +133,7 @@ class GiantComponentDeath:
     def create_giant_component_curve(graph_matrix, return_graphs_with_giant_sizes=None,
                                      normalize=None, adjusted=False, include_zero=True):
         # igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_PLUS)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
         # create the graph objects as well as the death analysis
         pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(igraph_graph,
                                                                        return_graphs_with_giant_sizes,
