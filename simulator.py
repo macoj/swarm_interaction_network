@@ -77,7 +77,7 @@ class Simulator:
         topologies = [("global", 0), ("ring", 1), ("vonneumann", 3)]
         runs = 30
         functions = range(1, 21)
-        evaluations = 100000
+        evaluations = 1000000
         dimensions = 1000
         particles = 100
         for topology in topologies:
@@ -86,6 +86,7 @@ class Simulator:
                              (particles, evaluations, dimensions, function, topology[1],
                              topology[0], function, r) for r in range(runs)]
         # dynamic topology
+	commands = []
         topologies = [("ring", 1)]
         functions = range(10, 21)
         for topology in topologies:
