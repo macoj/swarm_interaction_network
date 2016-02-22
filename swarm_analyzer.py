@@ -90,32 +90,46 @@ class SwarmAnalyzer:
                                                                    influence_graph_grep=influence_graph_grep,
                                                                    pos_callback=pos_callback,
                                                                    window_size=window_size, **kargs)
-        return all_graph_matrices[0][1]
+        return all_graph_matrices
     """
 execfile("swarm_analyzer.py")
-filename = "./data/100_particles/dynamicring_F06_06.teste"
+topology = "global"
+filename = "./data/100_particles/"+topology+"_F06_06.teste"
+until = 2000
 ws = list(np.arange(0, 1.01, 0.01))
 tws = range(1, 1001, 10) + [1000]
-components = np.zeros((len(ws), len(tws)))
+components = dict([(i, np.zeros((len(ws), len(tws)))) for i in range(until + 1)])
 for i in range(len(ws)):
     for j in range(len(tws)):
         w = ws[i]
         tw = tws[j]
-        components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)
+        for it, cs in SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000):
+            components[it][i][j] = cs
         print i, j
 
+print "Exporting: "
+for it in components:
+    pd.DataFrame(components[0]).to_hdf("./data/100_particles/number_of_components/heatmap_1000_%s_%05d.hdf" % (topology, it), 'df')
+
+
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+
+filename = "./data/100_particles/vonneumann_F06_06.teste"
+window_size = 100
+w = 0.2
+SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=1000)
 
     execfile("swarm_analyzer.py")
     execfile("plotter.py")
 
-    filename = "./data/100_particles/vonneumann_F06_06.teste"
     window_size = 100
-    until = 5000
-    curves = []
-    ws = [0.9, 0.7, 0.5]
-    w = 0
-    SwarmAnalyzer.get_number_of_components(filename, window_size, w, calculate_on=1000)
+    until = 3000
+    ws = [0.7, 0.5, 0.2]
+    ws = [0.9, 0.7, 0.5, 0.3]
 
+    filename = "./data/100_particles/vonneumann_F06_06.teste"
+    curves_1 = []
     for w in ws:
         components = SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=until)
         curve = {}
@@ -124,7 +138,7 @@ for i in range(len(ws)):
         for x, y in components:
             curve['x'].append(x)
             curve['y'].append(y)
-        curves.append(curve)
+        curves_1.append(curve)
 
     filename = "./data/100_particles/ring_F06_06.teste"
     curves_2 = []
@@ -141,7 +155,7 @@ for i in range(len(ws)):
 
     # smoothing the curves: getting points every 15 iterations
     curvess1 = []
-    for c in curves:
+    for c in curves_1:
         curve = {}
         curve['x'] = [c['x'][i] for i in range(0, len(c['x']), 15)]
         curve['y'] = [c['y'][i] for i in range(0, len(c['y']), 15)]
@@ -153,10 +167,11 @@ for i in range(len(ws)):
         curve['x'] = [c['x'][i] for i in range(0, len(c['x']), 15)]
         curve['y'] = [c['y'][i] for i in range(0, len(c['y']), 15)]
         curvess2.append(curve)
+    execfile("plotter.py")
 
-    Plotter.plot_curve(curvess, legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=10, markevery=17, alpha=0.9, tight_layout=[], figsize=(5,4), grid=True, linewidth=0.7, xlim=(window_size, 1400), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations")
-    #Plotter.plot_subplot_curve([curves, curves_2], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations")
-    Plotter.plot_subplot_curve([curvess1, curvess2], colors=["#e41a1c", "#4daf4a", "#377eb8"], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markevery=2, markersize=6, font_size=13, tight_layout=[], figsize=(13, 4), grid=True, linewidth=1.2, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components_2.pdf")
+    #Plotter.plot_curve(curves, legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=10, markevery=17, alpha=0.9, tight_layout=[], figsize=(5,4), grid=True, linewidth=0.7, xlim=(window_size, 1400), y_label="Number of\ncomponents", x_label="Iterations")
+    Plotter.plot_subplot_curve([curvess2, curvess1], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), y_label="Number of\ncomponents", x_label="Iterations")
+    Plotter.plot_subplot_curve([curvess2, curvess1], colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], titles=['Ring', 'Von Neumann'], legends=legends, marker=['v', '+', '.', 'x'], markevery=2, markersize=7, font_size=13, tight_layout=[], figsize=(13, 4), grid=True, linewidth=1.2, xlim=(window_size, 3000), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components_2.pdf")
     Plotter.plot_subplot_curve([curves, curves_2], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components.pdf")
     """
 
@@ -211,17 +226,257 @@ df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
         df.to_hdf(output_hdf, 'df')
     """
 execfile("swarm_analyzer.py")
-import time
 base_name = './data/100_particles/'
 topology = 'vonneumann'
 function = 6
 suffix = '.teste'
-filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(21, 30)]
+filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(14, 30)]
 for filename in filenames:
     print time.strftime(">> %H:%M:%S-%d/%m/%y")
     df = SwarmAnalyzer.create_swarm_analysis_df_file_from_file(filename, filename+'.hdf')
 
     """
+
+    @staticmethod
+    def analyze_analysis_df_file_stagnation_derivative(filename, tw, smooth=50, diff_threshold=0.0001,
+                                                       iter_threshold=500, head=None, plot=False):
+        df = pd.read_hdf(filename, 'df')
+        if head:
+            df = df.head(head)
+        x = df.index[smooth:len(df)]
+        communication_diversity_smoothed = [sum(df[tw][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+        # curves = [{'x': x, 'y': communication_diversity_smoothed}]
+        fitness = np.array(df['it:#'][smooth:])
+        # curves += [{'x': x, 'y': fitness/fitness.max()}]
+        # measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+
+        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff -= 1
+        # noinspection PyTypeChecker
+        fitness_diff = list(fitness_diff > diff_threshold)
+        counts = []
+        last = fitness_diff[0]
+        last_c = 1
+        for c in fitness_diff[1:]:
+            if c == last:
+                last_c += 1
+            else:
+                counts.append(last_c)
+                last_c = 1
+            last = c
+        if last_c != 1:
+            counts.append(last_c)
+        threshold_i = 0
+        for threshold_i in range(len(counts)):
+            if counts[threshold_i] > iter_threshold:
+                break
+        stagnation_iteration = sum(counts[:threshold_i-1])
+        communication_diversity_until_stagnation = communication_diversity_smoothed[:stagnation_iteration]
+        if plot:
+            Plotter.plot_curve({'x': x, 'y': fitness/max(fitness)}, vline_at=stagnation_iteration, figsize=(15, 4),
+                               markersize=3, ylim=(0, 1.0), grid=True)
+
+        return sum(communication_diversity_until_stagnation)/float(stagnation_iteration), float(stagnation_iteration)
+    """
+    execfile("swarm_analyzer.py")
+    i = 10
+    filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
+    filename = "./data/100_particles/ring_F06_%02d.teste.hdf" % i
+    sum_cd, stagnation_it = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename, 100, head=2000, diff_threshold=0.02, plot=True)
+
+    """
+
+    @staticmethod
+    def analyze_analysis_df_file_stagnation_derivative_and_measures(filename, tw, smooth=50, diff_threshold=0.0001,
+                                                                    iter_threshold=500, head=None, **kargs):
+        df = pd.read_hdf(filename, 'df')
+        if head:
+            df = df.head(head)
+        x = df.index[smooth:len(df)]
+        communication_diversity_smoothed = [sum(df[tw][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+        curves = [{'x': x, 'y': communication_diversity_smoothed}]
+        fitness = np.array(df['it:#'][smooth:])
+        curves += [{'x': x, 'y': fitness/fitness.max()}]
+        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+
+        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff -= 1
+        # noinspection PyTypeChecker
+        fitness_diff = list(fitness_diff > diff_threshold)
+        counts = []
+        last = fitness_diff[0]
+        last_c = 1
+        for c in fitness_diff[1:]:
+            if c == last:
+                last_c += 1
+            else:
+                counts.append(last_c)
+                last_c = 1
+            last = c
+        if last_c != 1:
+            counts.append(last_c)
+        threshold_i = 0
+        for threshold_i in range(len(counts)):
+            if counts[threshold_i] > iter_threshold:
+                break
+        stagnation_iteration = sum(counts[:threshold_i-1])
+        for m in measures:
+            ddx = df.index[smooth:len(df)]
+            ddy = [sum(df[m][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            ddy /= max(ddy)
+            curves += [{'x': ddx, 'y': ddy}]
+        legends = ['cd', 'it']+measures
+        Plotter.plot_curve(curves, legends=legends, vline_at=stagnation_iteration, figsize=(15, 4),
+                           markersize=3, ylim=(0, 1.0), grid=True, loc=1, **kargs)
+    """
+    execfile("swarm_analyzer.py")
+    i = 10
+    tw = 500
+    for i in range(1):
+        filename = "./data/100_particles/dynamicring_F06_%02d.teste.hdf" % i
+        # filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        # filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
+        # filename = "./data/100_particles/ring_F06_%02d.teste.hdf" % i
+        output_filename="auc_smoothed_ring_%03d_%02d.png" % (tw, i)
+        output_filename="auc_smoothed_vonneumann_%03d_%02d.png" % (tw, i)
+        output_filename="auc_smoothed_global_%03d_%02d.png" % (tw, i)
+        output_filename="auc_smoothed_dynamicring_%03d_%02d.png" % (tw, i)
+        SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative_and_measures(filename, tw, head=3000, diff_threshold=0.02, output_filename=output_filename, smooth=1)
+
+
+    """
+
+    @staticmethod
+    def analyze_stagnation_correlation_communication_diversity(tw, **kargs):
+        runs = 30
+        topologies = ['vonneumann', 'ring', 'global', 'dynamicring']
+        #topologies = ['vonneumann', 'ring', 'dynamicring']
+        #topologies = ['global']
+        sums = []
+        stagnation_its = []
+        for t in topologies:
+            for r in range(runs):
+                filename = "./data/100_particles/%s_F06_%02d.teste.hdf" % (t, r)
+                sum_cd, stagnation_it = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename,
+                                                                                                     tw, **kargs)
+                sums.append(sum_cd)
+                stagnation_its.append(stagnation_it)
+        df = pd.DataFrame({'sum_cd': sums, 's_it': stagnation_its})
+        return df
+    """
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+for tw in [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]:
+    df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw, head=3000, diff_threshold=0.02, smooth=1)
+    #df.sum_cd /= max(df.sum_cd)
+    #df.s_it /= max(df.s_it)
+    title = ""
+    xlabel = "Average communication diversity"
+    ylabel = "Stagnation iteration"
+    d = pd.DataFrame({'x': df.sum_cd, 'y': df.s_it})
+    #Plotter.plot_curve(d, linewidth=0, figsize=(5, 3.8), tight_layout=[], output_filename=output_filename, annotate=(0.15, 0.84, "$R=%0.2f$" % (d.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors='#de2d26', grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
+    d1 = pd.DataFrame({'x': df.sum_cd[:30], 'y': df.s_it[:30]})
+    d2 = pd.DataFrame({'x': df.sum_cd[30:60], 'y': df.s_it[30:60]})
+    d3 = pd.DataFrame({'x': df.sum_cd[60:90], 'y': df.s_it[60:90]})
+    d4 = pd.DataFrame({'x': df.sum_cd[90:120], 'y': df.s_it[90:120]})
+    legends = ['Neumann', 'Ring', 'Global', 'Dynamic']
+    #legends = ['Neumann', 'Ring', 'Dynamic']
+    output_filename = "correlation_cd_si_normalized.pdf"
+    # d1.x /= max(df.sum_cd)
+    # d2.x /= max(df.sum_cd)
+    # d3.x /= max(df.sum_cd)
+    # d4.x /= max(df.sum_cd)
+    # d1.y /= max(df.s_it)
+    # d2.y /= max(df.s_it)
+    # d3.y /= max(df.s_it)
+    # d4.y /= max(df.s_it)
+    # Plotter.plot_curve([d1, d2, d3, d4], linewidth=0, legends=legends, figsize=(5, 3.8), loc=1, tight_layout=[], output_filename=output_filename, annotate=(0.39, 0.84, "$r=%0.2f$" % (d.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+    dd1 = d1
+    dd2 = d2
+    dd3 = d3
+    dd4 = d4
+    # dd1.x /= max(dd1.x)
+    # dd1.y /= max(df.s_it)
+    # dd2.x /= max(dd2.x)
+    # dd2.y /= max(df.s_it)
+    # dd3.x /= max(dd3.x)
+    # dd3.y /= max(df.s_it)
+    # dd4.x /= max(dd4.x)
+    # dd4.y /= max(df.s_it)
+    # dd = dd4[dd4.y < 1000]
+    # dd = dd2[dd2.y < 1000].append(dd4[dd4.y < 1000]).append(dd3).append(dd1[dd1.y < 1000])
+    # dd = dd3
+    # output_filename = "correlation_cd_si_no_outliers.pdf"
+    # Plotter.plot_curve(dd, linewidth=0, legends=['Neumann', 'Ring', 'Global', 'Dynamic'], figsize=(5, 3.8), loc=4, tight_layout=[], output_filename=output_filename, annotate=(0.15, 0.84, "$r=%0.2f$" % (dd.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors="#4daf4a", grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+    ddd2 = dd2[dd2.y < 1000]
+    ddd4 = dd4[dd4.y < 1000]
+    ddd3 = dd3
+    ddd1 = dd1[dd1.y < 1000]
+    # ddd = ddd1.append(ddd2.append(ddd3.append(ddd4)))
+
+    # ddd1 /= ddd.max()
+    # ddd2 /= ddd.max()
+    # ddd3 /= ddd.max()
+    # ddd4 /= ddd.max()
+    # Plotter.plot_curve([ddd1, ddd2, ddd3, ddd4], linewidth=0, legends=legends, figsize=(5, 3.8), loc=1, tight_layout=[], output_filename=output_filename, annotate=(0.39, 0.84, "$r=%0.2f$" % (ddd.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+    ddds = [ddd1, ddd2, ddd3, ddd4]
+    for i in range(len(ddds)):
+        title = legends[i] + " $t_w=%d$" %tw
+        output_filename = "correlation_cd_si_no_outliers_%d_%s.pdf" %  (tw, title)
+        ddd = ddds[i]
+        Plotter.plot_curve(ddd, linewidth=0, legends=legends, figsize=(5, 3.8), loc=1, tight_layout=[], output_filename=output_filename, annotate=(0.39, 0.84, "$r=%0.2f$" % (ddd.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+        output_filename = "correlation_cd_si_no_outliers_%s.png" %  title
+        Plotter.plot_curve(ddd, linewidth=0, legends=legends, figsize=(5, 3.8), loc=1, tight_layout=[], output_filename=output_filename, annotate=(0.39, 0.84, "$r=%0.2f$" % (ddd.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
+correlations = {}
+for tw in tws:
+    print "heatmap_correlation_cd_si_%04d" % tw
+    df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw, head=3000, diff_threshold=0.02, smooth=1)
+
+    # outliers: (would need to use std dev and etc, but 1000 is pretty accurate)
+    d1 = df[:30]
+    d2 = df[30:60]
+    d3 = df[60:90]
+    d4 = df[90:120]
+
+    d1 = d1[d1.s_it < 1000]
+    d2 = d2[d2.s_it < 1000]
+    d3 = d3[d3.s_it < 1000]
+    d4 = d4[d4.s_it < 1000]
+    d1 = pd.DataFrame({'x': d1.sum_cd, 'y': d1.s_it})
+    d2 = pd.DataFrame({'x': d2.sum_cd, 'y': d2.s_it})
+    d3 = pd.DataFrame({'x': d3.sum_cd, 'y': d3.s_it})
+    d4 = pd.DataFrame({'x': d4.sum_cd, 'y': d4.s_it})
+    correlations[tw] = {}
+    correlations[tw]['vonneumann'] = d1.corr()['y']['x']
+    correlations[tw]['ring'] = d2.corr()['y']['x']
+    correlations[tw]['global'] = d3.corr()['y']['x']
+    correlations[tw]['dynamicring'] = d4.corr()['y']['x']
+
+output_filename = "heatmap_correlation_cd_si_no_outliers.png"
+Plotter.plot_heatmap(pd.DataFrame(correlations), titles_y=['Dynamic', 'Global', 'Ring', 'Neumann'], output_filename=output_filename, x_label="Time Window", titles_x=map(str, tws), ordered=False, tight_layout=[], figsize=(10, 3.5), cmap=plt.cm.RdBu_r, values_on=True, font_size=11)
+    # print "%03d:  %f" % (iter, df.corr()['y']['x'])
+
+    # boxplot stagnation and communication diversity
+    execfile("plotter.py")
+    tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
+    correlations = {}
+    for tw in tws:
+        df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw, head=3000, diff_threshold=0.02, smooth=1)
+        # ['vonneumann', 'ring', 'global', 'dynamicring']
+        d4 = pd.DataFrame({'x': df.sum_cd[:30], 'y': df.s_it[:30]})
+        d3 = pd.DataFrame({'x': df.sum_cd[30:60], 'y': df.s_it[30:60]})
+        d2 = pd.DataFrame({'x': df.sum_cd[60:90], 'y': df.s_it[60:90]})
+        d1 = pd.DataFrame({'x': df.sum_cd[90:120], 'y': df.s_it[90:120]})
+        Plotter.plot_boxplots([d1.x, d2.x, d3.x, d4.x], ['Dynamic', 'Global', 'Ring', 'Neumann'], "Communication diversity ($tw=%d$)" % tw, ylabel="Average communication\ndiversity until stagnation", size=(3.4,5), ylim=(0,1), output="boxplot_communication_diversity_%03d.pdf" % tw)
+    Plotter.plot_boxplots([d1.y, d2.y, d3.y, d4.y], ['Dynamic', 'Global', 'Ring', 'Neumann'], "Swarm stagnation", ylabel="Iteration of stagnation $i_s$", size=(3.4, 5), output="boxplot_stagnation.pdf")
+    """
+
 
     @staticmethod
     def analyze_analysis_df_file(filename):
@@ -238,15 +493,16 @@ for filename in filenames:
     # for each
     i = 0
     for i in range(1):
-        filename = "./data/100_particles/global_F06_%02d.teste.hdf" % i
+        filename = "./data/100_particles/vonneumann_F06_%02d.teste.hdf" % i
         df = pd.read_hdf(filename, 'df').head(2000)
         df.to_hdf
         k = 50
-        tw = 50
+        tw = 100
         x = df.index[k:len(df)]
         y = [sum(df[tw][n-k:n])/k for n in range(k, len(df))]
         curves = [{'x': x, 'y': y}]
         a = np.array(df['it:#'])
+
 
         b = a[:len(a)-1] - a[1:len(a)]
         b /= max(b)
@@ -254,14 +510,35 @@ for filename in filenames:
         curves += [{'x': df.index, 'y': a}]
         measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',  'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
 
-        # curves += [{'x': df.index[1:], 'y': b}]
+        d = (a[:len(a)-1] - a[1:len(a)]) > 0.0001
+        counts = []
+        last = d[0]
+        last_c = 1
+        for c in d[1:]:
+            if c == last:
+                last_c += 1
+            else:
+                counts.append(last_c)
+                last_c = 1
+            last = c
+        if last_c != 1:
+            counts.append(last_c)
+
+        threshold = 500
+
+        for threshold_i in range(len(counts)):
+            if counts[threshold_i] > threshold:
+                break
+        stagnation_iteration = sum(counts[:threshold_i])
+
+        #curves += [{'x': df.index[1:], 'y': b}]
         for m in measures:
             ddx = df.index[k:len(df)]
             ddy = [sum(df[m][n-k:n])/k for n in range(k, len(df))]
             ddy /= max(ddy)
             curves += [{'x': ddx, 'y': ddy}]
-        #Plotter.plot_curve(curves, legends=['auc', 'it']+measures, figsize=(15,4), markersize=3, output_filename="auc_smoothed_dynamic_%02d.png" % i, ylim=(0, 1.0), grid=True)
-        Plotter.plot_curve(curves, legends=['auc', 'it']+measures, figsize=(15,4), markersize=3, ylim=(0, 1.0), grid=True)
+        #Plotter.plot_curve(curves, legends=['auc', 'it']+measures, vline_at=stagnation_iteration, figsize=(15,4), markersize=3, output_filename="auc_smoothed_vonneumann_%02d.png" % i, ylim=(0, 1.0), grid=True)
+        Plotter.plot_curve(curves, legends=['auc', 'it']+measures, vline_at=stagnation_iteration, figsize=(15,4), markersize=3, ylim=(0, 1.0), grid=True)
 
     execfile("swarm_analyzer.py")
     execfile("plotter.py")
@@ -452,9 +729,9 @@ for filename in filenames:
     Plotter.plot_heatmap(df[tws].corr(), titles=tws, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.Spectral, values_on=True, font_size=11)
 
     execfile("plotter.py")
-    df = pd.read_hdf("components_global.hdf", 'df')
-    df = pd.read_hdf("components_ring.hdf", 'df')
-    df = pd.read_hdf("components_dynamicring.hdf", 'df')
+    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_vonneumann_00500.hdf", 'df')
+    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_ring_01000.hdf", 'df')
+    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_dynamicring_02000.hdf", 'df')
     components = np.array(df)#/100
     ws = list(np.arange(0, 1.01, 0.01))
     yticks = range(0, len(ws), 10)
@@ -473,17 +750,20 @@ for filename in filenames:
     #for j in range(len(tws)):
     #components[i][j] = SwarmAnalyzer.get_number_of_components(filename, tw, w, calculate_on=1000)[0][1]
 #    Plotter.plot_heatmap(np.flipud(components), vmin=components.min(), vmax=components.max(), figsize=(5,3.5), ordered=False, titles_x=titles_x, set_xticks=xticks, titles_y=titles_y, set_yticks=yticks, grid=False, y_label="Time window", x_label="Filter", cmap=plt.cm.Spectral_r)
-    ws = range(10)
-    tws = range(10)
-    components = np.zeros((len(ws), len(tws)))
-    for i in range(len(ws)):
-        for j in range(len(tws)):
-            components[i][j] = j + i*len(tws)
+#     ws = range(10)
+#     tws = range(10)
+#     components = np.zeros((len(ws), len(tws)))
+#     for i in range(len(ws)):
+#         for j in range(len(tws)):
+#             components[i][j] = j + i*len(tws)
 
-    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), output_filename="ring.png", vmin=components.min(), vmax=components.max(), figsize=(7, 5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
-    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), output_filename="ring.png", vmin=components.min(), vmax=components.max(), tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
-    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), subplot_adjust=[0.08, 0.135], font_size=16, output_filename="heatmap_ring.pdf", vmin=components.min(), vmax=components.max(), tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
-    Plotter.plot_heatmap(np.rot90(components,2), vmin=0, vmax=1, figsize=(6,3.5), ordered=False, titles_x=titles_x, set_xticks=xticks, titles_y=titles_y, set_yticks=yticks, grid=False, x_label="Time window", y_label="Filter", cmap=plt.cm.Spectral_r)
+
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), subplot_adjust=[0.08, 0.135], font_size=16, vmin=0, vmax=100, tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+
+
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), , vmin=components.min(), vmax=components.max(), figsize=(7, 5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    Plotter.plot_heatmap(np.fliplr(np.rot90(components,2)), vmin=components.min(), vmax=components.max(), tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    # Plotter.plot_heatmap(np.rot90(components,2), vmin=0, vmax=1, figsize=(6,3.5), ordered=False, titles_x=titles_x, set_xticks=xticks, titles_y=titles_y, set_yticks=yticks, grid=False, x_label="Time window", y_label="Filter", cmap=plt.cm.Spectral_r)
     """
 
     @staticmethod
@@ -1046,4 +1326,5 @@ for basename in basenames:
     curves.append({'x': xs, 'y': ys})
 Plotter.plot_curve(curves, figsize=(23,7), legends=['d', 'g', 'r'], x_label="Time Window", markersize=7, linewidth=2, alpha=0.7, grid=True, x_scale='log', y_scale='linear')
     """
+
 
