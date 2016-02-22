@@ -56,8 +56,11 @@ class Plotter:
             if x_label:
                 f.text(0.5, 0.01, x_label, ha='center', va='center')
             for data_i in range(len(pd_datas)):
+                markevery_ = markevery
                 pd_data = pd_datas[data_i]
                 ax = axs[data_i]
+                if grid:
+                    ax.grid()
                 for pd_data_i in pd_data:
                     legend_title = None
                     if legends:
@@ -68,21 +71,19 @@ class Plotter:
                         ax.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
                                 marker=next(markercycler), label=next(legend_title),
                                 markersize=markersize, linewidth=linewidth,
-                                markevery=markevery, color=next(colorcycler), **kwargs)
+                                markevery=markevery_, color=next(colorcycler), **kwargs)
                     else:
                         ax.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
                                 marker=next(markercycler), label=next(legend_title),
                                 markersize=markersize, linewidth=linewidth,
-                                markevery=markevery, **kwargs)
-                    if markevery:
-                        markevery += 1
+                                markevery=markevery_, **kwargs)
+                    if markevery_:
+                        markevery_ += 1
                     #plt.legend(loc=2)
                     xlim_min = min(xlim_min, min(pd_data_i['x']))
                     xlim_max = max(xlim_max, max(pd_data_i['x']))
                     if titles:
                         ax.set_title(titles[data_i])
-                    if grid:
-                        ax.grid()
                     if ylim:
                         ax.set_ylim(ylim)
                     # if y_label:
@@ -116,8 +117,8 @@ class Plotter:
 
     @staticmethod
     def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None,
-                   legends=None, figsize=(3, 2), marker=".", linestyle='-', markersize=10,
-                   linewidth=1, markevery=None, colors=None, ylim=None, xlim=None,
+                   legends=None, figsize=(3, 2), marker=".", linestyle='-', markersize=10, loc=2, loc_anchor=False,
+                   linewidth=1, markevery=None, colors=None, ylim=None, xlim=None, vline_at=None,
                    xticks_args=None, font_size=9, font_family='normal', font_weight='normal',
                    yticks_args=None, grid=False, tight_layout=None, x_scale='linear', annotate=None,
                    y_scale='linear', **kwargs):
@@ -170,14 +171,21 @@ class Plotter:
                                  markevery=markevery, **kwargs)
                     if markevery:
                         markevery += 1
-                    #plt.legend(loc=2)
-                    plt.legend(bbox_to_anchor=(1.01, 1), loc=2, borderaxespad=0.)
+                    if not loc_anchor:
+                        plt.legend(loc=loc, numpoints=1, framealpha=1.0, handletextpad=0.2, borderpad=0.2)
+                    else:
+                        plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1)
+                    leg = plt.gca().get_legend()
+                    ltext = leg.get_texts()  # all the text.Text instance in the legend
+                    plt.setp(ltext, fontsize='medium')    # the legend text fontsize
                     xlim_min = min(xlim_min, min(pd_data_i['x']))
                     xlim_max = max(xlim_max, max(pd_data_i['x']))
                 if xlim:
                     plt.xlim(xlim)
                 else:
                     plt.xlim(xlim_min, xlim_max)
+            if vline_at is not None:
+                plt.axvline(x=vline_at)
             if annotate:
                 fig.text(*annotate)
             if xticks_args:
@@ -193,7 +201,7 @@ class Plotter:
             if y_label:
                 plt.ylabel(y_label)
             if title:
-                plt.suptitle(title)
+                plt.suptitle(title, horizontalalignment='center')
             if x_scale:
                 plt.xscale(x_scale)
             if y_scale:
@@ -533,3 +541,46 @@ class Plotter:
             plt.close()
         else:
             plt.show()
+
+    @staticmethod
+    def plot_boxplots(data, titles, main_title, ylabel=None, xlabel=None, xscale=None,
+                      yscale=None, first=0, output=None, size=None, ylim=None, xlim=None):
+        # ## plot here:
+        # multiple box plots on one figure
+        if size:
+            plt.figure(figsize=size)
+        else:
+            plt.figure()
+        # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
+        # bp = axes[0, 0].boxplot(all_alphas, notch=0, sym='+', showmeans=True, widths=0.3)
+        ax = plt.axes()
+        bp = plt.boxplot(data[first:], notch=0, sym='+', showmeans=True, widths=0.3, whis=1.)
+        plt.setp(bp['boxes'], color='black')
+        plt.setp(bp['whiskers'], color='blue', linestyle="-")
+        plt.setp(bp['fliers'], color='gray', marker='+')
+        plt.setp(bp['means'], color='black', marker='.', fillstyle='none', markerfacecolor='gray', pickradius=0.2)
+        # for ax in axes.flatten():
+        #     ax.set_yscale('log')
+        #     ax.set_yticklabels([])
+        if yscale:
+            ax.set_yscale(yscale)
+        if xscale:
+            ax.set_xscale(xscale)
+        if titles:
+            plt.xticks(range(1, len(data[first:]) + 1), titles[first:], rotation=90)
+        if xlabel:
+            plt.xlabel(xlabel)
+        if ylabel:
+            plt.ylabel(ylabel)
+        if xlim:
+            ax.set_xlim(xlim)
+        if ylim:
+            ax.set_ylim(ylim)
+        plt.title(main_title)
+        plt.grid()
+        plt.tight_layout()
+        if not output:
+            plt.show()
+        else:
+            plt.savefig(output)
+            plt.close()
