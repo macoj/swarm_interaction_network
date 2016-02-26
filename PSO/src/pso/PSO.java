@@ -25,7 +25,7 @@ public class PSO implements Runnable {
 	TOPOLOGY swarm_initial_topology;
 	TOPOLOGY_MECHANISM swarm_topology_mechanism;
 	double swarm_random_topology_p; 
-	int swarm_number_of_clusters;
+	int swarm_static_topology_parameter;
 	
 	double particle_position[][];
 	double particle_velocity[][];
@@ -51,7 +51,7 @@ public class PSO implements Runnable {
 	
 	Function FUNCTION;
 	
-	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS};
+	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS, K_REGULAR};
 	
 	enum TOPOLOGY_MECHANISM { NONE, DYNAMIC_2011 };
 	
@@ -343,11 +343,11 @@ public class PSO implements Runnable {
                 }
                 printWriter.println();
                 // > diversity metrics
-                diversity.iterate();
-                aggregation.iterate();
-                ratio.iterate();
+//                diversity.iterate();
+//                aggregation.iterate();
+//                ratio.iterate();
                 // > position of particles
-                distance.iterate();
+//                distance.iterate();
 
                 this.current_iteration = this.current_iteration + 1;
                 /*
@@ -672,6 +672,28 @@ public class PSO implements Runnable {
 				}	
 			}
 			break;
+		case K_REGULAR:
+			int m = swarm_static_topology_parameter / 2 ;
+			boolean opposite_also = false;
+			boolean possible = true;
+			if (swarm_static_topology_parameter % 2 != 0) {
+				if (swarm_neighborhood_graph.length % 2 == 0) {
+					opposite_also = true;
+				} else {
+					possible = false;
+				}
+			}
+			if (possible) {
+				for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
+					for (int n = 0; n < m; n += 1) {
+						addNeighbour(i, (i+n)%swarm_neighborhood_graph.length);
+						if (opposite_also) {
+							addNeighbour(i, (i+n/2)%swarm_neighborhood_graph.length);
+						}
+					}
+				}
+			}
+			break;
 		case THREESOME_PARTNERS:
 			for (int i = 0; i < swarm_neighborhood_graph.length; i += 3) {
 				addNeighbour(i, (i+1)%swarm_neighborhood_graph.length);
@@ -680,7 +702,7 @@ public class PSO implements Runnable {
 			}
 			break;
 		case NSOME_PARTNERS:
-			int n = swarm_number_of_clusters;
+			int n = swarm_static_topology_parameter;
 			for (int i = 0; i < swarm_neighborhood_graph.length; i += n) {
 				for (int p_i = 0; p_i < n; p_i++) {
 					for (int p_j = p_i; p_j < n; p_j++) {
