@@ -1,5 +1,3 @@
-from hgext.convert.git import submodule
-
 __author__ = 'marcos'
 import numpy as np
 import matplotlib
