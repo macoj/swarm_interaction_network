@@ -75,18 +75,25 @@ class Simulator:
         """
         commands = []
         topologies = [("global", 0), ("ring", 1), ("vonneumann", 3)]
+        topologies = [("kregular", 6)]
         runs = 30
         functions = range(1, 21)
+        functions = [6]
         evaluations = 1000000
         dimensions = 1000
         particles = 100
+        for topology in topologies:
+            for k in range(10, 100, 10):
+                commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d.teste " %
+                             (particles, evaluations, dimensions, 6, topology[1], k,
+                             topology[0], k, 6, r) for r in range(runs)]
+        return commands
         for topology in topologies:
             for function in functions:
                 commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 > %s_F%02d_%02d.teste " %
                              (particles, evaluations, dimensions, function, topology[1],
                              topology[0], function, r) for r in range(runs)]
         # dynamic topology
-	commands = []
         topologies = [("ring", 1)]
         functions = range(10, 21)
         for topology in topologies:
@@ -95,9 +102,10 @@ class Simulator:
                                  (particles, evaluations, dimensions, function, topology[1],
                                  topology[0], function, r) for r in range(runs)]
         return commands
+
 """
 execfile("simulator.py")
 Simulator.execute(Simulator.pso(), number_of_processes=10, delay_between=5)
-Simulator.pso()
+Simulator.pso()[0]
 range(10, 21)
 """
