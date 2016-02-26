@@ -1,6 +1,7 @@
 package pso;
 
 import java.io.PrintWriter;
+import java.util.Vector;
 
 public class AnalysisDistance implements Analysis {
 	
@@ -25,7 +26,7 @@ public class AnalysisDistance implements Analysis {
 		//TODO: use the concept of vectors to speed it up.
 		double[][] distances = new double[pso.NUMBER_OF_PARTICLES][pso.NUMBER_OF_PARTICLES];
 
-		this.printer.print("distance:# ");
+		this.printer.print("distance:#"+ this.pso.current_iteration + " ");
 		for (int i = 0; i < pso.NUMBER_OF_PARTICLES; i++) {
 			for (int j = i; j < pso.NUMBER_OF_PARTICLES; j++) {
 				if (i != j) {		
