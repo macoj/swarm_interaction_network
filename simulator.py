@@ -83,7 +83,7 @@ class Simulator:
         dimensions = 1000
         particles = 100
         for topology in topologies:
-            for k in range(10, 100, 10):
+            for k in [3, 5, 6, 7, 8, 9]:
                 commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d.teste " %
                              (particles, evaluations, dimensions, 6, topology[1], k,
                              topology[0], k, 6, r) for r in range(runs)]
@@ -105,7 +105,7 @@ class Simulator:
 
 """
 execfile("simulator.py")
-Simulator.execute(Simulator.pso(), number_of_processes=10, delay_between=5)
+Simulator.execute(Simulator.pso(), number_of_processes=10, delay_between=10)
 Simulator.pso()[0]
 range(10, 21)
 """
