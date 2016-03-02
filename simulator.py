@@ -83,7 +83,7 @@ class Simulator:
         dimensions = 1000
         particles = 100
         for topology in topologies:
-            for k in [3, 5, 6, 7, 8, 9]:
+            for k in [4]:
                 commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d.teste " %
                              (particles, evaluations, dimensions, 6, topology[1], k,
                              topology[0], k, 6, r) for r in range(runs)]
