@@ -119,7 +119,7 @@ class Plotter:
                    linewidth=1, markevery=None, colors=None, ylim=None, xlim=None, vline_at=None,
                    xticks_args=None, font_size=9, font_family='normal', font_weight='normal',
                    yticks_args=None, grid=False, tight_layout=None, x_scale='linear', annotate=None,
-                   y_scale='linear', **kwargs):
+                   y_scale='linear', legend_ncol=1,  xtick_rotation=0, **kwargs):
         if pd_data is not None:
             font = {'family': font_family,
                     'weight': font_weight,
@@ -137,9 +137,10 @@ class Plotter:
             if type(pd_data) is not list:
                 plt.plot(pd_data['x'], pd_data['y'], linestyle=linestyle, linewidth=linewidth, markersize=markersize,
                          marker=next(markercycler), markevery=markevery, color=colors, **kwargs)
-                plt.xlim(min(pd_data['x']), max(pd_data['x']))
                 if xlim:
                     plt.xlim(xlim)
+                else:
+                    plt.xlim(min(pd_data['x']), max(pd_data['x']))
             else:
                 lines = ["-", "--", "-.", ":"]  # matplotlib.markers.MarkerStyle.markers.keys() #
                 linecycler = cycle(lines)
@@ -170,9 +171,10 @@ class Plotter:
                     if markevery:
                         markevery += 1
                     if not loc_anchor:
-                        plt.legend(loc=loc, numpoints=1, framealpha=1.0, handletextpad=0.2, borderpad=0.2)
+                        plt.legend(loc=loc, numpoints=1, framealpha=1.0, handletextpad=0.1, borderpad=0.2,
+                                   ncol=legend_ncol)
                     else:
-                        plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1)
+                        plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1, ncol=legend_ncol)
                     leg = plt.gca().get_legend()
                     ltext = leg.get_texts()  # all the text.Text instance in the legend
                     plt.setp(ltext, fontsize='medium')    # the legend text fontsize
@@ -186,8 +188,12 @@ class Plotter:
                 plt.axvline(x=vline_at)
             if annotate:
                 fig.text(*annotate)
+            if x_scale:
+                plt.xscale(x_scale)
+            if y_scale:
+                plt.yscale(y_scale)
             if xticks_args:
-                plt.xticks(*xticks_args)
+                plt.xticks(*xticks_args, rotation=xtick_rotation)
             if yticks_args:
                 plt.yticks(*yticks_args)
             if grid:
@@ -200,10 +206,6 @@ class Plotter:
                 plt.ylabel(y_label)
             if title:
                 plt.suptitle(title, horizontalalignment='center')
-            if x_scale:
-                plt.xscale(x_scale)
-            if y_scale:
-                plt.yscale(y_scale)
             if tight_layout is not None:
                 if not tight_layout:
                     plt.tight_layout()
@@ -392,14 +394,12 @@ class Plotter:
         else:
             plt.show()
 
-
-
     @staticmethod
     def plot_heatmap(matrix=None, matrixdf=None, main_title=None, output_filename=None, titles=None, ordered=False,
                      font_size=9, font_family='normal', font_weight='normal', figsize=None, tight_layout=None,
                      titles_x=None, titles_y=None, values_on=False, values_on_text=None, vmin=-1.0, vmax=1.0,
                      grid=False, x_label=None, y_label=None, set_yticks=None, set_xticks=None, subplot_adjust=None,
-                     **kargs):
+                     colorbar_on=True, **kargs):
         assert (matrix is not None or matrixdf is not None), "Give me matrix or matrixdf!"
         if matrix is not None:
             matrixdf = pd.DataFrame(matrix)
@@ -463,7 +463,8 @@ class Plotter:
             heatmap_subplot.set_yticks(set_yticks)
         else:
             heatmap_subplot.set_yticks(range(len(matrixdf)))
-        plt.colorbar(axi)
+        if colorbar_on:
+            plt.colorbar(axi)
         values_on_text_format = '{:s}'
         if values_on_text is None:
             values_on_text = matrixdf
@@ -541,10 +542,15 @@ class Plotter:
             plt.show()
 
     @staticmethod
-    def plot_boxplots(data, titles, main_title, ylabel=None, xlabel=None, xscale=None,
-                      yscale=None, first=0, output=None, size=None, ylim=None, xlim=None):
+    def plot_boxplots(data, titles, main_title=None, ylabel=None, xlabel=None, xscale=None,
+                      yscale=None, first=0, output=None, size=None, ylim=None, xlim=None, xticks_args=None,
+                      font_size=9, font_family='normal', font_weight='normal', **kargs):
         # ## plot here:
         # multiple box plots on one figure
+        font = {'family': font_family,
+                'weight': font_weight,
+                'size': font_size}
+        matplotlib.rc('font', **font)
         if size:
             plt.figure(figsize=size)
         else:
@@ -552,7 +558,7 @@ class Plotter:
         # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
         # bp = axes[0, 0].boxplot(all_alphas, notch=0, sym='+', showmeans=True, widths=0.3)
         ax = plt.axes()
-        bp = plt.boxplot(data[first:], notch=0, sym='+', showmeans=True, widths=0.3, whis=1.)
+        bp = plt.boxplot(data[first:], notch=0, sym='+', showmeans=True, widths=0.3, whis=1., **kargs)
         plt.setp(bp['boxes'], color='black')
         plt.setp(bp['whiskers'], color='blue', linestyle="-")
         plt.setp(bp['fliers'], color='gray', marker='+')
@@ -566,6 +572,8 @@ class Plotter:
             ax.set_xscale(xscale)
         if titles:
             plt.xticks(range(1, len(data[first:]) + 1), titles[first:], rotation=90)
+        if xticks_args:
+            plt.xticks(xticks_args)
         if xlabel:
             plt.xlabel(xlabel)
         if ylabel:
@@ -574,7 +582,8 @@ class Plotter:
             ax.set_xlim(xlim)
         if ylim:
             ax.set_ylim(ylim)
-        plt.title(main_title)
+        if main_title:
+            plt.title(main_title)
         plt.grid()
         plt.tight_layout()
         if not output:
