@@ -87,7 +87,7 @@ class Simulator:
                 for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
                     commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d " %
                                  (particles, evaluations, dimensions, function, topology[1], k,
-                                 topology[0], k, 6, r) for r in range(runs)]
+                                 topology[0], k, function, r) for r in range(runs)]
 
         for topology in [("global", 0), ("ring", 1), ("vonneumann", 3)]:
             for function in functions:
