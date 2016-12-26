@@ -12,8 +12,12 @@ public final class F_Schwefel extends Function {
   
   public double[] optimum;
 
-  public F_Schwefel(int dimension, double min, double max) {
-		super(dimension, min, max);
+  public F_Schwefel() {
+	  this(Defaults.DEFAULT_DIM);
+  }
+  
+  public F_Schwefel(int dimension) {
+	    super(dimension, MIN, MAX);
 		optimum = new double[dimension];
 		for (int i = 0; i < optimum.length; i++) {
 			optimum[i] = 420.96;

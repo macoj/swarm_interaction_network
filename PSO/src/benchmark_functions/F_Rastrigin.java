@@ -12,8 +12,12 @@ public final class F_Rastrigin extends Function {
   
   public double[] optimum;
 
-  public F_Rastrigin(int dimension, double min, double max) {
-		super(dimension, min, max);
+  public F_Rastrigin() {
+	  this(Defaults.DEFAULT_DIM);
+  }
+  
+  public F_Rastrigin(int dimension) {
+	    super(dimension, MIN, MAX);
 		optimum = new double[dimension];
 		for (int i = 0; i < optimum.length; i++) {
 			optimum[i] = 0.0;

@@ -12,8 +12,12 @@ public final class F_Rosenbrock extends Function {
   
   public double[] optimum;
 
-  public F_Rosenbrock(int dimension, double min, double max) {
-		super(dimension, min, max);
+  public F_Rosenbrock() {
+	  this(Defaults.DEFAULT_DIM);
+  }
+  
+  public F_Rosenbrock(int dimension) {
+		super(dimension, MIN, MAX);
 		optimum = new double[dimension];
 		for (int i = 0; i < optimum.length; i++) {
 			optimum[i] = 1.0;
