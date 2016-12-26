@@ -74,39 +74,28 @@ class Simulator:
          0: NONE 1: DYNAMIC_2011
         """
         commands = []
-        topologies = [("global", 0), ("ring", 1), ("vonneumann", 3)]
-        topologies = [("kregular", 6)]
         runs = 30
-        functions = range(1, 21)
-        # functions = [6]
+        functions = range(21, 28)
         evaluations = 1000000
         dimensions = 1000
         particles = 100
-        for topology in [("kregular", 6)]:
-            for function in [1]:
-                for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
-                    commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d " %
-                                 (particles, evaluations, dimensions, function, topology[1], k,
-                                 topology[0], k, function, r) for r in range(runs)]
+        # for topology in [("kregular", 6)]:
+        #     for function in [1]:
+        #         for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
+        #             commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s%d_F%02d_%02d " %
+        #                          (particles, evaluations, dimensions, function, topology[1], k,
+        #                          topology[0], k, function, r) for r in range(runs)]
         #
-        # for topology in [("global", 0), ("ring", 1), ("vonneumann", 3)]:
-        #     for function in functions:
-        #         commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 > %s_F%02d_%02d.teste " %
-        #                      (particles, evaluations, dimensions, function, topology[1],
-        #                      topology[0], function, r) for r in range(runs)]
-        # # dynamic topology
-        # topologies = [("ring", 1)]
-        # functions = range(10, 21)
-        # for topology in topologies:
-        #     for function in functions:
-        #             commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 1 > dynamic%s_F%02d_%02d.teste " %
-        #                          (particles, evaluations, dimensions, function, topology[1],
-        #                          topology[0], function, r) for r in range(runs)]
+        for topology in [("global", 0, 0), ("ring", 1, 0), ("regular30", 6, 30)]:
+            for function in functions:
+                commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s_F%02d_%02d.teste " %
+                             (particles, evaluations, dimensions, function, topology[1], topology[2],
+                             topology[0], function, r) for r in range(runs)]
         return commands
 
 """
 execfile("simulator.py")
-Simulator.execute(Simulator.pso(), number_of_processes=10, delay_between=10)
+Simulator.execute(Simulator.pso(), number_of_processes=1, delay_between=10)
 Simulator.pso()[0]
 range(10, 21)
 """
