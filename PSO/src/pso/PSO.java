@@ -159,8 +159,6 @@ public class PSO implements Runnable {
 			if (args.length > 7) {
 				swarm_static_topology_parameter = Integer.parseInt(args[7]);
 			}
-//			System.out.println("swarm_static_topology_parameter: " + swarm_static_topology_parameter + " " + swarm_initial_topology + " " + swarm_topology_mechanism);
-//			System.exit(0);
 			return true;
 		} else {
 			System.out.print("PSO.jar runs particles evaluations dimensions function topology mechanism [mechanism_parameter]");
@@ -365,11 +363,18 @@ public class PSO implements Runnable {
                 }
                 printWriter.println();
                 // > best personal values
-                printWriter.print("pbest:#" + this.current_iteration + " ");
+//                printWriter.print("pbest:#" + this.current_iteration + " ");
+//                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+//                    printWriter.print(this.particle_best_value[i] + " ");
+//                }
+                // > velocities of the particles: this is gonna be a DIMENSIONxPARTICLES
+                printWriter.print("velocities:#" + this.current_iteration + " ");
                 for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-                    printWriter.print(this.particle_best_value[i] + " ");
+                	for (int d = 0; d < this.DIMENSION; d++) {
+                		printWriter.print(this.particle_velocity[i][d] + " ");
+					}
                 }
-                printWriter.println();
+
                 // > diversity metrics
 //                diversity.iterate();
 //                aggregation.iterate();
