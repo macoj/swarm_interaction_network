@@ -11,6 +11,7 @@ from callbacks import Callback
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
 from giant_component_analysis_plotter import GiantComponentDeathPlotter
+from scipy.stats import pearsonr
 
 
 class SwarmAnalyzer:
@@ -169,10 +170,10 @@ SwarmAnalyzer.get_number_of_components(filename, window_size, w, until=1000)
         curve['y'] = [c['y'][i] for i in range(0, len(c['y']), 15)]
         curvess2.append(curve)
     execfile("plotter.py")
-
+plt.clf()
     #Plotter.plot_curve(curves, legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=10, markevery=17, alpha=0.9, tight_layout=[], figsize=(5,4), grid=True, linewidth=0.7, xlim=(window_size, 1400), y_label="Number of\ncomponents", x_label="Iterations")
     Plotter.plot_subplot_curve([curvess2, curvess1], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), y_label="Number of\ncomponents", x_label="Iterations")
-    Plotter.plot_subplot_curve([curvess2, curvess1], colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], titles=['Ring', 'Von Neumann'], legends=legends, marker=['v', '+', '.', 'x'], markevery=2, markersize=7, font_size=13, tight_layout=[], figsize=(13, 4), grid=True, linewidth=1.2, xlim=(window_size, 3000), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components_2.pdf")
+    Plotter.plot_subplot_curve([curvess2, curvess1], colors=['#009e73', '#0072b2', '#d55e00', '#e69f00'], titles=['Ring', 'Von Neumann'], legends=legends, marker=['v', 's', 'o', 'D'], markevery=10, markersize=3, mew=1.2, font_size=13, tight_layout=[-0.03, 0, 1.03, 1.06], figsize=(4.5, 1.9), grid=True, linewidth=1.2, xlim=(window_size, 2000), y_label="Number of components", x_label="Iterations", ylim=(0, 102), output_filename="number_of_components.pdf")
     Plotter.plot_subplot_curve([curves, curves_2], titles=['Von Neumann', 'Ring'], legends=legends, marker=['.', '+', 'x'], markersize=4, font_size=13, markevery=17, alpha=0.9, tight_layout=[], figsize=(13, 4), grid=True, linewidth=0.7, xlim=(window_size, 3000), ylim=(0, 17), y_label="Number of\ncomponents", x_label="Iterations", output_filename="number_of_components.pdf")
     """
     @staticmethod
@@ -230,24 +231,248 @@ df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
 50 3
 70 3
 
-20
-40
-60
+1 2 3
+4 5 6 7 8
+9 10 11 12 13
+14 15 16 17 18
+19 20
 execfile("swarm_analyzer.py")
-base_name = './data/100_particles/'
-topology = 'kregular4'
-function = 6
-suffix = '.teste'
-filenames = ['%s/%s_F%02d_%02d%s' % (base_name, topology, function, run, suffix) for run in range(21, 30)]
-for filename in filenames:
-    print time.strftime(">> %H:%M:%S-%d/%m/%y")
-    df = SwarmAnalyzer.create_swarm_analysis_df_file_from_file(filename, filename+'.hdf')
+output_base_name = './data/'
+topologies = ["ring", "vonneumann"] + ["kregular%d" % d for d in range(5, 10) + range(10, 100, 10)] + ["global"]
+function = 2
+0, 4
+4, 9
+9, 13
+13, 17
+for topology in topologies[13:17]:
+    if topology in ["ring", "vonneumann", "global"]:
+        suffix = ".teste"
+    else:
+        suffix = ""
+    filenames = ['%s_F%02d_%02d%s' % (topology, function, run, suffix) for run in range(30)]
+    for filename in filenames:
+        print time.strftime(">> %H:%M:%S-%d/%m/%y")
+        print filename, output_base_name+filename+'.hdf'
+        df = SwarmAnalyzer.create_swarm_analysis_df_file_from_file(filename, output_base_name+filename+'.hdf')
 
 
     """
 
     @staticmethod
-    def analyze_analysis_df_file_stagnation_derivative(filename, tw, smooth=50, diff_threshold=0.0001,
+    def retrieve_stagnation_iteration_derivative(
+            filename, smooth=50, diff_threshold=0.02, iter_threshold=500, head=None):
+        df = pd.read_hdf(filename, 'df')
+        if head:
+            df = df.head(head)
+        x = df.index[smooth:len(df)]
+        fitness = np.array(df['it:#'][smooth:])
+        # f_delta = [f(t) - f(t+1)]/f(t+1)
+        # f_delta = f(t)/f(t+1) - 1
+        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff -= 1
+
+        # noinspection PyTypeChecker
+        fitness_diff = list(fitness_diff > diff_threshold)
+        counts = []
+        last = fitness_diff[0]
+        last_c = 1
+        for c in fitness_diff[1:]:
+            if c == last:
+                last_c += 1
+            else:
+                counts.append(last_c)
+                last_c = 1
+            last = c
+        if last_c != 1:
+            counts.append(last_c)
+        threshold_i = 0
+        for threshold_i in range(len(counts)):
+            if counts[threshold_i] > iter_threshold:
+                break
+        stagnation_iteration = sum(counts[:threshold_i-1])
+        return stagnation_iteration
+    """
+    execfile("swarm_analyzer.py")
+    execfile("plotter.py")
+    it = "it:#"
+    topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+                  'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+                  'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+    function = 14
+    for t in topologies:
+        for i in range(5):
+            filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, function, r)
+            diff_threshold, iter_threshold = 0.00001, 500
+            stagnation_iteration = SwarmAnalyzer.retrieve_stagnation_iteration_derivative(filename, 10, diff_threshold=diff_threshold, iter_threshold=iter_threshold)
+            df = pd.read_hdf(filename, 'df')
+            Plotter.plot_curve({'x': df.index, 'y': df[it]}, grid=True, vline_at=stagnation_iteration, figsize=(10, 4), xlim=(0, 2000))
+
+    """
+
+    # noinspection PyTypeChecker
+    @staticmethod
+    def calculate_cd_and_dfit(function=14, mean=True, tws=None, topologies=None, runs=30,
+                              diff_threshold=10**-5, iter_threshold=500, fitness_only=False,
+                              max_iteration_mode=None):
+        it = "it:#"
+        if not topologies:
+            topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+                          'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+                          'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+        if not tws:
+            tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
+        dfits = []
+        fitnesses = []
+        cds = []
+        for t in topologies:
+            fitness_t = []
+            for r in range(runs):
+                filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, function, r)
+                if max_iteration_mode is None:
+                    stagnation_iteration = SwarmAnalyzer.retrieve_stagnation_iteration_derivative(
+                        filename, diff_threshold=diff_threshold, iter_threshold=iter_threshold)
+                else:
+                    stagnation_iteration = max_iteration_mode
+                df = pd.read_hdf(filename, 'df')
+                fitness = np.array(df[it])
+                if fitness_only:
+                    fitness_t.append(fitness[-1])
+                else:
+                    # f_delta = [f(t) - f(t+1)]/f(t+1) = f(t)/f(t+1) - 1
+                    fitness_diff = fitness[:len(fitness) - 1] / fitness[1:len(fitness)] - 1
+                    cd = 1 - sum([df[c] for c in tws]) / float(len(tws))
+                    if mean:
+                        cds.append(np.mean(list(cd[1:stagnation_iteration + 1])))
+                        if not fitness_only:
+                            dfits.append(np.mean(list(fitness_diff[:stagnation_iteration])))
+                    else:
+                        cds += list(cd[1:stagnation_iteration + 1])
+                        dfits += list(fitness_diff[:stagnation_iteration])
+                del df
+            if mean:
+                fitnesses.append(np.mean(fitness_t))
+            else:
+                fitnesses.append(fitness_t)
+        if fitness_only:
+            return fitnesses
+        else:
+            return cds, dfits
+    """
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+function = 2
+cds, dfits = SwarmAnalyzer.calculate_cd_and_dfit(function=function, runs=30, diff_threshold=10**-4, mean=True)
+indices = range(0, len(cds), 30)
+curves = []
+bb = []
+for i,j in zip(ds_index, ds_index[1:]):
+    curves.append({'x': cds[i:j], 'y': dfits[i:j]})
+    bb.append(dfits[i:j])
+
+pearson_correlation = pearsonr(cds, dfits)
+print pearson_correlation
+
+topologies = ['Ring', 'Neumann'] + ['$k=%d$' % k for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]] + ["Global"]
+colorblind = [(0, 0, 0), (230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0), (204, 121, 167)]
+colorblind = ['#%02x%02x%02x' % (c[0], c[1], c[2]) for c in colorblind]
+colors = colorblind[3], colorblind[5], colorblind[6], colorblind[1], colorblind[2], colorblind[7]
+colors = colorblind[1:]
+Plotter.plos_style()
+Plotter.plot_curve(curves, output_filename="dfits_cds_f_%02d.pdf" % function, legends=topologies, annotate=(0.78, 0.86, "$r=%0.2f$" % pearson_correlation[0]), tight_layout=[-0.025, -0.035, 1.02, 1.03], legend_ncol=3, colors=colors, linestyle="", figsize=(4.7, 2.7), loc=3, x_label="Average communication diversity", mew=1.2, y_label="Average fitness improvement", marker=['+', 'x', '>', '^', 'o', 'v', 'D', 's', '3', '2', '<'], grid=True, markersize=4)
+
+
+
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+function = 2
+bb = SwarmAnalyzer.calculate_cd_and_dfit(function=function, runs=30, diff_threshold=10**-4, fitness_only=True)
+indices = range(0, len(fitness), 30)
+bb = []
+for i,j in zip(ds_index, ds_index[1:]):
+    bb.append(dfits[i:j])
+
+
+boxes_kargs = {'color': 'black', 'linewidth': 1.3, 'zorder': 3, 'fillstyle': 'full', 'facecolor': '#a6cee3'}
+means_kargs = {'color': 'black', 'fillstyle': 'full', 'markerfacecolor': "black", 'marker': "s", 'markersize': 3, 'mew': 1, 'mec': 'black', 'zorder': 5}
+fliers_kargs = {'color': 'black', 'marker': ".", 'markersize': 3, 'mew': 1.5, 'mec': 'black'}
+whiskers_kargs = {'color': 'black', 'linewidth': 1.2, 'zorder': 2, 'linestyle': '-', 'alpha': 1.0, 'mec': 'black'}
+medians_kargs = {'color': 'black', 'linewidth': 1.6, 'zorder': 5, 'alpha': 0.3}
+caps_kargs = {'linewidth': 1.5, 'color': 'black',}
+
+topologies = [2, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+topologies_legend = map(str, topologies)
+topologies_legend.reverse()
+# topologies_legend[0] = 'Ring'
+# topologies_legend[len(topologies)-1] = 'Global'
+legends = [range(1, len(cds)/30 + 1), topologies_legend, {"rotation": 0}]
+Plotter.plot_boxplots(bb, output="fitness_f_%02d_r.pdf" % function, ylim=(6000, 11500), xticks_args=legends, grid_only='y', whis=1.5, xlim=(0.3, len(topologies)+0.6), grid=True, widths=0.7, tight_layout=[-0.03, -0.03, 1.025, 1.03], bootstrap=2000, boxes_kargs=boxes_kargs, showmeans=False, ylabel="Fitness", xlabel="$k$-regular topologies", size=(4.5, 2.8), showfliers=True, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs)
+plt.clf()
+Plotter.plot_boxplots(bb)
+
+
+
+
+for function in [2, 6, 14, 19]:
+    print function
+    fitness = SwarmAnalyzer.calculate_cd_and_dfit(function=function, runs=30, diff_threshold=10**-4, fitness_only=True)
+    jump_every = 6
+    jump_every_i = 0
+    tex = ""
+    for fitness_ in fitness:
+        f_fitness = re.sub("e\+[0]", "\\\\times10^{", "{0:.4e}".format(fitness_))
+        tex += "& $%s}$  " % f_fitness
+        jump_every_i += 1
+        if jump_every_i % jump_every == 0:
+            print tex + "\\\\"
+            tex = ""
+    print tex + "\\\\"
+
+
+
+#output_filename="f_%02d.png" % function
+title = ""
+xlabel = "Average communication diversity"
+ylabel = "Stagnation iteration"
+Plotter.plot_curve(dss, legend_ncol=2, ylim=(200, 1450), xlim=(0.05, 0.376), output_filename=output_filename, linewidth=0, legends=legends, mew=1.2, figsize=(4.8, 3.05), loc=2, tight_layout=[-0.03, -0.03, 1.03, 1.03], annotate=(0.66, 0.86, "$r=%0.2f$" % p[0]), font_size=11, alpha=1, marker=['+', 'x', '>', '^', 'o', 'v', 'D', 's', '3', '2', '<'], colors=colors, grid=True, markersize=4, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+
+
+plt.clf()
+from matplotlib.colors import Normalize
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
+
+weights = np.ones_like(dfits)/len(dfits)
+fig = plt.figure(figsize=(4.5, 2.6))
+plt.yscale('log')
+plt.hist2d(cds, dfits, bins=100, cmap=plt.cm.gist_heat_r, weights=weights)
+plt.show()
+
+    """
+
+    @staticmethod
+    def calculate_correlation_cd_dfit(**kargs):
+        cds, dfits = SwarmAnalyzer.calculate_cd_and_dfit(**kargs)
+        return pearsonr(cds, dfits)
+    """
+execfile("swarm_analyzer.py")
+SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
+
+
+>>> SwarmAnalyzer.calculate_correlation_cd_dfit(function=6)
+(-0.92356894964013847, 1.2505047550893154e-213)
+>>> SwarmAnalyzer.calculate_correlation_cd_dfit(function=14)
+(-0.33756838240407916, 4.6573148666352012e-15)
+>>> SwarmAnalyzer.calculate_correlation_cd_dfit(function=19)
+(-0.34651911636639665, 7.8013584786842649e-16)
+>>> SwarmAnalyzer.calculate_correlation_cd_dfit(function=2)
+(-0.78771894359497063, 5.9069928507128958e-109)
+
+    """
+
+    @staticmethod
+    def analyze_analysis_df_file_stagnation_derivative(filename, tw, smooth=50, diff_threshold=0.02,
                                                        iter_threshold=500, head=None, plot=False, tws=None):
         df = pd.read_hdf(filename, 'df')
         print filename
@@ -261,7 +486,14 @@ for filename in filenames:
             communication_diversity_smoothed = [sum(sum_tws[n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
         communication_diversity_smoothed = 1 - np.array(communication_diversity_smoothed)
         fitness = np.array(df['it:#'][smooth:])
+        #
+        # f_delta = [f(t) - f(t+1)]/f(t+1)
+        # f_delta = f(t)/f(t+1) - 1
+        #
         fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        # Plotter.plot_curve({'x': range(len(fitness_diff)), 'y': fitness_diff})
+        # Plotter.plot_curve({'x': range(len(fitness)), 'y': fitness}, vline_at=stagnation_iteration)
+
         fitness_diff -= 1
         # noinspection PyTypeChecker
         fitness_diff = list(fitness_diff > diff_threshold)
@@ -533,121 +765,157 @@ from scipy.stats import pearsonr
         return curves
 
     """
-    execfile("swarm_analyzer.py")
-    from scipy.stats import pearsonr
 
-    results = []
-    results_ = {}
-    topologies = ['global']
-    topologies = ['ring']
-    topologies = ['vonneumann']
-    topologies = ['global', 'ring', 'vonneumann']
-    topologies = ['ring', 'kregular4', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
-                  'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
-                  'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
-    # topologies = ['ring', 'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
-    #               'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+execfile("swarm_analyzer.py")
+from scipy.stats import pearsonr
+
+topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+              'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+              'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+for f in [2, 6, 14, 19]:
+    cds = []
+    dfits = []
+    tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
     for t in topologies:
-        for i in range(30):
-            filename = "./data/100_particles/%s_F06_%02d.teste.hdf" % (t, i)
-            print filename
-            mean = False
-            result = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative_measures_and_cd(filename, mean=mean, tw=None, head=2000, diff_threshold=0.01, smooth=50, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
-            if mean:
-                for m in result:
-                    k = m.keys()[0]
-                    if k not in results_:
-                        results_[k] = []
-                    results_[k].append(m.values()[0])
-            else:
-                results.append(pd.concat([pd.DataFrame(r) for r in result], axis=1))
-    if not mean:
-        df = results[0]
-        for d in results[1:]:
-            df = df.append(d)
-    else:
-        df = pd.DataFrame(results_)
+        for i in range(20):
+            filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, f, i)
+            df = pd.read_hdf(filename, 'df')
+            cd = 1 - sum([df[c] for c in tws])/float(len(tws))
+            fitness = np.array(df['it:#'])
 
-    i = 'dfit'
-    # for j in df.columns:
-    #     print "%s with %s: %s" % (i, j, pearsonr(df[i], df[j]))
-    #     Plotter.plot_curve({'x': df[j], 'y': df[i]}, output_filename="%s_%s.png" % (i, j), linewidth=0, y_label=i, title=str(pearsonr(df[i], df[j])), x_label=j, figsize=(7, 4.5), loc=2, tight_layout=[], font_size=11, alpha=0.4, marker='.', colors="#e41a1c", grid=True, markersize=6)
+            fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+            fitness_diff -= 1
+            max_it = 1000
+            # cds += list(cd[1:max_it+1])
+            # dfits += list(fitness_diff[:max_it])
+            cds.append(np.mean(list(cd[1:max_it+1])))
+            dfits.append(np.mean(list(fitness_diff[:max_it])))
+    print f, max_it, pearsonr(cds, dfits)
+
+Plotter.plot_curve({'x': cds, 'y': dfits}, linestyle='')
+
+execfile("swarm_analyzer.py")
+from scipy.stats import pearsonr
+
+topologies = ['global']
+topologies = ['ring']
+topologies = ['vonneumann']
+topologies = ['global', 'ring', 'vonneumann']
+topologies = ['ring', 'kregular4', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+              'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+              'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+              'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+              'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+f = 14
+results = []
+results_ = {}
+for t in topologies:
+    for i in range(5):
+        filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, f, i)
+        print filename
+        mean = False
+        result = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative_measures_and_cd(filename, mean=mean, tw=None, head=2000, smooth=50, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000], no_measure=True)
+
+        if mean:
+            for m in result:
+                k = m.keys()[0]
+                if k not in results_:
+                    results_[k] = []
+                results_[k].append(m.values()[0])
+        else:
+            results.append(pd.concat([pd.DataFrame(r) for r in result], axis=1))
+
+if not mean:
+    df = results[0]
+    for d in results[1:]:
+        df = df.append(d)
+else:
+    df = pd.DataFrame(results_)
+
+i = 'dfit'
+# for j in df.columns:
+#     print "%s with %s: %s" % (i, j, pearsonr(df[i], df[j]))
+#     Plotter.plot_curve({'x': df[j], 'y': df[i]}, output_filename="%s_%s.png" % (i, j), linewidth=0, y_label=i, title=str(pearsonr(df[i], df[j])), x_label=j, figsize=(7, 4.5), loc=2, tight_layout=[], font_size=11, alpha=0.4, marker='.', colors="#e41a1c", grid=True, markersize=6)
 
 
-    print [r for r in df.corr()['dfit']]
-    pearsonr(df.cd, np.log(df.dfit))
-    Plotter.plot_curve({'x': df.cd, 'y': df.dfit}, y_scale='log', linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.1, marker='.', colors="#e41a1c", grid=True, markersize=3)
-    Plotter.plot_curve({'x': df.dfit, 'y': df['radius:#']}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.4, marker='.', colors="#e41a1c", grid=True, markersize=6)
+print [r for r in df.corr()['dfit']]
+pearsonr(df.x, df.dfit)
+Plotter.plot_curve({'x': df.cd, 'y': df.dfit}, y_scale='log', linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.1, marker='.', colors="#e41a1c", grid=True, markersize=3)
+Plotter.plot_curve({'x': df.dfit, 'y': df['radius:#']}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.4, marker='.', colors="#e41a1c", grid=True, markersize=6)
 
-    from matplotlib.colors import Normalize
-    import matplotlib.pyplot as plt
-    import matplotlib.ticker as ticker
-    import numpy as np
+# F14: [-0.30529389079926983, 1.0, -0.72614528289662417, nan, nan, nan, nan, nan, nan, nan]
+# F19 [0.61180348812168583, 1.0, -0.72732930733369694, nan, nan, nan, nan, nan, nan, nan]
 
-    weights = np.ones_like(df.dfit)/len(df.dfit)
-    fig = plt.figure(figsize=(7, 3.5))
-    # plt.hist2d(np.log(df.cd), -np.log(df.dfit), bins=100, cmap=plt.cm.gist_heat_r, weights=weights)
-    #plt.xscale('log')
-    plt.yscale('log')
-    plt.hist2d(df.cd, df.dfit, bins=100, cmap=plt.cm.gist_heat_r, weights=weights)
-    plt.xlabel("Communication diversity")
-    plt.ylabel("Fitness improvement")
-    def fmt(x, pos):
-        a, b = '{:.1e}'.format(x).split('e')
-        b = int(b)
-        return "%0.3f" % x
-        # return r'${}\times10^{{{}}}$'.format(a, b)
-    plt.colorbar(format=ticker.FuncFormatter(fmt), pad=0.01, ticks=[0.0000, 0.0010, 0.0021, 0.0032])
-    plt.tight_layout()
-    plt.grid()
-    fig.text(0.2, 0.85, "$r=%0.2f$" % (pearsonr(np.log(df['dfit']), df['cd'])[0]))
-    plt.ylim(0, 0.005)
-    print pearsonr(df.cd, -np.log(df.dfit))
-    print pearsonr(np.log(df.cd), -np.log(df.dfit))
-    print pearsonr(df.cd, df.dfit)
-    # plt.show()
-    plt.savefig("hist2d_dfit_cd.pdf")
-    measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#', 'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
+from matplotlib.colors import Normalize
+import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
+import numpy as np
+
+weights = np.ones_like(df.dfit)/len(df.dfit)
+fig = plt.figure(figsize=(4.5, 2.6))
+# plt.hist2d(np.log(df.,cd), -np.log(df.dfit), bins=100, cmap=plt.cm.gist_heat_r, weights=weights)
+#plt.xscale('log')
+plt.yscale('log')
+plt.hist2d(df.cd, df.dfit, bins=100, cmap=plt.cm.gist_heat_r, weights=weights)
+plt.xlabel("Communication diversity")
+plt.ylabel("Fitness improvement")
+def fmt(x, pos):
+    a, b = '{:.1e}'.format(x).split('e')
+    b = int(b)
+    return "%0.3f" % x
+    # return r'${}\times10^{{{}}}$'.format(a, b)
+plt.colorbar(format=ticker.FuncFormatter(fmt), pad=0.03, ticks=[0.0000, 0.0010, 0.0021, 0.0032])
+plt.tight_layout(rect=[0, 0, 1.06, 1])
+plt.grid()
+fig.text(0.2, 0.85, "$r=%0.2f$" % (pearsonr(np.log(df['dfit']), df['cd'])[0]))
+plt.ylim(0, 0.005)
+print pearsonr(df.cd, -np.log(df.dfit))
+print pearsonr(np.log(df.cd), -np.log(df.dfit))
+print pearsonr(df.cd, df.dfit)
+plt.show()
+plt.savefig("hist2d_dfit_cd.pdf")
+measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#', 'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
 
 
-    by_topologies = []
-    for r in range(0, 90, 30):
-        res = results[r:r+30]
-        dd = res[0]
-        for d in res[1:]:
-            dd = dd.append(d)
-        by_topologies.append(dd)
+by_topologies = []
+for r in range(0, 90, 30):
+    res = results[r:r+30]
+    dd = res[0]
+    for d in res[1:]:
+        dd = dd.append(d)
+    by_topologies.append(dd)
 
-    for ddd in by_topologies:
-        for m in measures:
-            Plotter.plot_curve({'x': ddd.cd, 'y': ddd[m]}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
+for ddd in by_topologies:
     for m in measures:
-        Plotter.plot_curve({'x': df.cd, 'y': df[m]}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
-        print pearsonr(df.cd, df[m])
+        Plotter.plot_curve({'x': ddd.cd, 'y': ddd[m]}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
+for m in measures:
+    Plotter.plot_curve({'x': df.cd, 'y': df[m]}, linewidth=0, figsize=(5, 3.8), loc=2, tight_layout=[], font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
+    print pearsonr(df.cd, df[m])
 
 
-    runs = 30
-    ds_index = range(0, len(topologies)*runs + 1, runs)
-    for measure in range(1, 7):
-        ds = []
-        # measure = 3
-        away_std = 1.5
-        for i,j in zip(ds_index, ds_index[1:]):
-            d = pd.DataFrame({'x': df[measure][i:j], 'y': df[0][i:j]})
-            dd = d[d.y < np.mean(d.y) + away_std*np.std(d.y)]
-            dd = dd[dd.y > np.mean(dd.y) - away_std*np.std(dd.y)]
-            dd = dd[dd.x < np.mean(dd.x) + away_std*np.std(dd.x)]
-            dd = dd[dd.x > np.mean(dd.x) - away_std*np.std(dd.x)]
-            ds.append(dd)
-        ddd = ds[0]
-        for d in ds[1:]:
-            ddd = ddd.append(d)
-        legends = topologies
-        print pearsonr(ddd.x, ddd.y)
-        Plotter.plot_curve(ds, linewidth=0, legends=legends, title=str(measure), figsize=(5, 3.8), loc=2, tight_layout=[], annotate=(0.49, 0.85, "$r=%0.2f$" % (ddd.corr()['x']['y'])), font_size=11, alpha=0.6, marker='.', colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], grid=True, markersize=6)
+runs = 30
+ds_index = range(0, len(topologies)*runs + 1, runs)
+for measure in range(1, 7):
+    ds = []
+    # measure = 3
+    away_std = 1.5
+    for i,j in zip(ds_index, ds_index[1:]):
+        d = pd.DataFrame({'x': df[measure][i:j], 'y': df[0][i:j]})
+        dd = d[d.y < np.mean(d.y) + away_std*np.std(d.y)]
+        dd = dd[dd.y > np.mean(dd.y) - away_std*np.std(dd.y)]
+        dd = dd[dd.x < np.mean(dd.x) + away_std*np.std(dd.x)]
+        dd = dd[dd.x > np.mean(dd.x) - away_std*np.std(dd.x)]
+        ds.append(dd)
+    ddd = ds[0]
+    for d in ds[1:]:
+        ddd = ddd.append(d)
+    legends = topologies
+    print pearsonr(ddd.x, ddd.y)
+    Plotter.plot_curve(ds, linewidth=0, legends=legends, title=str(measure), figsize=(5, 3.8), loc=2, tight_layout=[], annotate=(0.49, 0.85, "$r=%0.2f$" % (ddd.corr()['x']['y'])), font_size=11, alpha=0.6, marker='.', colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], grid=True, markersize=6)
 
-        ddd = ds[1]
-        Plotter.plot_curve(ddd, linewidth=0, legends=legends, title=str(measure), figsize=(5, 3.8), loc=2, tight_layout=[], annotate=(0.49, 0.85, "$r=%0.2f$" % (ddd.corr()['x']['y'])), font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
+    ddd = ds[1]
+    Plotter.plot_curve(ddd, linewidth=0, legends=legends, title=str(measure), figsize=(5, 3.8), loc=2, tight_layout=[], annotate=(0.49, 0.85, "$r=%0.2f$" % (ddd.corr()['x']['y'])), font_size=11, alpha=0.6, marker='.', colors="#e41a1c", grid=True, markersize=6)
 
 # the average and std dev -- CORRELATION
 execfile("swarm_analyzer.py")
@@ -753,30 +1021,25 @@ Plotter.plot_heatmap(avg, output_filename="correlation_measures_ring_.pdf", valu
     """
 
     @staticmethod
-    def analyze_stagnation_correlation_communication_diversity(tw, **kargs):
-        runs = 30
-        topologies = ['ring', 'vonneumann', 'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
-                      'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
-        topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8',
-                      'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
-                      'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
-
-        topologies = ['ring', 'kregular4', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
-                      'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
-                      'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
-        #topologies = ['vonneumann', 'ring', 'dynamicring']
-
-
-        #topologies = ['global']
+    def analyze_stagnation_correlation_communication_diversity(
+            tw, topologies=None, function=6, functions=None, runs=30, **kargs):
+        if topologies is None:
+            topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+                          'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+                          'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+        if functions is None:
+            functions = [function]
         sums = []
         stagnation_its = []
-        for t in topologies:
-            for r in range(runs):
-                filename = "./data/100_particles/%s_F06_%02d.teste.hdf" % (t, r)
-                sum_cd, stagnation_it = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename,
-                                                                                                     tw, **kargs)
-                sums.append(sum_cd)
-                stagnation_its.append(stagnation_it)
+        for function in functions:
+            for t in topologies:
+                for r in range(runs):
+                    filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, function, r)
+                    print filename
+                    sum_cd, stagnation_it = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename,
+                                                                                                         tw, **kargs)
+                    sums.append(sum_cd)
+                    stagnation_its.append(stagnation_it)
         df = pd.DataFrame({'sum_cd': sums, 's_it': stagnation_its})
         return df
     """
@@ -790,7 +1053,7 @@ for tw in tws:
 
 execfile("swarm_analyzer.py")
 execfile("plotter.py")
-df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw=None, head=2000, diff_threshold=0.01, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
+df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw=None, function=2, head=2000, diff_threshold=0.01, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
 #df.sum_cd /= max(df.sum_cd)
 #df.s_it /= max(df.s_it)
 title = ""
@@ -798,10 +1061,10 @@ xlabel = "Average communication diversity"
 ylabel = "Stagnation iteration"
 d = pd.DataFrame({'x': df.sum_cd, 'y': df.s_it})
 #Plotter.plot_curve(d, linewidth=0, figsize=(5, 3.8), tight_layout=[], output_filename=output_filename, annotate=(0.15, 0.84, "$R=%0.2f$" % (d.corr()['y']['x'])), font_size=11, alpha=0.6, marker='.', colors='#de2d26', grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel, xlim=(0,1), ylim=(0,1))
-topologies = ['Ring', 'Neumann',  '10-regular', '20-regular', '30-regular', '40-regular', '50-regular', '60-regular', '70-regular', '80-regular', '90-regular', 'Global']
-topologies = ['Ring', 'Neumann',  '5-regular', '6-regular', '7-regular', '8-regular', '10-regular', '20-regular', '30-regular', '40-regular', '50-regular', '60-regular', '70-regular', '80-regular', '90-regular', 'Global']
+# topologies = ['Ring', 'Neumann',  '10-regular', '20-regular', '30-regular', '40-regular', '50-regular', '60-regular', '70-regular', '80-regular', '90-regular', 'Global']
+# topologies = ['Ring', 'Neumann',  '5-regular', '6-regular', '7-regular', '8-regular', '10-regular', '20-regular', '30-regular', '40-regular', '50-regular', '60-regular', '70-regular', '80-regular', '90-regular', 'Global']
 topologies = ['Ring', 'Neumann'] + ['$k=%d$' % k for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]] + ["Global"]
-topologies = ['$k=%d$' % k for k in [2, 4, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]]
+# topologies = ['$k=%d$' % k for k in [2, 4, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]]
 runs = 30
 ds_index = range(0, len(topologies)*runs + 1, runs)
 ds = []
@@ -835,11 +1098,18 @@ p = pearsonr(ddd['x'], ddd['y'])
 colors = ["#a6cee3", "#1f78b4", "#b2df8a", "#e0f3f8", "#33a02c", "#fb9a99", "#e31a1c", "#fdbf6f", "#ff7f00", "#cab2d6", "#6a3d9a"]
 colors = ["#e41a1c", "#4daf4a", "#377eb8", "#e0f3f8", "#fdae61", "#66c2a5", "#f46d43", "#6a3d9a"]
 legends = ['Ring', 'Neumann'] + ['$k=%d$' % k for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]] + ["Global$\quad\quad$ "]
-dss = ds_no_outliers[:2]+ds_no_outliers[3:]
+# dss = ds_no_outliers[:2]+ds_no_outliers[3:]
 dss = ds_no_outliers
 dss.reverse()
 legends.reverse()
-Plotter.plot_curve(dss, legend_ncol=3, ylim=(200, 1400), output_filename=output_filename, linewidth=0, legends=legends, figsize=(9.5, 4.5), loc=2, tight_layout=[], annotate=(0.65, 0.86, "$r=%0.2f$" % p[0]), font_size=11, alpha=0.8, marker=['+', '>', '^', 'o', 'v', '.', 'D', 's', 'x', '<'], colors=colors, grid=True, markersize=5, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+colorblind = [(0, 0, 0), (230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0), (204, 121, 167)]
+colorblind = ['#%02x%02x%02x' % (c[0], c[1], c[2]) for c in colorblind]
+colors = colorblind[3], colorblind[5], colorblind[6], colorblind[1], colorblind[2], colorblind[7]
+colors = colorblind[1:]
+title = ""
+xlabel = "Average communication diversity"
+ylabel = "Stagnation iteration"
+Plotter.plot_curve(dss, legend_ncol=2, ylim=(200, 1450), xlim=(0.05, 0.376), output_filename=output_filename, linewidth=0, legends=legends, mew=1.2, figsize=(4.8, 3.05), loc=2, tight_layout=[-0.03, -0.03, 1.03, 1.03], annotate=(0.66, 0.86, "$r=%0.2f$" % p[0]), font_size=11, alpha=1, marker=['+', 'x', '>', '^', 'o', 'v', 'D', 's', '3', '2', '<'], colors=colors, grid=True, markersize=4, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
 
 
 for i in range(len(topologies)):
@@ -852,6 +1122,67 @@ for i in range(len(topologies)):
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##########3
+
+execfile("swarm_analyzer.py")
+execfile("plotter.py")
+from scipy.stats import pearsonr
+
+df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw=None, function=19, head=2000, diff_threshold=0.02, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
+topologies = ['Ring', 'Neumann'] + ['$k=%d$' % k for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]] + ["Global"]
+runs = 30
+ds_index = range(0, len(topologies)*runs + 1, runs)
+ds = []
+for i,j in zip(ds_index, ds_index[1:]):
+    ds.append(pd.DataFrame({'x': df.sum_cd[i:j], 'y': df.s_it[i:j]}))
+
+away_std = 1.5
+ds_no_outliers = []
+for d in ds:
+    dd = d[d.y < np.mean(d.y) + away_std*np.std(d.y)]
+    dd = dd[dd.y > np.mean(dd.y) - away_std*np.std(dd.y)]
+    dd = dd[dd.x < np.mean(dd.x) + away_std*np.std(dd.x)]
+    dd = dd[dd.x > np.mean(dd.x) - away_std*np.std(dd.x)]
+    ds_no_outliers.append(dd)
+
+ddd = ds_no_outliers[0]
+for d in ds[1:]:
+    ddd = ddd.append(d)
+
+p = pearsonr(ddd['x'], ddd['y'])
+
+
+#F14 2k (0.48173211798028143, 1.3798970467458267e-30) 4k (0.47799341554669339, 4.4700103566216424e-30)
+
+print p
+
+output_filename= None
+legends = ['Ring', 'Neumann'] + ['$k=%d$' % k for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]] + ["Global$\quad\quad$ "]
+dss = ds_no_outliers
+dss.reverse()
+legends.reverse()
+colorblind = [(0, 0, 0), (230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0), (204, 121, 167)]
+colorblind = ['#%02x%02x%02x' % (c[0], c[1], c[2]) for c in colorblind]
+colors = colorblind[3], colorblind[5], colorblind[6], colorblind[1], colorblind[2], colorblind[7]
+colors = colorblind[1:]
+Plotter.plot_curve(dss, legend_ncol=2, output_filename=output_filename, linewidth=0, legends=legends, mew=1.2, figsize=(4.8, 3.05), loc=2, tight_layout=[-0.03, -0.03, 1.03, 1.03], annotate=(0.66, 0.86, "$r=%0.2f$" % p[0]), font_size=11, alpha=1, marker=['+', 'x', '>', '^', 'o', 'v', 'D', 's', '3', '2', '<'], colors=colors, grid=True, markersize=4, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+
+
 pearsonr([1, 2, 3], [4, 3, 7])
 
 Plotter.plot_curve(ds_no_outliers, linewidth=0, y_scale='log', x_scale='log', legends=legends, figsize=(5, 3.8), loc=3, tight_layout=[], annotate=(0.39, 0.86, "$r=%0.2f$" % (ddd.corr()['y']['x'])), font_size=11, alpha=0.8, marker=['x', '.', 'o'], colors=["#e41a1c", "#4daf4a", "#377eb8", "#fdae61"], grid=True, markersize=6, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
@@ -859,31 +1190,151 @@ ddd_l = np.log(ddd)
 
     # boxplot stagnation and communication diversity
     execfile("plotter.py")
-    # df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw=None, head=2000, diff_threshold=0.01, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
+    execfile("swarm_analyzer.py")
+    df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw=None, head=2000, diff_threshold=0.01, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
     topologies = [2, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
     runs = 30
     ds_index = range(0, len(topologies)*runs + 1, runs)
     ds = []
     for i,j in zip(ds_index, ds_index[1:]):
+    #for i,j in zip(ds_index, ds_index):
         ds.append(pd.DataFrame({'x': df.sum_cd[i:j], 'y': df.s_it[i:j]}))
     topologies_legend = map(str, topologies)
     output_filename="boxplot_stagnation.pdf"
     output_filename= None
-    Plotter.plot_boxplots([d.y for d in ds], topologies_legend, output=output_filename, ylabel="Iteration of stagnation $i_s$", xlabel="$k$-regular topologies", size=(5, 3), showfliers=False)
+    boxes_kargs = {'color': 'black', 'linewidth': 1.3, 'zorder': 3, 'fillstyle': 'full', 'facecolor': '#a6cee3'}
+    means_kargs = {'color': 'black', 'fillstyle': 'full', 'markerfacecolor': "black", 'marker': "s", 'markersize': 3, 'mew': 1, 'mec': 'black', 'zorder': 5}
+    fliers_kargs = {'color': 'black', 'marker': ".", 'markersize': 3, 'mew': 1.5, 'mec': 'black'}
+    whiskers_kargs = {'color': 'black', 'linewidth': 1.2, 'zorder': 2, 'linestyle': '-', 'alpha': 1.0, 'mec': 'black'}
+    medians_kargs = {'color': 'black', 'linewidth': 1.6, 'zorder': 5, 'alpha': 0.3}
+    caps_kargs = {'linewidth': 1.5, 'color': 'black',}
+    topologies_legend[0] = 'Ring'
+    topologies_legend[len(topologies)-1] = 'Global'
+    legends = [range(1, len(topologies_legend) + 1), topologies_legend, {"rotation": 90}]
+    Plotter.plot_boxplots([d.y for d in ds], xticks_args=legends, grid_only='y', xlim=(0.3, len(topologies)+0.6), grid=True, output=output_filename, widths=0.7, tight_layout=[-0.1, -0.10, 1.025, 1.06], bootstrap=2000, boxes_kargs=boxes_kargs, showmeans=False, ylabel="Iteration of stagnation $i_s$", xlabel="$k$-regular topologies", size=(2.26, 2.3), showfliers=False, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs)
     Plotter.plot_boxplots([d.x for d in ds], topologies_legend, ylabel="Communication diversity", size=(6, 3), showfliers=False)
-    output_filename="communication_diversity.pdf"
+    output_filename="communication_diversity_.pdf"
     output_filename= None
-    xticks_args = [2, 10, 30, 20, 40, 50, 60, 70, 80, 90, 100]
+    #xticks_args = [2, 10, 30, 20, 40, 50, 60, 70, 80, 90, 100]
+    xticks_args = [2, 10, 50, 100]
     xticks_args = (xticks_args, map(str, xticks_args))
-    # xticks_args[1][0] = 'Ring'
-    # xticks_args[1][len(xticks_args[1])-1] = 'Global'
-    Plotter.plot_curve({'x': topologies, 'y': [np.mean(d.x) for d in ds]}, linewidth=1, output_filename=output_filename, xticks_args=xticks_args, tight_layout=[], figsize=(4.2, 3.3), font_size=11, xtick_rotation=90, grid=True, marker=['x'], colors="#e41a1c", markersize=8, x_label="$k$-regular topologies", y_label="Average communication diversity", xlim=(-2, 100))
+    xticks_args[1][0] = 'Ring'
+    xticks_args[1][len(xticks_args[1])-1] = 'Global'
+    plt.clf()
+    Plotter.plot_curve({'x': topologies, 'y': [np.mean(d.x) for d in ds]}, linewidth=1.5, x_scale='log', output_filename=output_filename, xticks_args=xticks_args, tight_layout=[-0.08, -0.10, 1.08, 1.05], mew=1.5, figsize=(4.5/2, 2.3), font_size=11, xtick_rotation=90, grid=True, marker=['s'], mec="#e41a1c", colors="#e41a1c", markersize=3, x_label="$k$-regular topologies", y_label="Average communication diversity")
     plt.plot(topologies, [np.mean(d.x) for d in ds])
     plt.xticks(topologies)
     plt.show()
 
+
+
+execfile("swarm_analyzer.py")
+import numpy as np, scipy.stats as st
+import re
+
+functions = [2, 6, 14, 19]
+diff_threshold = 10**-5
+df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(functions=functions, tw=None, diff_threshold=diff_threshold, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
+len_topologies = 17
+runs = 30
+ds_index = range(0, len(df) + 1, runs)
+ds_indices = zip(ds_index, ds_index[1:])
+# ds_indices = [ds_indices[i] for j in range(len(functions)) for i in range(j, len(ds_indices), len_topologies) ]
+
+fun_top = [(i, f) for f in functions for i in range(len_topologies)]
+fun_top_i = 0
+jump_every = 6
+jump_every_i = 0
+tex = ""
+for i, j  in ds_indices:
+    if fun_top[fun_top_i][1] == 19:
+        sum_cd = list(df.sum_cd[i:j])
+        l, u = st.t.interval(0.95, len(sum_cd)-1, loc=np.mean(sum_cd), scale=st.sem(sum_cd))
+        # tex += "& $%0.3f, %.3f$  " % (l, u)
+        tex += re.sub("0\.", ".", "& $(%-1.3f, %.3f)$  " % (l, u))
+        jump_every_i += 1
+        if jump_every_i % jump_every == 0:
+            print tex + "\\\\"
+            tex = ""
+    fun_top_i += 1
+print tex + "\\\\"
+
+
+# execfile("plotter.py")
+execfile("swarm_analyzer.py")
+
+topologies = ['ring', 'kregular10', 'kregular30', 'kregular40']
+functions = [2, 6, 14, 19]
+diff_threshold = 10**-5
+df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(topologies=topologies, functions=functions, tw=None, diff_threshold=diff_threshold, smooth=1, tws=[10, 25, 50, 75, 100, 200, 300, 400, 500, 1000])
+# topologies = [2, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+topologies_n = [2, 10, 30, 40]
+runs = 30
+ds_index = range(0, len(functions)*len(topologies)*runs + 1, runs)
+ds_indices = zip(ds_index, ds_index[1:])
+ds_indices = [ds_indices[i] for j in range(len(functions)) for i in range(j, len(ds_indices), len(topologies)) ]
+ds = []
+space_i = 0
+for i,j in ds_indices:
+    ds.append(pd.DataFrame({'x': df.sum_cd[i:j], 'y': df.s_it[i:j]}))
+    space_i += 1
+    if space_i % len(topologies) == 0:
+        ds.append(None)
+topologies_legend = map(str, topologies)
+output_filename="boxplot_stagnation.pdf"
+output_filename= None
+colorblind = [(0, 0, 0), (230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0), (204, 121, 167)]
+colorblind = ['#%02x%02x%02x' % (c[0], c[1], c[2]) for c in colorblind]
+colors = [colorblind[3]]*len(functions) + [colorblind[5]]*len(functions) + [colorblind[6]]*len(functions) + [colorblind[1]]*len(functions) #, colorblind[2], colorblind[7]
+colors = [colorblind[3], colorblind[5], colorblind[6], colorblind[1], "black"]*4
+boxes_kargs = {'color': 'black', 'linewidth': 1.3, 'zorder': 3, 'fillstyle': 'full', 'facecolor': colors}
+means_kargs = {'color': 'black', 'fillstyle': 'full', 'markerfacecolor': "black", 'marker': "s", 'markersize': 3, 'mew': 1, 'mec': 'black', 'zorder': 5}
+fliers_kargs = {'color': 'black', 'marker': ".", 'markersize': 3, 'mew': 1.5, 'mec': 'black'}
+whiskers_kargs = {'color': 'black', 'linewidth': 1.2, 'zorder': 2, 'linestyle': '-', 'alpha': 1.0, 'mec': 'black'}
+medians_kargs = {'color': 'black', 'linewidth': 1.6, 'zorder': 5, 'alpha': 0.3}
+caps_kargs = {'linewidth': 1.5, 'color': 'black',}
+topologies_legend[0] = 'Ring'
+topologies_legend[len(topologies)-1] = 'Global'
+topologies_legend = ['%d-regular' % i for i in topologies_n]
+legends = [range(1, len(topologies_legend) + 1), topologies_legend, {"rotation": 90}]
+legends = [[2.5, 7.5, 12.5, 17.5] + range(5, len(topologies)*len(functions) + len(topologies) + 1, 5), topologies_legend + [""]*4, {"rotation": 0}]
+legends = None
+Plotter.plos_style()
+Plotter.plot_boxplots([d.x if d is not None else [] for d in ds ], whis=1.5, ylim=(0.1, 0.45), size=(4.7, 3), tight_layout=[-0.03, -0.04, 1.02, 1.04], loc=1, xticks_args=legends, legends=["$F_{%d}$" % i for i in [2, 6, 14, 19]], grid_only='y', xlim=(0.3, len(topologies) + len(topologies)*len(functions)), grid=True, output=output_filename, widths=0.7,  bootstrap=2000, boxes_kargs=boxes_kargs, showmeans=False, ylabel="Communication diversity", xlabel="$k$-regular topologies", showfliers=True, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs)
+Plotter.plot_boxplots([d.y if d is not None else [] for d in ds ], ylim=(1, 2200), xticks_args=legends, size=(4.7, 4), tight_layout=[-0.03, -0.04, 1.02, 1.04], legends=["$F_{%d}$" % i for i in [2, 6, 14, 19]], grid_only='y', xlim=(0.3, len(topologies) + len(topologies)*len(functions)), grid=True, output=output_filename, widths=0.7,  bootstrap=2000, boxes_kargs=boxes_kargs, showmeans=False, ylabel="Iteration of stagnation $i_s$", xlabel="$k$-regular topologies", showfliers=True, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs)
     """
 
+    @staticmethod
+    def create_influence_graph_graphml(filename, output_file_name, window_size=1000, calculate_on=1000):
+        influence_graph_grep = 'ig\:#'
+        pre_callback = Callback.to_symmetric
+        #for calculate_on in calculates_on:
+        graph, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep=influence_graph_grep,
+                                                      window_size=window_size, pre_callback=pre_callback,
+                                                      calculate_on=calculate_on)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
+        igraph.Graph.write_graphml(igraph_graph, output_file_name)
+    """
+    filename = './data/100_particles/vonneumann_F06_15.teste'
+    output_file_name = './vonneumann.graphml'
+    """
+
+    @staticmethod
+    def plot_fitness(topologies=None, function=2, functions=None, runs=1, **kargs):
+        if topologies is None:
+            topologies = ['ring', 'vonneumann', 'kregular5', 'kregular6', 'kregular7', 'kregular8', 'kregular9',
+                          'kregular10', 'kregular20', 'kregular30', 'kregular40', 'kregular50',
+                          'kregular60', 'kregular70', 'kregular80', 'kregular90', 'global']
+        if functions is None:
+            functions = [function]
+        for function in functions:
+            for t in topologies:
+                for r in range(runs):
+                    filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, function, r)
+                    diff_threshold, iter_threshold = 0.02, 500
+                    _, stagnation_iteration = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename, 10, smooth=1, diff_threshold=diff_threshold, iter_threshold=iter_threshold)
+                    df = pd.read_hdf(filename, 'df')
+                    Plotter.plot_curve({'x': df.index, 'y': df['it:#']}, vline_at=stagnation_iteration, figsize=(10, 4))
 
     @staticmethod
     def analyze_analysis_df_file(filename):
@@ -1139,27 +1590,29 @@ ddd_l = np.log(ddd)
     Plotter.plot_heatmap(df[tws].corr(), titles=tws, ordered=True, tight_layout=[], figsize=(7,6), cmap=plt.cm.Spectral, values_on=True, font_size=11)
 
     execfile("plotter.py")
-    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_vonneumann.hdf", 'df')
-    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_ring.hdf", 'df')
-    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_dynamicring.hdf", 'df')
-    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_global.hdf", 'df')
-    df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_30kregular.hdf", 'df')
-    components = np.array(df)#/100
-    ws = list(np.arange(0, 1.01, 0.01))
-    yticks = range(0, len(ws), 10)
-    titles_y = map(str, [ws[i] for i in yticks])
-    tws = range(1, 1001, 10) + [1000]
-    xticks = range(0, len(tws), 10)
-    titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
-    # yticks.reverse()
-    # titles_x = None
-    # titles_y = None
-    # xticks = [0]
-    # yticks = [0]
-
-    output_filename = "heatmap_30kregular_.pdf"
-    output_filename = None
-    Plotter.plot_heatmap(components, output_filename=output_filename, main_title="Number of components           $\qquad$", subplot_adjust=[0.08, 0.135], font_size=16, vmin=0, vmax=100, tight_layout=[], figsize=(9, 6.5), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=plt.cm.Spectral_r)
+    topologies = ["vonneumann", "ring", "dynamicring", "global", "30kregular"]
+    topology = "vonneumann"
+    for topology in topologies:
+        df = pd.read_hdf("./data/100_particles/number_of_components/heatmap_1000_%s.hdf" % topology, 'df')
+        components = np.array(df)#/100
+        ws = list(np.arange(0, 1.01, 0.01))
+        yticks = range(10, len(ws), 10)
+        titles_y = map(str, [ws[i] for i in yticks])
+        tws = range(1, 1001, 10) + [1000]
+        xticks = range(0, len(tws), 50)
+        titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
+        # yticks.reverse()
+        # titles_x = None
+        # titles_y = None
+        # xticks = [0]
+        # yticks = [0]
+        output_filename = "heatmap_%s.svg" % topology
+        # output_filename = None
+        plt.clf()
+        cmap = plt.cm.Spectral_r
+        # import seaborn.apionly as sns
+        # cmap = sns.cubehelix_palette(20, start=2.8, light=0.9, dark=0.1, rot=0.75, as_cmap=True)
+        Plotter.plot_heatmap(components, colorbar_on=False, output_filename=output_filename, subplot_adjust=[0.17, 0.19], font_size=16, vmin=0, vmax=100, tight_layout=[-0.03, 0, 1.06, 1.06], figsize=(2.5, 2.3), ordered=False, titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y, set_yticks=yticks, grid=False, cmap=cmap)
 
     ### tests
     #for i in range(len(ws)):
@@ -1363,19 +1816,19 @@ graph_3 = np.reshape(final_distances, (1, 10000))
                                                                 pos_callback=pre_callback, windows_size=windows_size,
                                                                 calculate_on=calculate_on)
         normalize = [2*i for i in windows_size]
-        pd_datas = {}
-        for title in graph_matrices:
+        pd_datas = []
+        for title, _ in filenames:
             graphs = [graph_matrices[title][i] for i in windows_size]
             graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
             curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
                                                                              weight_normalize=normalize)
-            pd_datas[title] = dict(zip(windows_size, curves_areas))
-        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0))
+            pd_datas.append((title, dict(zip(windows_size, curves_areas))))
+        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0), figsize=(4.5, 4))
     """
     execfile("swarm_analyzer.py")
-    filename = [('Global', "./data/100_particles/global_F06_15.teste"), ('Ring', "./data/100_particles/ring_F02_15.teste"), \
-    ('g2', "./data/100_particles/global_F02_15.teste"), ('g3', "./data/100_particles/global_F02_15.teste")]
-    df = SwarmAnalyzer.read_files_and_plot(filename, windows_size=[10], calculate_on=10)
+    execfile("giant_component_analysis_plotter.py")
+    filenames = [('Global', "./data/100_particles/global_F06_15.teste"), ('Ring', "./data/100_particles/ring_F06_15.teste"), ('Von Neumann', "./data/100_particles/vonneumann_F06_15.teste"), ('Dynamic', "./data/100_particles/dynamicring_F06_15.teste")]
+    df = SwarmAnalyzer.read_files_and_plot(filename, windows_size=[10, 50, 100, 1000], calculate_on=1000, tight_layout=[])
     """
 
     @staticmethod
@@ -1386,20 +1839,21 @@ graph_3 = np.reshape(final_distances, (1, 10000))
                                                                 pos_callback=pre_callback, windows_size=windows_size,
                                                                 calculate_on=calculate_on)
         normalize = [2*i for i in windows_size]
-        pd_datas = {}
-        for title in graph_matrices:
+        pd_datas = []
+        for title,_ in filenames:
             graphs = [graph_matrices[title][i] for i in windows_size]
             graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
             curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
                                                                              weight_normalize=normalize)
-            pd_datas[title] = dict(zip(windows_size, curves_areas))
-        GiantComponentDeathPlotter.giant_component_death_curve_with_area(pd_datas, xlim=(0, 1.0), figsize=(7.5, 3.0), **kargs)
+            pd_datas.append((title, dict(zip(windows_size, curves_areas))))
+        GiantComponentDeathPlotter.giant_component_death_curve_with_area(pd_datas, xlim=(0, 1.0), figsize=(4.5, 1.9), mew=1.2, tight_layout=[-0.02, 0.01, 1.02, 1.06], output_filename="graph_destruction_area.pdf") #, **kargs)
     """
+    plt.clf()
     execfile("swarm_analyzer.py")
     execfile("giant_component_analysis_plotter.py")
-    filename = [('Ring', "./data/100_particles/ring_F06_06.teste"), ('Global', "./data/100_particles/global_F06_06.teste")]
-    SwarmAnalyzer.read_files_and_plot_with_area(filename, windows_size=[100, 1000], calculate_on=1000, output_filename="graph_destruction_area_10002.pdf")
-    SwarmAnalyzer.read_files_and_plot_with_area(filename, windows_size=[100, 1000], calculate_on=1000)
+    filenames = [('Global', "./data/100_particles/global_F06_06.teste"), ('Ring', "./data/100_particles/ring_F06_06.teste")]
+    SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000, output_filename="graph_destruction_area_10002.pdf")
+    SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000)
     """
     #create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
     #create_heatmap_plot(all_graph_matrices, calculate_on)

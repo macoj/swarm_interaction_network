@@ -23,10 +23,10 @@ class Plotter:
                            xticks_args=None, yticks_args=None, font_size=9, font_family='normal', font_weight='normal',
                            grid=False, tight_layout=None, x_scale='linear', y_scale='linear', **kwargs):
         if pd_datas is not None:
-            font = {'family': font_family,
-                    'weight': font_weight,
-                    'size': font_size}
-            matplotlib.rc('font', **font)
+            # font = {'family': font_family,
+            #         'weight': font_weight,
+            #         'size': font_size}
+            # matplotlib.rc('font', **font)
             f, axs = plt.subplots(1, len(pd_datas), sharey=True, figsize=figsize)
             ls = linestyle
             #ax3 = fig.add_subplot(plot_gridspec[4, 2])
@@ -52,7 +52,7 @@ class Plotter:
             # if y_label:
             #     f.text(0.08, 0.5, y_label, ha='center', va='center', rotation='vertical')
             if x_label:
-                f.text(0.5, 0.01, x_label, ha='center', va='center')
+                f.text(0.5, 0.04, x_label, ha='center', va='center', fontsize=9)
             for data_i in range(len(pd_datas)):
                 markevery_ = markevery
                 pd_data = pd_datas[data_i]
@@ -66,10 +66,11 @@ class Plotter:
                     if not linestyle:
                         ls = next(linecycler)
                     if colorcycler:
+                        color = next(colorcycler)
                         ax.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
                                 marker=next(markercycler), label=next(legend_title),
-                                markersize=markersize, linewidth=linewidth,
-                                markevery=markevery_, color=next(colorcycler), **kwargs)
+                                markersize=markersize, linewidth=linewidth,  mec=color,
+                                markevery=markevery_, color=color, **kwargs)
                     else:
                         ax.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
                                 marker=next(markercycler), label=next(legend_title),
@@ -98,7 +99,7 @@ class Plotter:
                         ax.set_xlim(xlim)
                     else:
                         ax.set_xlim(xlim_min, xlim_max)
-            plt.legend(loc=4)
+            plt.legend(loc=4, numpoints=1)
             if tight_layout is not None:
                 if not tight_layout:
                     plt.tight_layout()
@@ -119,18 +120,19 @@ class Plotter:
                    linewidth=1, markevery=None, colors=None, ylim=None, xlim=None, vline_at=None,
                    xticks_args=None, font_size=9, font_family='normal', font_weight='normal',
                    yticks_args=None, grid=False, tight_layout=None, x_scale='linear', annotate=None,
-                   y_scale='linear', legend_ncol=1,  xtick_rotation=0, **kwargs):
+                   y_scale='linear', legend_ncol=1,  xtick_rotation=0, dpi=300, **kwargs):
         if pd_data is not None:
-            font = {'family': font_family,
-                    'weight': font_weight,
-                    'size': font_size}
-            matplotlib.rc('font', **font)
+            # font = {'family': font_family,
+            #         'weight': font_weight,
+            #         'size': font_size}
+            # matplotlib.rc('font', **font)
             fig = plt.figure(figsize=figsize)
             ls = linestyle
             #ax3 = fig.add_subplot(plot_gridspec[4, 2])
             if marker:
                 if type(marker) is not list:
                     marker = [marker]
+                    
             else:
                 marker = [None]
             markercycler = cycle(marker)
@@ -154,18 +156,21 @@ class Plotter:
                     colorcycler = cycle(colors)
                 for pd_data_i in pd_data:
                     legend_title = None
-                    if legends:
-                        legend_title = cycle(legendcycler)
-                    if not linestyle:
+                    if legendcycler is not None:
+                        legend_title = next(legendcycler)
+                    if linestyle is None:
                         ls = next(linecycler)
-                    if colorcycler:
+                    else:
+                        linestyle = ls
+                    if colorcycler is not None:
+                        color = next(colorcycler)
                         plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
-                                 marker=next(markercycler), label=next(legend_title),
+                                 marker=next(markercycler), label=legend_title,
                                  markersize=markersize, linewidth=linewidth,
-                                 markevery=markevery, color=next(colorcycler), **kwargs)
+                                 markevery=markevery, color=color, mec=color, **kwargs)
                     else:
                         plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
-                                 marker=next(markercycler), label=next(legend_title),
+                                 marker=next(markercycler), label=legend_title,
                                  markersize=markersize, linewidth=linewidth,
                                  markevery=markevery, **kwargs)
                     if markevery:
@@ -175,9 +180,9 @@ class Plotter:
                                    ncol=legend_ncol)
                     else:
                         plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1, ncol=legend_ncol)
-                    leg = plt.gca().get_legend()
-                    ltext = leg.get_texts()  # all the text.Text instance in the legend
-                    plt.setp(ltext, fontsize='medium')    # the legend text fontsize
+                    # leg = plt.gca().get_legend()
+                    # ltext = leg.get_texts()  # all the text.Text instance in the legend
+                    # plt.setp(ltext, fontsize='medium')    # the legend text fontsize
                     xlim_min = min(xlim_min, min(pd_data_i['x']))
                     xlim_max = max(xlim_max, max(pd_data_i['x']))
                 if xlim:
@@ -212,7 +217,7 @@ class Plotter:
                 else:
                     plt.tight_layout(rect=tight_layout)
             if output_filename:
-                plt.savefig(output_filename)
+                plt.savefig(output_filename, dpi=dpi)
                 #plt.clf()
                 plt.close()
             else:
@@ -403,10 +408,10 @@ class Plotter:
         assert (matrix is not None or matrixdf is not None), "Give me matrix or matrixdf!"
         if matrix is not None:
             matrixdf = pd.DataFrame(matrix)
-        font = {'family': font_family,
-                'weight': font_weight,
-                'size': font_size}
-        matplotlib.rc('font', **font)
+        # font = {'family': font_family,
+        #         'weight': font_weight,
+        #         'size': font_size}
+        # matplotlib.rc('font', **font)
         # look at raw data
         #axi = plt.imshow(matrixdf,interpolation='nearest')
         #ax = axi.get_axes()
@@ -451,7 +456,7 @@ class Plotter:
             axi = heatmap_subplot.matshow(matrixdf, interpolation='nearest', aspect='auto', origin='lower',
                                           vmin=vmin, vmax=vmax, **kargs)
             if titles_x:
-                heatmap_subplot.set_xticklabels(titles_x, rotation=90)
+                heatmap_subplot.set_xticklabels(titles_x, rotation=0)
                 heatmap_subplot.tick_params(labelbottom='on', labeltop='off')
             if titles_y:
                 heatmap_subplot.set_yticklabels(titles_y)
@@ -542,27 +547,60 @@ class Plotter:
             plt.show()
 
     @staticmethod
-    def plot_boxplots(data, titles, main_title=None, ylabel=None, xlabel=None, xscale=None,
-                      yscale=None, first=0, output=None, size=None, ylim=None, xlim=None, xticks_args=None,
-                      font_size=9, font_family='normal', font_weight='normal', **kargs):
+    def plot_boxplots(data, titles=None, main_title=None, ylabel=None, xlabel=None, xscale=None, violin=False,
+                      yscale=None, first=0, output=None, size=None, ylim=None, xlim=None, grid=False, loc=2,
+                      whis=1., notch=0, sym='+', showmeans=True, widths=0.5, boxes_kargs=None, legends=None,
+                      whiskers_kargs=None, means_kargs=None, fliers_kargs=None, medians_kargs=None, grid_only=None,
+                      tight_layout=None, caps_kargs=None, on_current=False, just_plot=False, xticks_args=None, **kargs):
         # ## plot here:
         # multiple box plots on one figure
-        font = {'family': font_family,
-                'weight': font_weight,
-                'size': font_size}
-        matplotlib.rc('font', **font)
-        if size:
-            plt.figure(figsize=size)
-        else:
-            plt.figure()
+        if not on_current:
+            if size:
+                plt.figure(figsize=size)
+            else:
+                plt.figure()
         # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
         # bp = axes[0, 0].boxplot(all_alphas, notch=0, sym='+', showmeans=True, widths=0.3)
         ax = plt.axes()
-        bp = plt.boxplot(data[first:], notch=0, sym='+', showmeans=True, widths=0.3, whis=1., **kargs)
-        plt.setp(bp['boxes'], color='black')
-        plt.setp(bp['whiskers'], color='blue', linestyle="-")
-        plt.setp(bp['fliers'], color='gray', marker='+')
-        plt.setp(bp['means'], color='black', marker='.', fillstyle='none', markerfacecolor='gray', pickradius=0.2)
+        if violin:
+            plt.violinplot(data[first:])
+        else:
+            if whiskers_kargs is None:
+                whiskers_kargs = {'color': 'blue', 'linestyle': "-"}
+            if boxes_kargs is None:
+                boxes_kargs = {'color': 'black'}
+            if means_kargs is None:
+                means_kargs = {'color': 'black', 'fillstyle': 'none', 'marker': ".",
+                               'pickradius': 0.2, 'markerfacecolor': "gray"}
+            if fliers_kargs is None:
+                fliers_kargs = {'color': 'gray', 'marker': "+"}
+            if medians_kargs is None:
+                medians_kargs = {'color': 'red'}
+            if caps_kargs is None:
+                caps_kargs = {'linewidth': 1}
+            facecolorcycler = None
+            if 'facecolor' in boxes_kargs:
+                if type(boxes_kargs['facecolor']) != list:
+                    facecolorcycler = cycle([boxes_kargs['facecolor']])
+                else:
+                    facecolorcycler = cycle(boxes_kargs['facecolor'])
+            bp = plt.boxplot(
+                data[first:], notch=notch, sym=sym, showmeans=showmeans, widths=widths, whis=whis, patch_artist=True, **kargs)
+            for patch in bp['boxes']:
+                key_func = {'color': patch.set_color,
+                            'linewidth': patch.set_linewidth}
+                for key in boxes_kargs:
+                    if key in key_func:
+                        key_func[key](boxes_kargs[key])
+                if 'facecolor' in boxes_kargs and facecolorcycler:
+                        patch.set_facecolor(facecolorcycler.next())
+                if 'zorder' in boxes_kargs:
+                    patch.zorder = boxes_kargs['zorder']
+            plt.setp(bp['whiskers'], **whiskers_kargs)
+            plt.setp(bp['fliers'], **fliers_kargs)
+            plt.setp(bp['means'], **means_kargs)
+            plt.setp(bp['medians'], **medians_kargs)
+            plt.setp(bp['caps'], **caps_kargs)
         # for ax in axes.flatten():
         #     ax.set_yscale('log')
         #     ax.set_yticklabels([])
@@ -570,24 +608,78 @@ class Plotter:
             ax.set_yscale(yscale)
         if xscale:
             ax.set_xscale(xscale)
-        if titles:
-            plt.xticks(range(1, len(data[first:]) + 1), titles[first:], rotation=90)
-        if xticks_args:
-            plt.xticks(xticks_args)
+        if titles and not xticks_args:
+            plt.xticks(range(1, len(data[first:]) + 1), titles[first:])
+        elif xticks_args:
+            if len(xticks_args) > 2:
+                plt.xticks(*xticks_args[:2], **xticks_args[2])
+            else:
+                plt.xticks(*xticks_args)
+        # plt.ylim((0, 150))
+        # plt.ylim((0.02, 0.04))
         if xlabel:
             plt.xlabel(xlabel)
         if ylabel:
             plt.ylabel(ylabel)
-        if xlim:
-            ax.set_xlim(xlim)
         if ylim:
-            ax.set_ylim(ylim)
-        if main_title:
+            plt.ylim(ylim)
+        if xlim:
+            plt.xlim(xlim)
+        if main_title is not None:
             plt.title(main_title)
-        plt.grid()
-        plt.tight_layout()
-        if not output:
-            plt.show()
-        else:
-            plt.savefig(output)
-            plt.close()
+        if legends and facecolorcycler:
+            legends_d = []
+            for _ in legends:
+                plot_d, = plt.plot([1, 1], color=facecolorcycler.next(), linewidth=10)
+                legends_d.append(plot_d)
+            plt.legend(legends_d, legends, loc=loc)
+            for plot_d in legends_d:
+                plot_d.set_visible(False)
+        if grid:
+            if grid_only is None:
+                plt.grid()
+            elif grid_only == 'y':
+                plt.gca().yaxis.grid(True)
+            else:
+                plt.gca().xaxis.grid(True)
+        if tight_layout is not None:
+            if not tight_layout:
+                plt.tight_layout()
+            else:
+                plt.tight_layout(rect=tight_layout)
+        if not just_plot:
+            if not output:
+                plt.show()
+            else:
+                plt.savefig(output, dpi=600)
+                plt.close()
+
+    @staticmethod
+    def plos_style():
+        ## line width frame
+        matplotlib.rcParams['axes.linewidth'] = 1.5
+        matplotlib.rcParams['patch.linewidth'] = 1.3
+        # matplotlib.rcParams['grid.linewidth'] = 0.5
+        # matplotlib.rcParams['grid.linestyle'] = ':'
+        # matplotlib.rcParams['grid.color'] = 'black'
+        # matplotlib.rcParams['axes.labelsize'] = 10
+        # matplotlib.rcParams['text.fontsize'] = 10
+        matplotlib.rcParams['legend.fontsize'] = 8
+        matplotlib.rcParams['xtick.labelsize'] = 7
+        matplotlib.rcParams['ytick.labelsize'] = 7
+        matplotlib.rcParams['axes.titlesize'] = 8
+        # xticks
+        matplotlib.rcParams['xtick.major.size'] = 4
+        matplotlib.rcParams['xtick.minor.size'] = 3
+        matplotlib.rcParams['xtick.major.width'] = 1.4
+        matplotlib.rcParams['ytick.major.width'] = 1.4
+        matplotlib.rcParams['xtick.minor.width'] = 1
+
+        matplotlib.rcParams['axes.labelpad'] = 0
+        matplotlib.rcParams['axes.labelsize'] = 8
+        matplotlib.rcParams['backend'] = 'ps'
+        matplotlib.rcParams['xtick.major.pad'] = 4
+        matplotlib.rcParams['ytick.major.pad'] = 4
+        params = {'mathtext.default': 'sf' }
+        plt.rcParams.update(params)
+        plt.rc('font', **{'family': 'sans-serif', 'sans-serif': ['Arial'], 'size': 12})
