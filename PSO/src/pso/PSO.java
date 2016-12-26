@@ -3,13 +3,16 @@ package pso;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.Random;
+
+import com.sun.management.GarbageCollectionNotificationInfo;
+
 import benchmark_functions.*;
 import edu.uci.ics.jung.graph.Graph;
 import edu.uci.ics.jung.graph.SparseMultigraph;
 
 public class PSO implements Runnable {
 	
-    private PrintWriter printWriter;
+    private PrintWriter print_writer;
 	public int swarm_gbest;
 	int current_iteration;
 	boolean swarm_neighborhood_graph[][];
@@ -57,6 +60,8 @@ public class PSO implements Runnable {
 	
 	int particles_failures_threshold;
 	int[] particles_failures_threshold_particular = null;
+	
+	boolean swarm_print_info = false;
 
 	public PSO(String[] args) {
 		//// PARAMETERS:
@@ -158,6 +163,9 @@ public class PSO implements Runnable {
 			particles_failures_threshold = 50; // TODO :
 			if (args.length > 7) {
 				swarm_static_topology_parameter = Integer.parseInt(args[7]);
+			}
+			if (args.length == 9) {
+				swarm_print_info = Boolean.parseBoolean(args[8]);
 			}
 			return true;
 		} else {
@@ -314,10 +322,10 @@ public class PSO implements Runnable {
     
     public void setTopologyMechanism(TOPOLOGY_MECHANISM topologyMechanism){
         this.swarm_topology_mechanism = topologyMechanism;
-    }
+    }  
 
     public void setPrinter(PrintWriter printer){
-        this.printWriter = printer;
+        this.print_writer = printer;
     }
     
     /**
@@ -326,14 +334,14 @@ public class PSO implements Runnable {
      */
     @Override
 	public void run(){
-    	if (printWriter == null) {
-        	printWriter =  new PrintWriter(System.out);
+    	if (print_writer == null) {
+        	print_writer =  new PrintWriter(System.out, true);
         }
 //    	DecimalFormat decimal_format = new DecimalFormat("#.####");
-        Analysis diversity = new AnalysisOlorunda(this, printWriter);
-        Analysis aggregation = new AnalysisYang(this, printWriter);
-        Analysis ratio = new AnalysisWorasucheep(this, printWriter);
-        Analysis distance = new AnalysisDistance(this, printWriter);
+        Analysis diversity = new AnalysisOlorunda(this, print_writer);
+        Analysis aggregation = new AnalysisYang(this, print_writer);
+        Analysis ratio = new AnalysisWorasucheep(this, print_writer);
+        Analysis distance = new AnalysisDistance(this, print_writer);
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
@@ -351,36 +359,38 @@ public class PSO implements Runnable {
                 // we now print:
                 // > fitness
                 String it = "it:#" + this.current_iteration + " " + particle_best_value[this.swarm_gbest];
-                printWriter.println(it);
+                print_writer.println(it);
                 // > influence graph
                 String igLine = "ig:#" + this.current_iteration + " ";
-                printWriter.print(igLine);
+                print_writer.print(igLine);
                 int[][] ig = this.getInfluenceGraph();
                 for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
                     for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
-                        printWriter.print(ig[i][j]+" ");
+                        print_writer.print(ig[i][j]+" ");
                     }                            
                 }
-                printWriter.println();
-                // > best personal values
-//                printWriter.print("pbest:#" + this.current_iteration + " ");
-//                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-//                    printWriter.print(this.particle_best_value[i] + " ");
-//                }
-                // > velocities of the particles: this is gonna be a DIMENSIONxPARTICLES
-                printWriter.print("velocities:#" + this.current_iteration + " ");
-                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
-                	for (int d = 0; d < this.DIMENSION; d++) {
-                		printWriter.print(this.particle_velocity[i][d] + " ");
-					}
+                print_writer.println();
+                if (swarm_print_info) {
+	                // > best personal values
+//	                printWriter.print("pbest:#" + this.current_iteration + " ");
+//	                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+//	                    printWriter.print(this.particle_best_value[i] + " ");
+//	                }
+	                // > velocities of the particles: this is gonna be a DIMENSIONxPARTICLES
+	                print_writer.print("velocities:#" + this.current_iteration + " ");
+	                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+	                	for (int d = 0; d < this.DIMENSION; d++) {
+	                		print_writer.print(this.particle_velocity[i][d] + " ");
+						}
+	                }
+	                print_writer.println();	
+	                // > diversity metrics
+//	                diversity.iterate();
+//	                aggregation.iterate();
+//	                ratio.iterate();
+	                // > position of particles
+//	                distance.iterate();
                 }
-
-                // > diversity metrics
-//                diversity.iterate();
-//                aggregation.iterate();
-//                ratio.iterate();
-                // > position of particles
-//                distance.iterate();
 
                 this.current_iteration = this.current_iteration + 1;
                 /*
@@ -390,10 +400,15 @@ public class PSO implements Runnable {
                     Logger.getLogger(PSO.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 */
+                if (this.current_iteration % 300 == 0) {
+                	print_writer.flush();
+                	System.gc();
+                }
             } while (this.current_iteration < MAXITER);
             run_final_values[run] = particle_best_value[this.swarm_gbest];
         }
-        printWriter.close();
+        
+        print_writer.close();
 	}
 
 	private void updateInfluenceGraph() {
