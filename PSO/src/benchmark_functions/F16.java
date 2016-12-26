@@ -8,7 +8,7 @@
 package benchmark_functions;
 /**
  * <p>
- * The D/m-group group Shifted and m-rotated Ackley�s Function: F16.
+ * The D/m-group group Shifted and m-rotated Ackley���s Function: F16.
  * </p>
  * <p>
  * This function is not <warning>not threadsafe</warning> because it uses
@@ -29,9 +29,19 @@ public final class F16 extends ShiftedPermutatedRotatedFunction {
 
   /** the minimum value */
   public static final double MIN = (-MAX);
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F16(int dimension) {
+    this(Defaults.getRandomizer(F16.class), dimension);
+  }
 
   /**
-   * Create a new D/m-group group Shifted and m-rotated Ackley�s Function
+   * Create a new D/m-group group Shifted and m-rotated Ackley���s Function
    * 
    * @param o
    *          the shifted global optimum
@@ -51,10 +61,14 @@ public final class F16 extends ShiftedPermutatedRotatedFunction {
    *          the randomizer to use
    */
   public F16(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
-        r.createRotMatrix1D(Defaults.DEFAULT_M));//
+    this(r, Defaults.DEFAULT_DIM);//
   }
+  
+  public F16(final Randomizer r, int dimension) {
+    this(r.createShiftVector(dimension, MIN, MAX),//
+        r.createPermVector(dimension),//
+        r.createRotMatrix1D(Defaults.DEFAULT_M));//
+  }  
 
   /**
    * Create a default instance of F16.
@@ -98,7 +112,7 @@ public final class F16 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -106,12 +120,12 @@ public final class F16 extends ShiftedPermutatedRotatedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "D/m-group group Shifted and m-rotated Ackley�s Function";//$NON-NLS-1$
+    return "D/m-group group Shifted and m-rotated Ackley���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

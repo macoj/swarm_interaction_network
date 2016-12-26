@@ -25,6 +25,17 @@ public final class F1 extends ShiftedFunction {
   /** the lookup table */
   private final double[] m_lookup;
 
+
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F1(int dimension) {
+	    this(Defaults.getRandomizer(F1.class).createShiftVector(dimension, MIN, MAX));
+  }  
+	  
   /**
    * Create a new shifted elliptic function
    * 
@@ -70,7 +81,7 @@ public final class F1 extends ShiftedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010)
    * 
@@ -83,7 +94,7 @@ public final class F1 extends ShiftedFunction {
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010). If no short
    * name is defined, the full name will be used.

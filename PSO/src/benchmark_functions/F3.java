@@ -21,6 +21,16 @@ public final class F3 extends ShiftedFunction {
 
   /** the minimum value */
   public static final double MIN = (-MAX);
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F3(int dimension) {
+	    this(Defaults.getRandomizer(F3.class).createShiftVector(dimension, MIN, MAX));
+  }
 
   /**
    * Create a new shifted ackley's function
@@ -65,7 +75,7 @@ public final class F3 extends ShiftedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -73,12 +83,12 @@ public final class F3 extends ShiftedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "Shifted Ackley�s Function";//$NON-NLS-1$
+    return "Shifted Ackley���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

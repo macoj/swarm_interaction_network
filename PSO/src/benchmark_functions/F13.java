@@ -7,7 +7,7 @@
  */
 package benchmark_functions;
 /**
- * The D/2m-group Shifted m-dimensional Rosenbrock�s Function: F13.
+ * The D/2m-group Shifted m-dimensional Rosenbrock���s Function: F13.
  * 
  * @author Thomas Weise
  */
@@ -27,6 +27,16 @@ public final class F13 extends ShiftedPermutatedFunction {
   
   /** the optimum vector */
   private transient double[] m_opt;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F13(int dimension) {
+	    this(Defaults.getRandomizer(F13.class), dimension);
+  }
 
   /**
    * Create a new D/2m--group v
@@ -50,9 +60,13 @@ public final class F13 extends ShiftedPermutatedFunction {
    *          the randomizer to use
    */
   public F13(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX - 1d),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
-        Defaults.DEFAULT_M);//
+    this(r, Defaults.DEFAULT_DIM);//
+  }
+  
+  public F13(final Randomizer r, int dimension) {
+	    this(r.createShiftVector(dimension, MIN, MAX - 1d),//
+	        r.createPermVector(dimension),//
+	        Defaults.DEFAULT_M);//
   }
 
   /**
@@ -94,7 +108,7 @@ public final class F13 extends ShiftedPermutatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -102,12 +116,12 @@ public final class F13 extends ShiftedPermutatedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "D/2m-group Shifted m-dimensional Rosenbrock�s Function";//$NON-NLS-1$
+    return "D/2m-group Shifted m-dimensional Rosenbrock���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

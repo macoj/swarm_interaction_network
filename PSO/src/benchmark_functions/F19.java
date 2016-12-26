@@ -7,7 +7,7 @@
  */
 package benchmark_functions;
 /**
- * The Shifted Schwefel�s Problem 1.2: F19.
+ * The Shifted Schwefel���s Problem 1.2: F19.
  * 
  * @author Thomas Weise
  */
@@ -23,13 +23,23 @@ public final class F19 extends ShiftedFunction {
   public static final double MIN = (-MAX);
 
   /**
-   * Create a new Shifted Schwefel�s Problem 1.2
+   * Create a new Shifted Schwefel���s Problem 1.2
    * 
    * @param o
    *          the shifted global optimum
    */
   public F19(final double[] o) {
     super(o, MIN, MAX);
+  }
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F19(int dimension) {
+    this(Defaults.getRandomizer(F19.class).createShiftVector(dimension, MIN, MAX));
   }
 
   /**
@@ -65,7 +75,7 @@ public final class F19 extends ShiftedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010)
    * 
@@ -73,12 +83,12 @@ public final class F19 extends ShiftedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "Shifted Schwefel�s Problem 1.2";//$NON-NLS-1$
+    return "Shifted Schwefel���s Problem 1.2";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010). If no short
    * name is defined, the full name will be used.

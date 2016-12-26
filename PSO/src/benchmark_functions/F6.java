@@ -8,7 +8,7 @@
 package benchmark_functions;
 /**
  * <p>
- * The Single-group Shifted and m-rotated Ackley�s Function: F6.
+ * The Single-group Shifted and m-rotated Ackley���s Function: F6.
  * </p>
  * <p>
  * This function is not <warning>not threadsafe</warning> because it uses
@@ -29,9 +29,19 @@ public final class F6 extends ShiftedPermutatedRotatedFunction {
 
   /** the minimum value */
   public static final double MIN = (-MAX);
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F6(int dimension) {
+	    this(Defaults.getRandomizer(F6.class), dimension);
+  }
 
   /**
-   * Create a new Single-group Shifted and m-rotated Ackley�s Function
+   * Create a new Single-group Shifted and m-rotated Ackley���s Function
    * 
    * @param o
    *          the shifted global optimum
@@ -51,8 +61,12 @@ public final class F6 extends ShiftedPermutatedRotatedFunction {
    *          the randomizer to use
    */
   public F6(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
+    this(r, Defaults.DEFAULT_DIM);//
+  }
+  
+  public F6(final Randomizer r, int dimension) {
+    this(r.createShiftVector(dimension, MIN, MAX),//
+        r.createPermVector(dimension),//
         r.createRotMatrix1D(Defaults.DEFAULT_M));//
   }
 
@@ -82,7 +96,7 @@ public final class F6 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -90,12 +104,12 @@ public final class F6 extends ShiftedPermutatedRotatedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "Single-group Shifted and m-rotated Ackley�s Function";//$NON-NLS-1$
+    return "Single-group Shifted and m-rotated Ackley���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

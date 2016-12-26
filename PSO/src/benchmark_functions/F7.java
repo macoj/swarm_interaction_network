@@ -9,7 +9,7 @@ package benchmark_functions;
 import java.io.BufferedWriter;
 
 /**
- * The Single-group Shifted m-dimensional Schwefel�s Problem 1.2: F7.
+ * The Single-group Shifted m-dimensional Schwefel���s Problem 1.2: F7.
  * 
  * @author Thomas Weise
  */
@@ -26,9 +26,19 @@ public final class F7 extends ShiftedPermutatedFunction {
 
   /** the m-value */
   private final int m_m;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F7(int dimension) {
+	    this(Defaults.getRandomizer(F7.class), dimension);
+  }
 
   /**
-   * Create a new Single-group Shifted m-dimensional Schwefel�s Problem 1.2
+   * Create a new Single-group Shifted m-dimensional Schwefel���s Problem 1.2
    * 
    * @param o
    *          the shifted global optimum
@@ -49,9 +59,13 @@ public final class F7 extends ShiftedPermutatedFunction {
    *          the randomizer to use
    */
   public F7(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
-        Defaults.DEFAULT_M);//
+    this(r, Defaults.DEFAULT_DIM);//
+  }
+  
+  public F7(final Randomizer r, int dimension) {
+	    this(r.createShiftVector(dimension, MIN, MAX),//
+	        r.createPermVector(dimension),//
+	        Defaults.DEFAULT_M);//
   }
 
   /**
@@ -80,7 +94,7 @@ public final class F7 extends ShiftedPermutatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -88,12 +102,12 @@ public final class F7 extends ShiftedPermutatedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "Single-group Shifted m-dimensional Schwefel�s Problem 1.2";//$NON-NLS-1$
+    return "Single-group Shifted m-dimensional Schwefel���s Problem 1.2";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

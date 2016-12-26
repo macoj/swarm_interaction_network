@@ -35,6 +35,16 @@ public final class F9 extends ShiftedPermutatedRotatedFunction {
 
   /** the second lookup table */
   private final double[] m_lookup2;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F9(int dimension) {
+	    this(Defaults.getRandomizer(F9.class), dimension);//
+  }
 
   /**
    * Create a new D/2m-group Shifted and m-rotated Elliptic Function
@@ -68,10 +78,20 @@ public final class F9 extends ShiftedPermutatedRotatedFunction {
    * @param r
    *          the randomizer to use
    */
-  public F9(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
+  public F9(final Randomizer r, int dimension) {
+    this(r.createShiftVector(dimension, MIN, MAX),//
+        r.createPermVector(dimension),//
         r.createRotMatrix1D(Defaults.DEFAULT_M));//
+  }
+  
+  /**
+   * Create a default instance of F9.
+   * 
+   * @param r
+   *          the randomizer to use
+   */
+  public F9(final Randomizer r) {
+    this(r, Defaults.DEFAULT_DIM);//
   }
 
   /**
@@ -114,7 +134,7 @@ public final class F9 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -127,7 +147,7 @@ public final class F9 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

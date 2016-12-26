@@ -7,7 +7,7 @@
  */
 package benchmark_functions;
 /**
- * The Shifted Rosenbrock�s Function: F20.
+ * The Shifted Rosenbrock���s Function: F20.
  * 
  * @author Thomas Weise
  */
@@ -24,9 +24,19 @@ public final class F20 extends ShiftedFunction {
 
   /** the optimum */
   private transient double[] m_opt;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F20(int dimension) {
+	    this(Defaults.getRandomizer(F20.class).createShiftVector(dimension, MIN, MAX - 1d));
+  }
 
   /**
-   * Create a new Shifted Rosenbrock�s Function
+   * Create a new Shifted Rosenbrock���s Function
    * 
    * @param o
    *          the shifted global optimum
@@ -68,7 +78,7 @@ public final class F20 extends ShiftedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010)
    * 
@@ -76,12 +86,12 @@ public final class F20 extends ShiftedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "Shifted Rosenbrock�s Function";//$NON-NLS-1$
+    return "Shifted Rosenbrock���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; , Ke Tang,
    * Xiaodong Li, P. N. Suganthan, and Zhenyu Yang, CEC'2010). If no short
    * name is defined, the full name will be used.

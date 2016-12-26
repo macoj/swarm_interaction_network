@@ -32,6 +32,16 @@ public final class F14 extends ShiftedPermutatedRotatedFunction {
 
   /** the lookup table */
   private final double[] m_lookup;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F14(int dimension) {
+	    this(Defaults.getRandomizer(F14.class), dimension);
+  }
 
   /**
    * Create a new D/m-group group Shifted and m-rotated Elliptic Function
@@ -55,10 +65,14 @@ public final class F14 extends ShiftedPermutatedRotatedFunction {
    *          the randomizer to use
    */
   public F14(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
-        r.createRotMatrix1D(Defaults.DEFAULT_M));//
+    this(r, Defaults.DEFAULT_DIM);//
   }
+  
+  public F14(final Randomizer r, int dimension) {
+    this(r.createShiftVector(dimension, MIN, MAX),//
+        r.createPermVector(dimension),//
+        r.createRotMatrix1D(Defaults.DEFAULT_M));//
+  }  
 
   /**
    * Create a default instance of F14.
@@ -102,7 +116,7 @@ public final class F14 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -115,7 +129,7 @@ public final class F14 extends ShiftedPermutatedRotatedFunction {
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 

@@ -154,7 +154,13 @@ public class PSO implements Runnable {
 			//swarm_initial_topology = TOPOLOGY.NSOME_PARTNERS;
 			//swarm_number_of_clusters = 3;
 			// > DYNAMIC TOPOLOGY FAILURES THRESHOLD
-			particles_failures_threshold = 50;
+			// TODO: you need to organize things here for parameters of the topologies!!
+			particles_failures_threshold = 50; // TODO :
+			if (args.length > 7) {
+				swarm_static_topology_parameter = Integer.parseInt(args[7]);
+			}
+//			System.out.println("swarm_static_topology_parameter: " + swarm_static_topology_parameter + " " + swarm_initial_topology + " " + swarm_topology_mechanism);
+//			System.exit(0);
 			return true;
 		} else {
 			System.out.print("PSO.jar runs particles evaluations dimensions function topology mechanism [mechanism_parameter]");
@@ -206,66 +212,88 @@ public class PSO implements Runnable {
 		Function func_return = null;
 		switch (parseInt) {
 		case 1:
-			func_return = new F1();
+			func_return = new F1(DIMENSION);
 			break;
 		case 2:
-			func_return = new F2();
+			func_return = new F2(DIMENSION);
 			break;
 		case 3:
-			func_return = new F3();
+			func_return = new F3(DIMENSION);
 			break;
 		case 4:
-			func_return = new F4();
+			func_return = new F4(DIMENSION);
 			break;
 		case 5:
-			func_return = new F5();
+			func_return = new F5(DIMENSION);
 			break;
 		case 6:
-			func_return = new F6();
+			func_return = new F6(DIMENSION);
 			break;
 		case 7:
-			func_return = new F7();
+			func_return = new F7(DIMENSION);
 			break;
 		case 8:
-			func_return = new F8();
+			func_return = new F8(DIMENSION);
 			break;
 		case 9:
-			func_return = new F9();
+			func_return = new F9(DIMENSION);
 			break;
 		case 10:
-			func_return = new F10();
+			func_return = new F10(DIMENSION);
 			break;
 		case 11:
-			func_return = new F11();
+			func_return = new F11(DIMENSION);
 			break;
 		case 12:
-			func_return = new F12();
+			func_return = new F12(DIMENSION);
 			break;
 		case 13:
-			func_return = new F13();
+			func_return = new F13(DIMENSION);
 			break;
 		case 14:
-			func_return = new F14();
+			func_return = new F14(DIMENSION);
 			break;
 		case 15:
-			func_return = new F15();
+			func_return = new F15(DIMENSION);
 			break;
 		case 16:
-			func_return = new F16();
+			func_return = new F16(DIMENSION);
 			break;
 		case 17:
-			func_return = new F17();
+			func_return = new F17(DIMENSION);
 			break;
 		case 18:
-			func_return = new F18();
+			func_return = new F18(DIMENSION);
 			break;
 		case 19:
-			func_return = new F19();
+			func_return = new F19(DIMENSION);
 			break;
 		case 20:
+			func_return = new F20(DIMENSION);
+			break;
+		case 21:
+			func_return = new F_Ackley(DIMENSION);
+			break;
+		case 22:
+			func_return = new F_Griewank(DIMENSION);
+			break;
+		case 23:
+			func_return = new F_Rastrigin(DIMENSION);
+			break;
+		case 24:
+			func_return = new F_Rosenbrock(DIMENSION);
+			break;
+		case 25:
+			func_return = new F_Schwefel(DIMENSION);
+			break;
+		case 26:
+			func_return = new F_Sphere(DIMENSION);
+			break;			
+		case 27:
 		default:
-			func_return = new F20();
+			func_return = new F_Weierstrass(DIMENSION);
 			break;				
+			
 		}
 		return func_return;
 	}
@@ -311,9 +339,9 @@ public class PSO implements Runnable {
         
         double run_final_values[] = new double[RUNS];
         for (int run = 0; run < RUNS; run++) {
+        	this.current_iteration = 0; 
             this.initializeRNG();
             this.initializePSO();
-
             do {
                 this.evaluatePositionAndUpdatePersonal();
                 this.updateGBest();
@@ -514,8 +542,10 @@ public class PSO implements Runnable {
 			int best_neighbour = particle_best_neighbour[particle];
 			// update particle with constriction factor
 			for (int dimension = 0; dimension < particle_velocity[particle].length; dimension++) {
-				double cognitive = c1*randomDouble()*(particle_best_value_position[particle][dimension] - particle_position[particle][dimension]);
-				double social = c2*randomDouble()*(particle_best_value_position[best_neighbour][dimension] - particle_position[particle][dimension]);
+				double c1_random = c1*randomDouble();
+				double c2_random = c2*randomDouble();
+				double cognitive = c1_random*(particle_best_value_position[particle][dimension] - particle_position[particle][dimension]);
+				double social = c2_random*(particle_best_value_position[best_neighbour][dimension] - particle_position[particle][dimension]);
 				particle_velocity[particle][dimension] = factor * (particle_velocity[particle][dimension] + cognitive + social);
 				// clamp the particles
 				if (particle_velocity[particle][dimension] > PARTICLE_MAXV) {

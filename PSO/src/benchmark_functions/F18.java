@@ -7,7 +7,7 @@
  */
 package benchmark_functions;
 /**
- * The D/m-group Shifted m-dimensional Rosenbrock�s Function: F18.
+ * The D/m-group Shifted m-dimensional Rosenbrock���s Function: F18.
  * 
  * @author Thomas Weise
  */
@@ -27,9 +27,19 @@ public final class F18 extends ShiftedPermutatedFunction {
   
   /** the optimum vector */
   private transient double[] m_opt;
+  
+  /**
+   * Create a new function with a given dimensionality
+   * 
+   * @param dimension
+   *          the dimension
+   */
+  public F18(int dimension) {
+	    this(Defaults.getRandomizer(F18.class), dimension);
+  }
 
   /**
-   * Create a new D/m--group Shifted m-dimensional Rosenbrock�s Function
+   * Create a new D/m--group Shifted m-dimensional Rosenbrock���s Function
    * 
    * @param o
    *          the shifted global optimum
@@ -50,10 +60,14 @@ public final class F18 extends ShiftedPermutatedFunction {
    *          the randomizer to use
    */
   public F18(final Randomizer r) {
-    this(r.createShiftVector(Defaults.DEFAULT_DIM, MIN, MAX - 1d),//
-        r.createPermVector(Defaults.DEFAULT_DIM),//
-        Defaults.DEFAULT_M);//
+    this(r, Defaults.DEFAULT_DIM);//
   }
+  
+  public F18(final Randomizer r, int dimension) {
+	    this(r.createShiftVector(dimension, MIN, MAX - 1d),//
+	        r.createPermVector(dimension),//
+	        Defaults.DEFAULT_M);//
+	  }
 
   /**
    * Create a default instance of F18.
@@ -96,7 +110,7 @@ public final class F18 extends ShiftedPermutatedFunction {
 
   /**
    * Obtain the full name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
@@ -104,12 +118,12 @@ public final class F18 extends ShiftedPermutatedFunction {
    */
   // @Override
   public final String getFullName() {
-    return "D/m-group Shifted m-dimensional Rosenbrock�s Function";//$NON-NLS-1$
+    return "D/m-group Shifted m-dimensional Rosenbrock���s Function";//$NON-NLS-1$
   }
 
   /**
    * Obtain the short name of the benchmark function (according to
-   * &quot;Benchmark Functions for the CEC�2010 Special Session and
+   * &quot;Benchmark Functions for the CEC���2010 Special Session and
    * Competition on Large-Scale Global Optimization&quot; Ke Tang, Xiaodong
    * Li, P. N. Suganthan, Zhenyu Yang, and Thomas Weise CEC'2010)
    * 
