@@ -74,11 +74,10 @@ class Simulator:
          0: NONE 1: DYNAMIC_2011
         """
         commands = []
-        runs = 30
-        functions = range(21, 28)
-        evaluations = 1000000
+        evaluations = 600000
         dimensions = 1000
         particles = 100
+        functions = range(21, 28)
         # for topology in [("kregular", 6)]:
         #     for function in [1]:
         #         for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
@@ -86,9 +85,16 @@ class Simulator:
         #                          (particles, evaluations, dimensions, function, topology[1], k,
         #                          topology[0], k, function, r) for r in range(runs)]
         #
+        runs = 2
         for topology in [("global", 0, 0), ("ring", 1, 0), ("regular30", 6, 30)]:
             for function in functions:
-                commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d > %s_F%02d_%02d.teste " %
+                commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d True > %s_F%02d_%02d.with_positions " %
+                             (particles, evaluations, dimensions, function, topology[1], topology[2],
+                             topology[0], function, r) for r in range(runs)]
+        runs = 30
+        for topology in [("global", 0, 0), ("ring", 1, 0), ("regular30", 6, 30)]:
+            for function in functions:
+                commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d False > %s_F%02d_%02d.normal " %
                              (particles, evaluations, dimensions, function, topology[1], topology[2],
                              topology[0], function, r) for r in range(runs)]
         return commands
