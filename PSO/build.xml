@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project default="create_run_jar" name="Create Runnable Jar for Project PSO">
+    <!--this file was created by Eclipse Runnable JAR Export Wizard-->
+    <!--ANT 1.7 is required                                        -->
+    <!--define folder properties-->
+    <property name="dir.buildfile" value="."/>
+    <property name="dir.workspace" value="/home/marcos/workspace"/>
+    <property name="dir.jarfile" value="${dir.buildfile}/jar"/>
+    <target name="create_run_jar">
+        <jar destfile="${dir.jarfile}/pso.jar" filesetmanifest="mergewithoutmain">
+            <manifest>
+                <attribute name="Main-Class" value="pso.PSO"/>
+                <attribute name="Class-Path" value="."/>
+            </manifest>
+            <fileset dir="${dir.buildfile}/bin"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/collections-generic-4.01.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/colt-1.2.0.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/concurrent-1.3.4.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/j3d-core-1.3.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung2-2_0_1.zip"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/vecmath-1.3.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-api-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-algorithms-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-visualization-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-3d-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-graph-impl-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-3d-demos-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/wstx-asl-3.2.6.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/stax-api-1.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-io-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-jai-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-samples-2.0.1.jar"/>
+            <zipfileset excludes="META-INF/*.SF" src="${dir.buildfile}/libs/jung/jung-jai-samples-2.0.1.jar"/>
+        </jar>
+    </target>
+</project>
