@@ -75,6 +75,7 @@ class SwarmParser:
                                                                               influence_graph_grep,
                                                                               informations_grep,
                                                                               information_map=information_map)
+            print iteration
             information_index, information = information
             if information is not None:
                 if calculate_on == -1 or iteration == calculate_on:
@@ -112,7 +113,7 @@ informations_grep = "velocities\:#"
 
 dimensions, particles = 1000, 100
 f = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
-t = SwarmParser.read_file_and_measures("./data/100_particles/regular30_F21_00.with_positions_head_300", influence_graph_grep=None, informations_grep=informations_grep, information_map=f)
+t = SwarmParser.read_file_and_measures("./regular30_F21_00.with_positions", influence_graph_grep=None, informations_grep=informations_grep, information_map=f, until=30)
 
 
 
