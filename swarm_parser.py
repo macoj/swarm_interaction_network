@@ -75,7 +75,10 @@ class SwarmParser:
                                                                               influence_graph_grep,
                                                                               informations_grep,
                                                                               information_map=information_map)
-            print iteration
+            # let's check if we already have useful information
+            if iteration == -1:
+                continue
+            # OK, let's start!
             information_index, information = information
             if information is not None:
                 if calculate_on == -1 or iteration == calculate_on:
