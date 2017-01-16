@@ -71,45 +71,36 @@ class SwarmParser:
         accumulated_matrix = None
         for line in input_file:
             # we add fitnesses and influence graphs in ig_line and fitnesses
-            print 1
             matrix_line, information, iteration = SwarmParser.grep_line_infos(line,
                                                                               influence_graph_grep,
                                                                               informations_grep,
                                                                               information_map=information_map)
-            print 2
-            print iteration
             information_index, information = information
             if information is not None:
                 if calculate_on == -1 or iteration == calculate_on:
-                    print 3
                     informations[information_index].append((iteration, information))
-            print 4
             if matrix_line:
-                print 5
                 current_matrix = SwarmParser.read_matrix_from_line(matrix_line)
                 if pre_callback:
                     current_matrix = pre_callback(current_matrix)
                 if not windowed:
-                    print 6
                     if accumulated_matrix is None:
                         accumulated_matrix = current_matrix
                     else:
                         accumulated_matrix = accumulated_matrix + current_matrix
                     current_accumulated = accumulated_matrix
                 else:
-                    print 7
                     window[matrix_count % window_size] = current_matrix  # we can do that because order does not matter
                     current_accumulated = SwarmParser.sum_matrices(window)
                     matrix_count += 1
                 if calculate_on == -1 or iteration == calculate_on:
-                    print 8
                     if pos_callback:
                         current_accumulated = pos_callback(current_accumulated)
                     graphs.append((iteration, current_accumulated))
-                    if iteration == calculate_on:
-                        break
-                    if until != -1 and iteration >= until:
-                        break
+            if iteration == calculate_on:
+                break
+            if until != -1 and iteration >= until:
+                break
         input_file.close()
         return graphs, informations
     """
@@ -180,33 +171,24 @@ pearsonr(a[0], a[1])
         iteration = -1
         times = 0
         if influence_graph_grep:
-            print 11
             line, times = re.subn("^"+influence_graph_grep, "", line)
-        print 12
         if times != 0:
-            print 13
             iteration_find = re.findall(iteration_grep, line)
-            print 14
             if iteration_find:
                 iteration = int(iteration_find[0].strip())
-            print 15
             line, _ = re.subn(iteration_grep, "", line)
             graph_line = line
         elif informations_grep:
-            print 16
             for information_grep in informations_grep:
                 line, times = re.subn("^"+information_grep, "", line)
                 if times != 0:
                     break
             if times != 0:
-                print 17
                 iteration_find = re.findall(iteration_grep, line)
                 if iteration_find:
                     iteration = int(iteration_find[0].strip())
                 line, _ = re.subn(iteration_grep, "", line)
-                print 18
                 information = information_map(line.strip())
-                print 19
             else:
                 information_grep, information = None, None
         return graph_line, (information_grep, information), iteration
