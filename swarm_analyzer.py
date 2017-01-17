@@ -93,7 +93,7 @@ class SwarmAnalyzer:
             abs_cmp = lambda x, y: cmp(abs(x), abs(y))
         else:
             abs_cmp = cmp
-        if kind in ['highest', 'average', 'all']:
+        if kind in ['highest', 'average', 'all_for_each']:
             correlation_t = {}
             for particle in range(particles):
                 correlation_t[particle] = []
@@ -101,7 +101,7 @@ class SwarmAnalyzer:
             correlation_t = []
         for i in range(len(velocities[1][informations_grep])):
             correlations = pd.DataFrame(np.rot90(velocities[1][informations_grep][i][1])).corr()
-            if kind in ['highest', 'average', 'all']:
+            if kind in ['highest', 'average', 'all_for_each']:
                 for particle in range(particles):
                     if kind == 'highest':
                         correlation = sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1]
@@ -110,31 +110,39 @@ class SwarmAnalyzer:
                     else:
                         correlation = sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1:]
                     correlation_t[particle].append(correlation)
-            if kind in ['average_highest', 'average_average']:
+            if kind in ['average_highest', 'average_average', 'all']:
                 if kind == 'average_highest':
                     correlation = np.average([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1]
                                               for p in range(particles)])
-                else:
+                elif kind == 'average_average':
                     correlation = np.average([np.average(sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:])
                                               for p in range(particles)])
+                else:
+                    correlation = np.concatenate([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:]
+                                                  for p in range(particles)])
                 correlation_t.append(correlation)
         return correlation_t
     """
 filename = "./data/100_particles/global_F21_00.with_positions"
 filename = "./data/100_particles/regular30_F21_00.with_positions"
 
+import matplotlib
+matplotlib.use('Agg')
 execfile("swarm_analyzer.py")
 topology = "regular30"
 function = 21
 run = 0
-filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-filename = "./data/100_particles/%s_F%02d_%02d.with_positions" % (topology, function, run)
-kind = "all"
-until = 20
-correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=until)
-xticks = range(0, until + 1, 10)
-xticks = xticks, map(str, xticks)
-Plotter.plot_boxplots(correlation_t[3], size=(20, 5), tight_layout=[], xticks_args=xticks, xlabel="Iteration", ylabel="pearson correlation", output="boxplot_all_particles_%s_F%02d_%02d.png" % (topology, function, run))
+for topology in ['global', 'regular30', 'ring']:
+    for function in [21, 22, 23, 24]:
+        for run in [0, 1]:
+            filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
+            # filename = "./data/100_particles/%s_F%02d_%02d.with_positions" % (topology, function, run)
+            kind = "all"
+            until = 3000
+            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=until)
+            xticks = range(0, until + 1, 10)
+            xticks = xticks, map(str, xticks)
+            Plotter.plot_boxplots(correlation_t, size=(20, 5), tight_layout=[], xticks_args=xticks, xlabel="Iteration", ylabel="pearson correlation", output="boxplot_all_particles_%s_F%02d_%02d.png" % (topology, function, run))
 
 
 kind = "highest"
