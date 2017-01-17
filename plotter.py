@@ -549,7 +549,7 @@ class Plotter:
     @staticmethod
     def plot_boxplots(data, titles=None, main_title=None, ylabel=None, xlabel=None, xscale=None, violin=False,
                       yscale=None, first=0, output=None, size=None, ylim=None, xlim=None, grid=False, loc=2,
-                      whis=1., notch=0, sym='+', showmeans=True, widths=0.5, boxes_kargs=None, legends=None,
+                      whis=1., notch=0, sym='+', showmeans=True, widths=0.5, boxes_kargs=None, legends=None, dpi=72,
                       whiskers_kargs=None, means_kargs=None, fliers_kargs=None, medians_kargs=None, grid_only=None,
                       tight_layout=None, caps_kargs=None, on_current=False, just_plot=False, xticks_args=None, **kargs):
         # ## plot here:
@@ -651,7 +651,7 @@ class Plotter:
             if not output:
                 plt.show()
             else:
-                plt.savefig(output, dpi=600)
+                plt.savefig(output, dpi=dpi)
                 plt.close()
 
     @staticmethod
