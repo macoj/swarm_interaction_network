@@ -108,7 +108,7 @@ class SwarmAnalyzer:
                     elif kind == 'average':
                         correlation = np.average(sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1:])
                     else:
-                        correlation = sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1:]
+                        correlation = list(correlations[particle])
                     correlation_t[particle].append(correlation)
             if kind in ['average_highest', 'average_average', 'all']:
                 if kind == 'average_highest':
@@ -118,31 +118,30 @@ class SwarmAnalyzer:
                     correlation = np.average([np.average(sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:])
                                               for p in range(particles)])
                 else:
-                    correlation = np.concatenate([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:]
-                                                  for p in range(particles)])
+                    correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                 correlation_t.append(correlation)
+            if kind == 'fluctuation':
+                # need to change to a unitary vector I think, otherwise we mess up everything
+                v_average = np.average([v[1] for v in velocities[1][informations_grep][:i]], axis=0)
+                len(v_average)
         return correlation_t
     """
 filename = "./data/100_particles/global_F21_00.with_positions"
-filename = "./data/100_particles/regular30_F21_00.with_positions"
+filename = "./data/100_particles/regular30_F21_00.with_positions_head_30"
 
 import matplotlib
 matplotlib.use('Agg')
 execfile("swarm_analyzer.py")
-topology = "regular30"
-function = 21
-run = 0
 for topology in ['global', 'regular30', 'ring']:
-    for function in [21, 22, 23, 24]:
+    for function in range(21, 28):
         for run in [0, 1]:
             filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-            # filename = "./data/100_particles/%s_F%02d_%02d.with_positions" % (topology, function, run)
+            print filename
             kind = "all"
-            until = 3000
+            until = 10
             correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=until)
-            xticks = range(0, until + 1, 10)
-            xticks = xticks, map(str, xticks)
-            Plotter.plot_boxplots(correlation_t, size=(20, 5), tight_layout=[], xticks_args=xticks, xlabel="Iteration", ylabel="pearson correlation", output="boxplot_all_particles_%s_F%02d_%02d.png" % (topology, function, run))
+            df = pd.DataFrame(correlation_t)
+            df.to_hdf(filename + "_correlation.hdf", 'df')
 
 
 kind = "highest"
