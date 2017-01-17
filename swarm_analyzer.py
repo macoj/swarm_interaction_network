@@ -81,6 +81,49 @@ class SwarmAnalyzer:
         components = len(igraph_graph.components())
         return components
 
+    @staticmethod
+    def calculate_velocities_correlation(
+            filename, dimensions=1000, particles=100, informations_grep="velocities\:#", absolute=False, kind='highest',
+            **kargs):
+        information_map = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
+        velocities = SwarmParser.read_file_and_measures(
+            filename, influence_graph_grep=None,
+            informations_grep=informations_grep, information_map=information_map, **kargs)
+        if absolute:
+            abs_cmp = lambda x, y: cmp(abs(x), abs(y))
+        else:
+            abs_cmp = cmp
+        if kind in ['highest', 'average']:
+            correlation_t = {}
+            for particle in range(particles):
+                correlation_t[particles] = []
+        else:
+            correlation_t = []
+        for i in range(len(velocities[1][informations_grep])):
+            correlations = pd.DataFrame(np.rot90(velocities[1][informations_grep][i][1])).corr()
+            if kind in ['highest', 'average']:
+                for particle in range(particles):
+                    if kind == 'highest':
+                        correlation = sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1]
+                    else:
+                        correlation = np.average(sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1:])
+                    correlation_t[particle].append(correlation)
+            if kind in ['average_highest', 'average_average']:
+                if kind == 'average_highest':
+                    correlation = np.average([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1]
+                                              for p in range(particles)])
+                else:
+                    correlation = np.average([np.average(sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:])
+                                              for p in range(particles)])
+                correlation_t.append(correlation)
+        return correlation_t
+    """
+execfile("swarm_analyzer.py")
+filename = "./data/100_particles/regular30_F21_00.with_positions"
+filename = "./regular30_F21_00.with_positions"
+correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind="average_highest", until=2000)
+Plotter.plot_curve({'x': range(len(correlation_t)), 'y': correlation_t})
+    """
 
     @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
