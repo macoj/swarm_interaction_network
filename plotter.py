@@ -463,11 +463,13 @@ class Plotter:
         if set_xticks:
             heatmap_subplot.set_xticks(set_xticks)
         else:
-            heatmap_subplot.set_xticks(range(len(matrixdf.columns)))
+            pass
+            # heatmap_subplot.set_xticks(range(len(matrixdf.columns)))
         if set_yticks:
             heatmap_subplot.set_yticks(set_yticks)
         else:
-            heatmap_subplot.set_yticks(range(len(matrixdf)))
+            pass
+            # heatmap_subplot.set_yticks(range(len(matrixdf)))
         if colorbar_on:
             plt.colorbar(axi)
         values_on_text_format = '{:s}'
