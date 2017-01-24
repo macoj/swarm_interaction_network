@@ -89,8 +89,11 @@ class SwarmAnalyzer:
         velocities = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=None,
             informations_grep=informations_grep, information_map=information_map, **kargs)
+        print 1
         velocities = [v[1] for v in velocities[1][informations_grep]]
+        print 2
         velocities = [v/np.linalg.norm(v) for v in velocities]
+        print 3
         if absolute:
             abs_cmp = lambda x, y: cmp(abs(x), abs(y))
         else:
@@ -111,12 +114,20 @@ class SwarmAnalyzer:
             elif kind in ['average', 'fluctuations']:
                 v_average = np.average([v for v in velocities[:(iteration+1)]], axis=0)
                 if kind == 'fluctuations':
+                    print 4
                     fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
+                    print 5
                     correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
+                    print 6
                 else:
+                    print 7
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
+                    print 8
+                print 9
                 correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
+                print 10
                 correlation_t.append(correlation)
+                print 11
         return correlation_t
 # a = velocities[0][0]
 # b = velocities[0][1]
@@ -148,11 +159,11 @@ for topology in ['global', 'regular30', 'ring']:
         for run in [0, 1]:
             filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
             print filename
-            kind = "average"
+            kind = "fluctuations"
             print filename
             correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind)
             df = pd.DataFrame(correlation_t)
-            df.to_hdf(filename + "_average_correlation.hdf", 'df')
+            df.to_hdf(filename + "_fluctuations_correlation.hdf", 'df')
 
 
 kind = "highest"
