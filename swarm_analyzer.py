@@ -127,7 +127,7 @@ class SwarmAnalyzer:
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
                     print 8
                 print 9
-                if correlations:
+                if correlations is not None:
                     correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                     print 10
                     correlation_t.append(correlation)
