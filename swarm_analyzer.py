@@ -83,51 +83,60 @@ class SwarmAnalyzer:
 
     @staticmethod
     def calculate_velocities_correlation(
-            filename, dimensions=1000, particles=100, informations_grep="velocities\:#", absolute=False, kind='highest',
+            filename, dimensions=1000, particles=100, informations_grep="velocities\:#", kind='all', absolute=False,
             **kargs):
         information_map = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
         velocities = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=None,
             informations_grep=informations_grep, information_map=information_map, **kargs)
+        velocities = [v[1] for v in velocities[1][informations_grep]]
+        velocities = [v/np.linalg.norm(v) for v in velocities]
         if absolute:
             abs_cmp = lambda x, y: cmp(abs(x), abs(y))
         else:
             abs_cmp = cmp
-        if kind in ['highest', 'average', 'all_for_each']:
-            correlation_t = {}
-            for particle in range(particles):
-                correlation_t[particle] = []
-        else:
-            correlation_t = []
-        for i in range(len(velocities[1][informations_grep])):
-            correlations = pd.DataFrame(np.rot90(velocities[1][informations_grep][i][1])).corr()
-            if kind in ['highest', 'average', 'all_for_each']:
-                for particle in range(particles):
-                    if kind == 'highest':
-                        correlation = sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1]
-                    elif kind == 'average':
-                        correlation = np.average(sorted(correlations[particle], cmp=abs_cmp, reverse=True)[1:])
-                    else:
-                        correlation = list(correlations[particle])
-                    correlation_t[particle].append(correlation)
-            if kind in ['average_highest', 'average_average', 'all']:
-                if kind == 'average_highest':
-                    correlation = np.average([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1]
-                                              for p in range(particles)])
-                elif kind == 'average_average':
-                    correlation = np.average([np.average(sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:])
-                                              for p in range(particles)])
-                else:
-                    correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
+        correlation_t = []
+        for i in range(len(velocities)):
+            if kind in ['all']:
+                correlations = pd.DataFrame(np.rot90(velocities[i])).corr()
+                # if kind == 'average_highest':
+                #     correlation = np.average([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1]
+                #                               for p in range(particles)])
+                # elif kind == 'average_average':
+                #     correlation = np.average([np.average(sorted(correlations[p], cmp=abs_cmp, reverse=True)[1:])
+                #                               for p in range(particles)])
+                # else:
+                correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                 correlation_t.append(correlation)
-            if kind == 'fluctuation':
-                # need to change to a unitary vector I think, otherwise we mess up everything
-                v_average = np.average([v[1] for v in velocities[1][informations_grep][:i]], axis=0)
-                len(v_average)
+            elif kind == 'average':
+                v_average = np.average([v for v in velocities[:(i+1)]], axis=0)
+                # until_2 = velocities[:2]
+                # averages = [np.average([until_2[i][p] for i in range(2)], axis=0) for p in range(100)]
+                correlations = pd.DataFrame(np.rot90(v_average)).corr()
+                correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
+                correlation_t.append(correlation)
         return correlation_t
+# a = velocities[0][0]
+# b = velocities[0][1]
+# np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
+# pearsonr(a, b)[0]
+#
+# aa = a - np.average(a)
+# bb = b - np.average(b)
+# np.dot(aa, bb)/(np.linalg.norm(aa)*np.linalg.norm(bb))
     """
 filename = "./data/100_particles/global_F21_00.with_positions"
 filename = "./data/100_particles/regular30_F21_00.with_positions_head_30"
+correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind='average')
+
+execfile("swarm_analyzer.py")
+info = "it\:#"
+
+t = SwarmParser.read_file_and_measures(filename, informations_grep=[info])
+
+curves = zip(*t[1][info])
+curves = {'x': curves[0], 'y': curves[1]}
+Plotter.plot_curve(curves)
 
 import matplotlib
 matplotlib.use('Agg')
@@ -137,11 +146,10 @@ for topology in ['global', 'regular30', 'ring']:
         for run in [0, 1]:
             filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
             print filename
-            kind = "all"
-            until = 10
-            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=until)
+            kind = "average"
+            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind)
             df = pd.DataFrame(correlation_t)
-            df.to_hdf(filename + "_correlation.hdf", 'df')
+            df.to_hdf(filename + "_average_correlation.hdf", 'df')
 
 
 kind = "highest"
@@ -159,6 +167,42 @@ kind = "average_average"
 correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=20)
 Plotter.plot_curve({'x': range(len(correlation_t)), 'y': correlation_t}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="%s pearson correlation" % kind, title="All particles", output_filename="%s_particle_%s_F%02d_%02d.png" % (kind, topology, function, run))
 
+execfile("plotter.py")
+import matplotlib
+matplotlib.use('Agg')
+execfile("swarm_analyzer.py")
+names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass"}
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+for topology in ['global', 'regular30', 'ring']:
+    for function in range(21, 28):
+        for run in [0, 1]:
+            filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
+            df = pd.read_hdf(filename + ".hdf", 'df')
+            bins = np.arange(-1, 1.01, 0.01)
+            iterations = 6000
+            counts = []
+            for i in range(iterations):
+                count, _ = np.histogram(df.irow(i), bins=bins)
+                count = count/float(max(count))
+                counts.append(count)
+            title = "%s - f:'%s' run:%d" % (topology, names[function], run)
+            Plotter.plot_heatmap(np.rot90(counts), main_title=title, output_filename=filename + ".png", vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1], titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False)
+
+
+
+title = ""
+xlabel = "Average communication diversity"
+ylabel = "Stagnation iteration"
+Plotter.plot_curve(dss, legend_ncol=2, ylim=(200, 1450), xlim=(0.05, 0.376), output_filename=output_filename, linewidth=0, legends=legends, mew=1.2, figsize=(4.8, 3.05), loc=2, tight_layout=[-0.03, -0.03, 1.03, 1.03], annotate=(0.66, 0.86, "$r=%0.2f$" % p[0]), font_size=11, alpha=1, marker=['+', 'x', '>', '^', 'o', 'v', 'D', 's', '3', '2', '<'], colors=colors, grid=True, markersize=4, title=title, x_label=xlabel, y_label=ylabel) #, xlim=(0,1), ylim=(0,1))
+
+
+
+np.rotate90(counts)
+np.array(counts)
+
+Plotter.plot_
     """
 
     @staticmethod
