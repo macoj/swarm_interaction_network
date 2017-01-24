@@ -99,6 +99,7 @@ class SwarmAnalyzer:
         else:
             abs_cmp = cmp
         correlation_t = []
+        v_sum = []
         for iteration in range(len(velocities)):
             if kind in ['all']:
                 correlations = pd.DataFrame(np.rot90(velocities[iteration])).corr()
@@ -113,7 +114,11 @@ class SwarmAnalyzer:
                 correlation_t.append(correlation)
             elif kind in ['average', 'fluctuations']:
                 print 12
-                v_average = np.average([v for v in velocities[:(iteration+1)]], axis=0)
+                if iteration == 0:
+                    v_sum = velocities[0]
+                else:
+                    v_sum += velocities[iteration]
+                v_average = v_sum / float(iteration+1)
                 correlations = None
                 if kind == 'fluctuations':
                     print 4
