@@ -96,9 +96,9 @@ class SwarmAnalyzer:
         else:
             abs_cmp = cmp
         correlation_t = []
-        for i in range(len(velocities)):
+        for iteration in range(len(velocities)):
             if kind in ['all']:
-                correlations = pd.DataFrame(np.rot90(velocities[i])).corr()
+                correlations = pd.DataFrame(np.rot90(velocities[iteration])).corr()
                 # if kind == 'average_highest':
                 #     correlation = np.average([sorted(correlations[p], cmp=abs_cmp, reverse=True)[1]
                 #                               for p in range(particles)])
@@ -108,11 +108,13 @@ class SwarmAnalyzer:
                 # else:
                 correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                 correlation_t.append(correlation)
-            elif kind == 'average':
-                v_average = np.average([v for v in velocities[:(i+1)]], axis=0)
-                # until_2 = velocities[:2]
-                # averages = [np.average([until_2[i][p] for i in range(2)], axis=0) for p in range(100)]
-                correlations = pd.DataFrame(np.rot90(v_average)).corr()
+            elif kind in ['average', 'fluctuations']:
+                v_average = np.average([v for v in velocities[:(iteration+1)]], axis=0)
+                if kind == 'fluctuations':
+                    fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
+                    correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
+                else:
+                    correlations = pd.DataFrame(np.rot90(v_average)).corr()
                 correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                 correlation_t.append(correlation)
         return correlation_t
@@ -147,6 +149,7 @@ for topology in ['global', 'regular30', 'ring']:
             filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
             print filename
             kind = "average"
+            print filename
             correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind)
             df = pd.DataFrame(correlation_t)
             df.to_hdf(filename + "_average_correlation.hdf", 'df')
