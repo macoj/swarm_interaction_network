@@ -113,7 +113,6 @@ class SwarmAnalyzer:
                 correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                 correlation_t.append(correlation)
             elif kind in ['average', 'fluctuations']:
-                print 12
                 if iteration == 0:
                     v_sum = velocities[0]
                 else:
@@ -121,20 +120,13 @@ class SwarmAnalyzer:
                 v_average = v_sum / float(iteration+1)
                 correlations = None
                 if kind == 'fluctuations':
-                    print 4
-                    if iteration <= len(velocities):
+                    if iteration < len(velocities):
                         fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
-                        print 5
                         correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
-                    print 6
                 else:
-                    print 7
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
-                    print 8
-                print 9
                 if correlations is not None:
                     correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
-                    print 10
                     correlation_t.append(correlation)
                 print 11
         return correlation_t
