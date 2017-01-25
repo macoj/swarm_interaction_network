@@ -89,11 +89,8 @@ class SwarmAnalyzer:
         velocities = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=None,
             informations_grep=informations_grep, information_map=information_map, **kargs)
-        print 1
         velocities = [v[1] for v in velocities[1][informations_grep]]
-        print 2
         velocities = [v/np.linalg.norm(v) for v in velocities]
-        print 3
         if absolute:
             abs_cmp = lambda x, y: cmp(abs(x), abs(y))
         else:
@@ -114,13 +111,13 @@ class SwarmAnalyzer:
                 correlation_t.append(correlation)
             elif kind in ['average', 'fluctuations']:
                 if iteration == 0:
-                    v_sum = velocities[0]
+                    v_sum = copy.deepcopy(velocities[0])
                 else:
                     v_sum += velocities[iteration]
-                v_average = v_sum / float(iteration+1)
+                v_average = v_sum / float(iteration + 1)
                 correlations = None
                 if kind == 'fluctuations':
-                    if iteration < len(velocities):
+                    if iteration < len(velocities) - 1:
                         fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
                         correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
                 else:
@@ -128,7 +125,6 @@ class SwarmAnalyzer:
                 if correlations is not None:
                     correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                     correlation_t.append(correlation)
-                print 11
         return correlation_t
 # a = velocities[0][0]
 # b = velocities[0][1]
