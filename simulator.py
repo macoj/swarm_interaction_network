@@ -77,8 +77,7 @@ class Simulator:
         evaluations = 600000
         dimensions = 1000
         particles = 100
-        functions = range(21, 28)
-        functions = [28]
+        functions = range(21, 29)
         # for topology in [("kregular", 6)]:
         #     for function in [1]:
         #         for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
