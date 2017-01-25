@@ -561,6 +561,8 @@ public class PSO implements Runnable {
 		double c2 = 2.05f;
 		double phi = c1 + c2;
 		double factor = 2 / Math.abs(2 - phi - Math.sqrt(phi*phi - 4*phi));
+		// c1 = 2.05f; 
+		// c2 = 0f;
 		for (int particle = 0; particle < particle_velocity.length; particle++) {
 			int best_neighbour = particle_best_neighbour[particle];
 			// update particle with constriction factor
