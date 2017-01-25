@@ -78,6 +78,7 @@ class Simulator:
         dimensions = 1000
         particles = 100
         functions = range(21, 28)
+        functions = [28]
         # for topology in [("kregular", 6)]:
         #     for function in [1]:
         #         for k in [5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
@@ -101,7 +102,7 @@ class Simulator:
 
 """
 execfile("simulator.py")
-Simulator.execute(Simulator.pso(), number_of_processes=1, delay_between=10)
+Simulator.execute(Simulator.pso(), number_of_processes=5, delay_between=10)
 Simulator.pso()[0]
 range(10, 21)
 """

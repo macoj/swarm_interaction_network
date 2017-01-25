@@ -296,9 +296,12 @@ public class PSO implements Runnable {
 			func_return = new F_Sphere(DIMENSION);
 			break;			
 		case 27:
-		default:
 			func_return = new F_Weierstrass(DIMENSION);
 			break;				
+		case 28:
+		default:
+			func_return = new F_Random(DIMENSION);
+			break;
 			
 		}
 		return func_return;
