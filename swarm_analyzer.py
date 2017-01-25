@@ -1,8 +1,8 @@
-import time
-import igraph
-
 __author__ = 'marcos'
 import sys
+import time
+import igraph
+import copy
 import pandas as pd
 import numpy as np
 from plotter import Plotter
