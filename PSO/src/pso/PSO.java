@@ -740,10 +740,10 @@ public class PSO implements Runnable {
 			}
 			if (possible) {
 				for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
-					for (int n = 0; n < m; n += 1) {
-						addNeighbour(i, (i+n)%swarm_neighborhood_graph.length);
+					for (int n = 1; n <= m; n += 1) {
+						addNeighbour(i, (i + n)%swarm_neighborhood_graph.length);
 						if (opposite_also) {
-							addNeighbour(i, (i+n/2)%swarm_neighborhood_graph.length);
+							addNeighbour(i, (i + swarm_neighborhood_graph.length/2)%swarm_neighborhood_graph.length);
 						}
 					}
 				}
