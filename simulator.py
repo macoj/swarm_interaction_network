@@ -82,18 +82,18 @@ class Simulator:
         runs = 2
         for topology in [("kregular", 6)]:
             for function in [23]:
-                for k in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]:
+                for k in [12, 14, 16, 18, 22, 24, 26, 28]:
                     commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d True > %s%d_F%02d_%02d.with_positions " %
                                  (particles, evaluations, dimensions, function, topology[1], k,
                                  topology[0], k, function, r) for r in range(runs)]
 
         # runs = 2
         # # for topology in [("global", 0, 0), ("ring", 1, 0), ("regular30", 6, 30)]:
-        for topology in [("noc2", 0, 0)]:
-            for function in [23]:
-                commands += ["java -jar PSO/jar/pso_no_c2.jar 1 %d %d %d %d %d 0 %d True > %s_F%02d_%02d.with_positions " %
-                             (particles, evaluations, dimensions, function, topology[1], topology[2],
-                             topology[0], function, r) for r in range(runs)]
+        # for topology in [("noc2", 0, 0)]:
+        #     for function in [23]:
+        #         commands += ["java -jar PSO/jar/pso_no_c2.jar 1 %d %d %d %d %d 0 %d True > %s_F%02d_%02d.with_positions " %
+        #                      (particles, evaluations, dimensions, function, topology[1], topology[2],
+        #                      topology[0], function, r) for r in range(runs)]
         # runs = 30
         # #for topology in [("global", 0, 0), ("ring", 1, 0), ("regular30", 6, 30)]:
         # for topology in [("noc2", 0, 0)]:
