@@ -136,10 +136,7 @@ class SwarmAnalyzer:
         counts = []
         for i in range(iterations):
             values = df.irow(i)
-            individuals = int(np.sqrt(len(values)))
-            unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
-            count, _ = np.histogram(unique, bins=bins)
-            count = count/float(np.sum(count))
+            count = SwarmAnalyzer.get_distribution(values, bins)
             counts.append(count)
         Plotter.plot_heatmap(
             np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1],
@@ -165,6 +162,15 @@ class SwarmAnalyzer:
                 print title
                 SwarmAnalyzer.plot_heatmap_correlations(filename, output_filename=filename + "_perc.png", main_title=title)
     """
+
+    @staticmethod
+    def get_distribution(values, bins):
+        swarm_size = int(np.sqrt(len(values)))
+        unique = [values[j * swarm_size + i] for i in range(swarm_size) for j in range(i + 1, swarm_size)]
+        count, _ = np.histogram(unique, bins=bins)
+        count = count / float(np.sum(count))
+        return count
+
 # a = velocities[0][0]
 # b = velocities[0][1]
 # np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
