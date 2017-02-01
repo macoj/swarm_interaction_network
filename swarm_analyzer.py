@@ -127,13 +127,14 @@ class SwarmAnalyzer:
     topologies += ['noc2']
     topologies += ['global']
     topologies += ['ring']
+    topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
     for topology in topologies:
         for function in [23]:
             for run in [0]:
                 filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-                kind = "average"
+                kind = "fluctuations"
                 print filename
-                filename_hdf = filename + "_average_correlation.hdf"
+                filename_hdf = filename + "_fluctuations_correlation.hdf"
                 correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, save_hdf=filename_hdf)
                 del correlation_t
 
@@ -201,10 +202,12 @@ class SwarmAnalyzer:
     """
 
     @staticmethod
-    def get_distribution(values, bins):
+    def get_distribution(values, bins, absolute=False):
         swarm_size = int(np.sqrt(len(values)))
-        unique = [values[j * swarm_size + i] for i in range(swarm_size) for j in range(i + 1, swarm_size)]
-        count, _ = np.histogram(unique, bins=bins)
+        upper_triangle = [values[j * swarm_size + i] for i in range(swarm_size) for j in range(i + 1, swarm_size)]
+        if absolute:
+            upper_triangle = map(abs, upper_triangle)
+        count, _ = np.histogram(upper_triangle, bins=bins)
         count = count / float(np.sum(count))
         return count
 
