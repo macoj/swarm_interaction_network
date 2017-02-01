@@ -121,11 +121,50 @@ class SwarmAnalyzer:
                         fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
                         correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
                 else:
+                    # average
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
                 if correlations is not None:
                     correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
                     correlation_t.append(correlation)
         return correlation_t
+
+    @staticmethod
+    def plot_heatmap_correlations(filename, iterations=6000, **kargs):
+        df = pd.read_hdf(filename + ".hdf", 'df')
+        bins = np.arange(-1, 1.01, 0.01)
+        iterations -= 1
+        counts = []
+        for i in range(iterations):
+            values = df.irow(i)
+            individuals = int(np.sqrt(len(values)))
+            unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
+            count, _ = np.histogram(unique, bins=bins)
+            count = count/float(np.sum(count))
+            counts.append(count)
+        Plotter.plot_heatmap(
+            np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1],
+            titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
+    """
+    import matplotlib
+    matplotlib.use('Agg')
+    execfile("plotter.py")
+    execfile("swarm_analyzer.py")
+    names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass", 28: "Random"}
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import numpy as np
+    topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
+    topologies += ['noc2']
+    topologies += ['global']
+    topologies += ['ring']
+    for topology in topologies:
+        for function in [23]:
+            for run in [0]:
+                filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
+                title = "%s - f:'%s' run:%d" % (topology, names[function], run)
+                print title
+                SwarmAnalyzer.plot_heatmap_correlations(filename, output_filename=filename + "_perc.png", main_title=title)
+    """
 # a = velocities[0][0]
 # b = velocities[0][1]
 # np.dot(a, b)/(np.linalg.norm(a)*np.linalg.norm(b))
@@ -142,25 +181,29 @@ correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind='a
 execfile("swarm_analyzer.py")
 info = "it\:#"
 
-t = SwarmParser.read_file_and_measures(filename, informations_grep=[info])
+t = SwarmParser.read_file_and_measures(filename, informations_grep=[info], until=1500)
 
 curves = zip(*t[1][info])
 curves = {'x': curves[0], 'y': curves[1]}
-Plotter.plot_curve(curves)
+Plotter.plot_curve(curves, marker=".", markevery=10, tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), grid=True)
 
 import matplotlib
 matplotlib.use('Agg')
 execfile("swarm_analyzer.py")
-for topology in ['global', 'regular30', 'ring']:
-    for function in range(21, 28):
-        for run in [0, 1]:
+topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
+topologies += ['noc2']
+topologies += ['global']
+topologies += ['ring']
+for topology in topologies:
+    for function in [23]:
+        for run in [0]:
             filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
+            kind = "average"
             print filename
-            kind = "fluctuations"
-            print filename
-            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=1000)
+            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind)
             df = pd.DataFrame(correlation_t)
-            df.to_hdf(filename + "_fluctuations_correlation.hdf", 'df')
+            df.to_hdf(filename + "_average_correlation.hdf", 'df')
+            del correlation_t
 
 
 kind = "highest"
@@ -182,26 +225,121 @@ execfile("plotter.py")
 import matplotlib
 matplotlib.use('Agg')
 execfile("swarm_analyzer.py")
-names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass"}
+names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass", 28: "Random"}
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-for topology in ['global', 'regular30', 'ring']:
-    for function in range(21, 28):
-        for run in [0, 1]:
+topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
+topologies += ['noc2']
+topologies += ['global']
+topologies += ['ring']
+for topology in topologies:
+    for function in [23]:
+        for run in [0]:
             filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
+            filename = "./%s_F%02d_%02d.with_positions_fluctuations_correlation" % (topology, function, run)
+            filename = "./%s_F%02d_%02d.with_positions_average_correlation" % (topology, function, run)
             df = pd.read_hdf(filename + ".hdf", 'df')
             bins = np.arange(-1, 1.01, 0.01)
-            iterations = 6000
+            iterations = 6000 - 1
             counts = []
+            print "counting..."
             for i in range(iterations):
-                count, _ = np.histogram(df.irow(i), bins=bins)
-                count = count/float(max(count))
+                values = df.irow(i)
+                individuals = int(np.sqrt(len(values)))
+                unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
+                count, _ = np.histogram(values, bins=bins)
+                # count, _ = np.histogram(df.irow(i), bins=bins)
+                count = count/float(np.sum(count))
+                #count = count/float(np.max(count))
                 counts.append(count)
             title = "%s - f:'%s' run:%d" % (topology, names[function], run)
-            Plotter.plot_heatmap(np.rot90(counts), main_title=title, output_filename=filename + ".png", vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1], titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False)
+            print title
+            Plotter.plot_heatmap(np.fliplr(np.rot90(counts, -1)),  output_filename=filename + "_perc.png", main_title=title, vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1], titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False)
 
 
+
+execfile("plotter.py")
+import matplotlib
+matplotlib.use('Agg')
+execfile("swarm_analyzer.py")
+names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass", 28: "Random"}
+import pandas as pd
+import matplotlib.pyplot as plt
+import numpy as np
+for topology in ['global', 'regular30', 'ring', 'noc2']:
+    for function in range(21, 29):
+        for run in [0, 1]:
+            filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
+            info = "it\:#"
+            t = SwarmParser.read_file_and_measures(filename, informations_grep=[info])
+            curves = zip(*t[1][info])
+            curves = {'x': curves[0], 'y': curves[1]}
+            title = "%s - f:'%s' run:%d" % (topology, names[function], run)
+            print title
+            Plotter.plot_curve(curves, marker=".", output_filename=filename + "_fit.png", markevery=10, title=title, tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), grid=True)
+
+
+sum(count)
+iterations
+np.triu(np.array(df.irow(0)).reshape(100, 100), 1)
+
+filename = "global_F21_00.with_positions_fluctuations_correlation"
+filename = "ring_F21_00.with_positions_fluctuations_correlation"
+filename = "noc2_F21_00.with_positions_fluctuations_correlation"
+filename = "regular30_F21_00.with_positions_fluctuations_correlation"
+
+df = pd.read_hdf(filename + ".hdf", 'df')
+
+import powerlaw
+
+it = 3370
+it = 3380
+it = 3340
+it = 3420
+it = 3430
+it = 3020
+results = []
+for it in range(100, 1000, 100):
+    print it
+    values = df.irow(it)
+    individuals = int(np.sqrt(len(values)))
+    unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
+    unique = np.abs(unique)
+    plt.hist(unique)
+    #plt.xlim((-1, 1))
+    plt.show()
+
+    # fit = powerlaw.Fit(unique)
+    # results.append((it, fit.D, fit.alpha, fit.xmin))
+    # plt.hist(unique, bins=100)
+    # plt.xscale('log')
+    # plt.yscale('log')
+    # plt.show()
+
+    ax = fit.plot_ccdf(ls='', marker='.')
+    ax = fit.power_law.plot_ccdf(ax=ax)
+    ax = fit.lognormal.plot_ccdf(ax=ax)
+    ax = fit.exponential.plot_ccdf(ax=ax)
+    ax = fit.truncated_power_law.plot_ccdf(ax=ax)
+    plt.show()
+
+for _, d, a, x in results:
+    print a, d, x
+
+count, _ = np.histogram(values, bins=bins)
+# count, _ = np.histogram(df.irow(i), bins=bins)
+count = count/float(np.sum(count))
+
+
+np.arange(100)
+
+pairs = []
+
+        pairs.append((i, j))
+
+100*99/2
+len(pairs)
 
 title = ""
 xlabel = "Average communication diversity"
