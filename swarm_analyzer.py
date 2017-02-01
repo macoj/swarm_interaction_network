@@ -167,8 +167,43 @@ class SwarmAnalyzer:
     """
 
     @staticmethod
-    def plot_heatmap_correlations(filename, iterations=6000, **kargs):
-        df = pd.read_hdf(filename + ".hdf", 'df')
+    def calculate_entropy_correlation_distribution(filename_hdf, iterations=6000):
+        print filename_hdf
+        df = pd.read_hdf(filename_hdf, 'df')
+        bins = np.arange(-1, 1.01, 0.01)
+        iterations -= 1
+        entropies = []
+        for i in range(iterations):
+            values = df.irow(i)
+            distribution = SwarmAnalyzer.get_distribution(values, bins)
+            entropy = -sum([pi*np.log(pi) for pi in distribution if pi > 0.0])
+            del distribution
+            entropies.append(entropy)
+        return entropies
+    """
+import matplotlib
+matplotlib.use('Agg')
+execfile("plotter.py")
+execfile("swarm_analyzer.py")
+filename_hdf = 'regular30_F21_00.with_positions_fluctuations_correlation.hdf'
+names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass", 28: "Random"}
+topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
+topologies += ['noc2']
+topologies += ['global']
+topologies += ['ring']
+for topology in topologies:
+    for function in [23]:
+        for run in [0]:
+            filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
+            title = "%s - f:'%s' run:%d" % (topology, names[function], run)
+            print title
+            entropies = SwarmAnalyzer.calculate_entropy_correlation_distribution(filename_hdf, iterations=100)
+            Plotter.plot_curve({'x': range(iterations-1), 'y': entropies}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="Entropy", title=title, grid=True, output_filename="entropy_%s_F%02d_%02d.png" % (topology, function, run))
+    """
+
+    @staticmethod
+    def plot_heatmap_correlations(filename_hdf, iterations=6000, **kargs):
+        df = pd.read_hdf(filename_hdf, 'df')
         bins = np.arange(-1, 1.01, 0.01)
         iterations -= 1
         counts = []
@@ -198,7 +233,7 @@ class SwarmAnalyzer:
                 filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
                 title = "%s - f:'%s' run:%d" % (topology, names[function], run)
                 print title
-                SwarmAnalyzer.plot_heatmap_correlations(filename, output_filename=filename + "_perc.png", main_title=title)
+                SwarmAnalyzer.plot_heatmap_correlations(filename+".hdf", output_filename=filename + "_perc.png", main_title=title)
     """
 
     @staticmethod
