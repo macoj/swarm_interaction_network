@@ -117,26 +117,26 @@ class SwarmAnalyzer:
                     correlation_t.append(correlation)
         if save_hdf is not None:
             df = pd.DataFrame(correlation_t)
-            df.to_hdf(filename + "_average_correlation.hdf", 'df')
+            df.to_hdf(save_hdf, 'df')
         return correlation_t
     """
-    import matplotlib
-    matplotlib.use('Agg')
-    execfile("swarm_analyzer.py")
-    topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
-    topologies += ['noc2']
-    topologies += ['global']
-    topologies += ['ring']
-    topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
-    for topology in topologies:
-        for function in [23]:
-            for run in [0]:
-                filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-                kind = "fluctuations"
-                print filename
-                filename_hdf = filename + "_fluctuations_correlation.hdf"
-                correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, save_hdf=filename_hdf)
-                del correlation_t
+import matplotlib
+matplotlib.use('Agg')
+execfile("swarm_analyzer.py")
+topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
+topologies += ['noc2']
+topologies += ['global']
+topologies += ['ring']
+topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
+for topology in topologies:
+    for function in [23]:
+        for run in [0]:
+            filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
+            kind = "average"
+            print filename
+            filename_hdf = filename + "_%s_correlation.hdf" % kind
+            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, save_hdf=filename_hdf)
+            del correlation_t
 
     filename = "./data/100_particles/regular30_F21_00.with_positions_head_30"
     kind = "average"
@@ -167,8 +167,51 @@ class SwarmAnalyzer:
     """
 
     @staticmethod
-    def plot_heatmap_correlations(filename, iterations=6000, **kargs):
-        df = pd.read_hdf(filename + ".hdf", 'df')
+    def calculate_entropy_correlation_distribution(filename_hdf, iterations=6000, absolute=False):
+        print filename_hdf
+        df = pd.read_hdf(filename_hdf, 'df')
+        bins = np.arange(-1, 1.01, 0.01)
+        iterations -= 1
+        entropies = []
+        for i in range(iterations):
+            values = df.irow(i)
+            distribution = SwarmAnalyzer.get_distribution(values, bins, absolute=absolute)
+            entropy = -sum([pi*np.log(pi) for pi in distribution if pi > 0.0])
+            del distribution
+            entropies.append(entropy)
+        return entropies
+    """
+import matplotlib
+matplotlib.use('Agg')
+execfile("plotter.py")
+execfile("swarm_analyzer.py")
+names = {21: "Ackley",  22: "Griewank", 23: "Rastrigin", 24: "Rosenbrock", 25: "Schwefel", 26: "Sphere", 27: "Weierstrass", 28: "Random"}
+topologies = ['noc2']
+topologies += ['ring']
+topologies += [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10]]
+topologies += [("kregular%d" % i) for i in range(12, 30, 2)]
+topologies += [("kregular%d" % i) for i in range(30, 100, 10)]
+topologies += ['global']
+topologies = [("kregular%d" % i) for i in range(30, 50, 10)]
+topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
+iterations = 6000
+for topology in topologies:
+    for function in [23]:
+        for run in [0]:
+            kind = "fluctuations"
+            output_filename="entropy_%s_%s_F%02d_%02d.png" % (kind, topology, function, run)
+            filename_hdf = "./data/correlations/%s_F%02d_%02d.with_positions_%s_correlation.hdf" % (topology, function, run, kind)
+            title = "%s - f:'%s' run:%d" % (topology, names[function], run)
+            print title
+            entropies = SwarmAnalyzer.calculate_entropy_correlation_distribution(filename_hdf, iterations=iterations)
+            Plotter.plot_curve({'x': range(iterations-1), 'y': entropies}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="Entropy", title=title, grid=True, output_filename=output_filename, ylim=(0, 5.5))
+            df = pd.DataFrame({'entropy': entropies, 'iteration': range(iterations-1)})
+            df.to_hdf("entropy_%s_%s_F%02d_%02d.hdf" % (kind, topology, function, run), 'df')
+    """
+
+    @staticmethod
+    def plot_heatmap_correlations(filename_hdf, iterations=6000, **kargs):
+        df = pd.read_hdf(filename_hdf, 'df')
         bins = np.arange(-1, 1.01, 0.01)
         iterations -= 1
         counts = []
@@ -198,7 +241,7 @@ class SwarmAnalyzer:
                 filename = "./%s_F%02d_%02d.with_positions_correlation" % (topology, function, run)
                 title = "%s - f:'%s' run:%d" % (topology, names[function], run)
                 print title
-                SwarmAnalyzer.plot_heatmap_correlations(filename, output_filename=filename + "_perc.png", main_title=title)
+                SwarmAnalyzer.plot_heatmap_correlations(filename+".hdf", output_filename=filename + "_perc.png", main_title=title)
     """
 
     @staticmethod
