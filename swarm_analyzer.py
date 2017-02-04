@@ -235,14 +235,14 @@ for topology in topologies:
         return counts
 
     @staticmethod
-    def get_distribution2(matrix, bins, absolute=False):
+    def get_distribution2(matrix, bins):
         assert (matrix[0] is not None), 'Empty matrix'
         dimensions = int(np.sqrt(len(matrix[0])))
 
         # if absolute:
         #     bins = bins[bins >= 0]
 
-        f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=absolute)
+        f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions)
 
         counts = map(f_counts, matrix)
 
@@ -285,7 +285,7 @@ import matplotlib.pyplot as plt
 execfile("plotter.py")
 execfile("swarm_analyzer.py")
 filename = 'data/kregular30_F23_00.with_positions_fluctuations_correlation'
-iterations = 6000
+iterations = 20
 SwarmAnalyzer.get_alphas(filename, iterations=iterations)
 SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     """
