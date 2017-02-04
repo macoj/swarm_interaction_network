@@ -285,7 +285,7 @@ import matplotlib.pyplot as plt
 execfile("plotter.py")
 execfile("swarm_analyzer.py")
 filename = 'data/kregular30_F23_00.with_positions_fluctuations_correlation'
-iterations = 20
+iterations = 6000
 SwarmAnalyzer.get_alphas(filename, iterations=iterations)
 SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     """
