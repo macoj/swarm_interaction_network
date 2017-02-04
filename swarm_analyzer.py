@@ -238,7 +238,7 @@ for topology in topologies:
         assert (matrix[0] is not None), 'Empty matrix'
         dimensions = int(np.sqrt(len(matrix[0])))
 
-        f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=True)
+        f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=absolute)
 
         counts = map(f_counts, matrix)
 
