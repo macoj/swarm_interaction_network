@@ -260,7 +260,7 @@ for topology in topologies:
             bins = np.arange(0, 1.01, 0.01)
 
         iterations -= 1
-        df = pd.read_hdf(filename + ".hdf", 'df')
+        df = pd.read_hdf(filename, 'df')
 
         matrix = df[0:iterations].as_matrix()
         matrix = map(abs, matrix)
