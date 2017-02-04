@@ -238,22 +238,28 @@ for topology in topologies:
         assert (matrix[0] is not None), 'Empty matrix'
         dimensions = int(np.sqrt(len(matrix[0])))
 
-        if absolute:
-            bins = bins[bins >= 0]
+        # if absolute:
+        #     bins = bins[bins >= 0]
 
         f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=absolute)
 
         counts = map(f_counts, matrix)
 
-        return counts, bins
+        return counts
 
     @staticmethod
-    def get_alphas(filename, bins, iterations=2, save_hdf=None):
+    def get_alphas(filename, bins=None, iterations=2, save_hdf=None):
+        if not bins:
+            bins = np.append(np.arange(-1, 0, .01), np.arange(0, 1.01, 0.01))
+
         iterations -= 1
         df = pd.read_hdf(filename + ".hdf", 'df')
 
         matrix = df[0:iterations].as_matrix()
-        counts, bins = SwarmAnalyzer.get_distribution2(matrix, bins=bins, absolute=True)
+
+        matrix = map(abs, matrix)
+
+        counts = SwarmAnalyzer.get_distribution2(matrix, bins=bins)
 
         def get_alpha(count):
             slope, intercept, r_value, p_value, std_err = st.linregress(np.arange(len(count)), count)
