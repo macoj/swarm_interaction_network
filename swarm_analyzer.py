@@ -222,6 +222,53 @@ for topology in topologies:
         Plotter.plot_heatmap(
             np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1],
             titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
+
+    @staticmethod
+    def get_counts(values, bins, dimensions, absolute=False):
+        values = values.reshape(dimensions, dimensions)
+        values = values[np.triu_indices(n=dimensions, k=1)]
+        if absolute:
+            values = map(abs, values)
+        counts = np.histogram(values, bins=bins)[0]
+        counts = counts / float(np.sum(counts))
+        return counts
+
+    @staticmethod
+    def get_distribution2(matrix, bins, absolute=False):
+        assert (matrix[0] is not None), 'Empty matrix'
+        dimensions = int(np.sqrt(len(matrix[0])))
+
+        f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=True)
+
+        counts = map(f_counts, matrix)
+
+        return counts
+
+    @staticmethod
+    def calculate_alpha(filename, iterations=2, **kargs):
+
+        df = pd.read_hdf(filename + ".hdf", 'df')
+        bins = np.arange(-1, 1.01, 0.01)
+
+        matrix = df[0:iterations-1].as_matrix()
+        counts = SwarmAnalyzer.get_distribution2(matrix, bins=bins)
+
+        Plotter.plot_heatmap(
+            np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins) / 2.0, len(bins) - 1],
+            titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
+
+    """
+import matplotlib
+matplotlib.use('Agg')
+execfile("plotter.py")
+execfile("swarm_analyzer.py")
+filename = 'data/kregular30_F23_00.with_positions_fluctuations_correlation'
+iterations = 6000
+SwarmAnalyzer.calculate_alpha(filename, iterations=iterations)
+SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
+    """
+
+
     """
     import matplotlib
     matplotlib.use('Agg')
@@ -244,6 +291,8 @@ for topology in topologies:
                 SwarmAnalyzer.plot_heatmap_correlations(filename+".hdf", output_filename=filename + "_perc.png", main_title=title)
     """
 
+
+
     @staticmethod
     def get_distribution(values, bins, absolute=False):
         swarm_size = int(np.sqrt(len(values)))
@@ -251,7 +300,7 @@ for topology in topologies:
         if absolute:
             upper_triangle = map(abs, upper_triangle)
         count, _ = np.histogram(upper_triangle, bins=bins)
-        count = count / float(np.sum(count))
+        # count = count / float(np.sum(count))
         return count
 
     @staticmethod
