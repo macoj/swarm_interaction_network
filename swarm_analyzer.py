@@ -12,7 +12,7 @@ from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
 from giant_component_analysis_plotter import GiantComponentDeathPlotter
 from scipy.stats import pearsonr
-
+import scipy.stats as st
 
 class SwarmAnalyzer:
     def __init__(self):
@@ -238,28 +238,44 @@ for topology in topologies:
         assert (matrix[0] is not None), 'Empty matrix'
         dimensions = int(np.sqrt(len(matrix[0])))
 
+        if absolute:
+            bins = bins[bins >= 0]
+
         f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=dimensions, absolute=absolute)
 
         counts = map(f_counts, matrix)
 
-        return counts
+        return counts, bins
 
     @staticmethod
-    def calculate_alpha(filename, iterations=2, **kargs):
-
+    def get_alphas(filename, bins, iterations=2, save_hdf=None):
+        iterations -= 1
         df = pd.read_hdf(filename + ".hdf", 'df')
-        bins = np.arange(-1, 1.01, 0.01)
 
-        matrix = df[0:iterations-1].as_matrix()
-        counts = SwarmAnalyzer.get_distribution2(matrix, bins=bins)
 
-        Plotter.plot_heatmap(
-            np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins) / 2.0, len(bins) - 1],
-            titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
+        matrix = df[0:iterations].as_matrix()
+        counts, bins = SwarmAnalyzer.get_distribution2(matrix, bins=bins, absolute=True)
+
+        def get_alpha(count):
+            slope, intercept, r_value, p_value, std_err = st.linregress(np.arange(len(count)), count)
+            return slope
+
+        alphas = np.array(map(get_alpha, counts))
+
+        if save_hdf is not None:
+            df = pd.DataFrame(alphas)
+            df.to_hdf(save_hdf, 'df')
+        return alphas
+
+        # plt.plot(bins[1:], counts[10])
+        # plt.plot(np.arange(iterations), alphas)
+        # np.where(alphas > 0)
+        # plt.hist(alphas, normed=1, cumulative=0)
+        # alphas[10]
 
     """
 import matplotlib
-matplotlib.use('Agg')
+import matplotlib.pyplot as plt
 execfile("plotter.py")
 execfile("swarm_analyzer.py")
 filename = 'data/kregular30_F23_00.with_positions_fluctuations_correlation'
@@ -267,7 +283,6 @@ iterations = 6000
 SwarmAnalyzer.calculate_alpha(filename, iterations=iterations)
 SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     """
-
 
     """
     import matplotlib
