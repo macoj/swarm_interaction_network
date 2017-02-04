@@ -250,21 +250,22 @@ for topology in topologies:
 
     @staticmethod
     def get_alphas(filename, bins=None, iterations=2, save_hdf=None):
-        if not bins:
-            bins = np.append(np.arange(-1, 0, .01), np.arange(0, 1.01, 0.01))
+
+        def get_alpha(count):
+            slope, intercept, r_value, p_value, std_err = st.linregress(np.arange(len(count)), count)
+            return slope
+
+        if bins is None:
+            # bins = np.append(np.arange(-1, 0, .01), np.arange(0, 1.01, 0.01))
+            bins = np.arange(0, 1.01, 0.01)
 
         iterations -= 1
         df = pd.read_hdf(filename + ".hdf", 'df')
 
         matrix = df[0:iterations].as_matrix()
-
         matrix = map(abs, matrix)
 
         counts = SwarmAnalyzer.get_distribution2(matrix, bins=bins)
-
-        def get_alpha(count):
-            slope, intercept, r_value, p_value, std_err = st.linregress(np.arange(len(count)), count)
-            return slope
 
         alphas = np.array(map(get_alpha, counts))
 
