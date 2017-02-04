@@ -252,7 +252,6 @@ for topology in topologies:
         iterations -= 1
         df = pd.read_hdf(filename + ".hdf", 'df')
 
-
         matrix = df[0:iterations].as_matrix()
         counts, bins = SwarmAnalyzer.get_distribution2(matrix, bins=bins, absolute=True)
 
@@ -265,6 +264,8 @@ for topology in topologies:
         if save_hdf is not None:
             df = pd.DataFrame(alphas)
             df.to_hdf(save_hdf, 'df')
+            # df_bins = pd.DataFrame(bins)
+            # df_bins.to_hdf(save_hdf, 'df_bins')
         return alphas
 
         # plt.plot(bins[1:], counts[10])
