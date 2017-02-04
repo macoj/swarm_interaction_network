@@ -224,11 +224,12 @@ for topology in topologies:
             titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
 
     @staticmethod
-    def get_counts(values, bins, dimensions, absolute=False):
+    def get_counts(values, bins, dimensions):
+    # def get_counts(values, bins, dimensions, absolute=False):
         values = values.reshape(dimensions, dimensions)
         values = values[np.triu_indices(n=dimensions, k=1)]
-        if absolute:
-            values = map(abs, values)
+        # if absolute:
+        #     values = map(abs, values)
         counts = np.histogram(values, bins=bins)[0]
         counts = counts / float(np.sum(counts))
         return counts
@@ -285,7 +286,7 @@ execfile("plotter.py")
 execfile("swarm_analyzer.py")
 filename = 'data/kregular30_F23_00.with_positions_fluctuations_correlation'
 iterations = 6000
-SwarmAnalyzer.calculate_alpha(filename, iterations=iterations)
+SwarmAnalyzer.get_alphas(filename, iterations=iterations)
 SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     """
 
