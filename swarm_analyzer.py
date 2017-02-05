@@ -13,6 +13,8 @@ from giant_component_analysis import GiantComponentDeath
 from giant_component_analysis_plotter import GiantComponentDeathPlotter
 from scipy.stats import pearsonr
 import scipy.stats as st
+from statsmodels.distributions.empirical_distribution import ECDF
+
 
 class SwarmAnalyzer:
     def __init__(self):
@@ -164,6 +166,56 @@ for topology in topologies:
         ax = fit.truncated_power_law.plot_ccdf(ax=ax)
         plt.show()
 
+topology = "regular30"
+topology = "noc2"
+topology = "global"
+function = 21
+function = 23
+run = 0
+kind = "fluctuations"
+filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
+filename_hdf = filename + "_%s_correlation.hdf" % kind
+print filename_hdf
+df = pd.read_hdf(filename_hdf, 'df')
+
+from statsmodels.distributions.empirical_distribution import ECDF
+import matplotlib
+matplotlib.use('Agg')
+execfile("swarm_analyzer.py")
+
+
+x = np.arange(-1, 1, 0.01)
+curves.append({'x': x, 'y': ecdf(x)})
+
+all_values[0]
+df.tail(0)
+d
+values = matrix[0]
+iteration = 1520
+
+iteration = 1000
+iteration = 3988 # flat
+iteration = 3970 # v
+iteration = 3971 # v
+iteration = 3973 # v
+iteration = 3710 # v
+iteration = 4190 # 0 with tail
+iteration = 4500 # 0 not much tail
+iterations = [3988, 3970, 3971, 3973, 3710, 4190, 4500]
+for iteration in range(1000, 2000, 20):
+    values = np.array(df.irow(iteration))
+    values = values.reshape(100, 100)
+    values = values[np.triu_indices(n=100, k=1)]
+    print iteration
+    plt.figure(figsize=(3, 2.5))
+    plt.hist(values, bins=30, facecolor='#a6bddb')
+    plt.xlim(-1, 1)
+    plt.ylabel("Frequency")
+    plt.xlabel("Correlation")
+    plt.tight_layout(rect=[0, 0, 1, 1])
+    plt.savefig("%s_it%d_correlation_%s.pdf" % (filename, iteration, kind))
+    # plt.clf()
+    plt.show()
     """
 
     @staticmethod
@@ -192,22 +244,125 @@ topologies += [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10]]
 topologies += [("kregular%d" % i) for i in range(12, 30, 2)]
 topologies += [("kregular%d" % i) for i in range(30, 100, 10)]
 topologies += ['global']
-topologies = [("kregular%d" % i) for i in range(30, 50, 10)]
-topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
 iterations = 6000
 for topology in topologies:
     for function in [23]:
         for run in [0]:
             kind = "fluctuations"
+            absolute = True
             output_filename="entropy_%s_%s_F%02d_%02d.png" % (kind, topology, function, run)
             filename_hdf = "./data/correlations/%s_F%02d_%02d.with_positions_%s_correlation.hdf" % (topology, function, run, kind)
             title = "%s - f:'%s' run:%d" % (topology, names[function], run)
             print title
-            entropies = SwarmAnalyzer.calculate_entropy_correlation_distribution(filename_hdf, iterations=iterations)
-            Plotter.plot_curve({'x': range(iterations-1), 'y': entropies}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="Entropy", title=title, grid=True, output_filename=output_filename, ylim=(0, 5.5))
+            entropies = SwarmAnalyzer.calculate_entropy_correlation_distribution(filename_hdf, iterations=iterations, absolute=absolute)
+            # Plotter.plot_curve({'x': range(iterations-1), 'y': entropies}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="Entropy", title=title, grid=True, output_filename=output_filename, ylim=(0, 5.5))
             df = pd.DataFrame({'entropy': entropies, 'iteration': range(iterations-1)})
-            df.to_hdf("entropy_%s_%s_F%02d_%02d.hdf" % (kind, topology, function, run), 'df')
+            df.to_hdf("entropy_%s_%s_F%02d_%02d_abs.hdf" % (kind, topology, function, run), 'df')
     """
+
+    @staticmethod
+    def plot_entropy_curve():
+        topologies = ['global', 'ring', 'noc2']
+        run = 0
+        function = 23
+        kind = "fluctuations"
+        curves = []
+        for topology in topologies:
+            hdf_file = "entropy_%s_%s_F%02d_%02d.hdf" % (kind, topology, function, run)
+            df = pd.read_hdf(hdf_file, 'df')
+            curves.append({'x': range(len(list(df['entropy']))), 'y': list(df['entropy'])})
+        curves[2]['y'] = curves[2]['y'][:1300]
+        curves[2]['x'] = curves[2]['x'][:1300]
+        Plotter.plos_style()
+        Plotter.plot_curve(curves, x_label="Iteration", y_label="Entropy", figsize=(2.7, 2.3),
+                           legends=["Global", "Ring", "Selfish"], loc=4, tight_layout=[-0.02, -0.03, 1.03, 1.01],
+                           marker=[''], colors=['#7570b3', '#1b9e77', "#d95f02"], linewidth=1.5, grid=False,
+                           output_filename="entropy_global_ring_noc2.pdf")
+
+    @staticmethod
+    def plot_alphas_correlation_curve():
+        topologies = ['global', 'ring', 'noc2']
+        run = 0
+        function = 23
+        kind = "fluctuations"
+        curves = []
+        for topology in topologies:
+            hdf_file = "data/alphas_%s_%s_F%02d_%02d.hdf" % (kind, topology, function, run)
+            df = pd.read_hdf(hdf_file, 'df')
+            x = df[~pd.isnull(df[0])][0]
+            curves.append({'x': range(len(x)), 'y': x})
+        Plotter.plos_style()
+        colors = ['#7570b3', '#1b9e77', "#d95f02"]
+        yticks_args = np.arange(-0.0006, 0.0006, 0.0002)
+        yticks_args = yticks_args, map(str, 1000*yticks_args)
+        Plotter.plot_curve(curves, x_label="Iteration", y_label="Slope ($\\times10^{-3}$)", ylim=(-0.0006, 0.00025),
+                           yticks_args=yticks_args, figsize=(2.7, 2.3), legends=["Global", "Ring", "Selfish"], loc=1,
+                           tight_layout=[-0.07, -0.03, 1.03, 1.01], marker=[''], colors=colors, linewidth=1.1,
+                           grid=False, output_filename="alphas_global_ring_noc2.pdf")
+
+    @staticmethod
+    def plot_entropy_cdf():
+        topologies = ['noc2']
+        topologies += ['ring']
+        topologies += [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10]]
+        topologies += [("kregular%d" % i) for i in range(12, 30, 2)]
+        topologies += [("kregular%d" % i) for i in range(30, 100, 10)]
+        topologies += ['global']
+        kind = "fluctuations"
+        run = 0
+        function = 23
+        distributions = []
+        for topology in topologies:
+            hdf_file = "entropy_%s_%s_F%02d_%02d.hdf" % (kind, topology, function, run)
+            df = pd.read_hdf(hdf_file, 'df')
+            distributions.append(list(df['entropy']))
+        distributions[0] = [d for d in distributions[0] if d > 0.0]
+        titles = ["$c_2=0$", "$k = 2$ to $28$"] + [None] *17 + ["$k=30$ to $100$"] + [None] *20
+        curves = []
+        for i in range(len(distributions)):
+            ecdf = ECDF(distributions[i])
+            x = np.arange(0, 6, 0.1)
+            curves.append({'x': x, 'y': ecdf(x)})
+            # print float(cmap.N)*(i+1)/len(distributions)
+        colors = ["#d95f02"] + ['#1b9e77']*18 + ['#7570b3']*20
+        Plotter.plos_style()
+        Plotter.plot_curve(curves, x_label="Entropy ($h$)", y_label="$P(H < h)$", loc=4, figsize=(3, 2.3),
+                           xlim=(1.85, 5.5), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           linewidth=1.5, legends=titles, output_filename="cdf_entropy.pdf")
+
+    @staticmethod
+    def plot_correlations_cdf():
+        def get_values(values):
+            values = values.reshape(100, 100)
+            values = values[np.triu_indices(n=100, k=1)]
+            return values
+        topologies = ['noc2']
+        topologies += ['ring']
+        topologies += [("kregular%d" % i) for i in range(3, 11, 1)]
+        topologies += [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
+        topologies += [("kregular%d" % i) for i in range(30, 100, 10)]
+        topologies += ['global']
+        curves = []
+        x = np.arange(-1, 1, 0.01)
+        for topology in topologies:
+            function = 23
+            run = 0
+            kind = "fluctuations"
+            filename = "./data/correlations/%s_F%02d_%02d.with_positions" % (topology, function, run)
+            filename_hdf = filename + "_%s_correlation.hdf" % kind
+            print filename_hdf
+            df = pd.read_hdf(filename_hdf, 'df')
+            matrix = df.as_matrix()
+            all_values = np.array(map(get_values, matrix))
+            all_values = all_values.reshape(1, all_values.shape[0]*all_values.shape[1])
+            all_values = all_values[0][~np.isnan(all_values[0])]
+            ecdf = ECDF(all_values)
+            curves.append({'x': x, 'y': ecdf(x)})
+        colors = ["#d95f02"] + ['#1b9e77']*18 + ['#7570b3']*20
+        Plotter.plos_style()
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", y_label="$P(R < r)$", loc=4, figsize=(3, 2.3),
+                           marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf.pdf")
 
     @staticmethod
     def plot_heatmap_correlations(filename_hdf, iterations=6000, **kargs):
@@ -313,7 +468,43 @@ SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
                 SwarmAnalyzer.plot_heatmap_correlations(filename+".hdf", output_filename=filename + "_perc.png", main_title=title)
     """
 
+    @staticmethod
+    def plot_boxplot_fitness(sets_of_filenames, output_filename=None, info_grep="it\:#"):
+        # topologies = ['noc2']
+        topologies = []
+        topologies += ['ring']
+        kregulars = range(3, 11, 1) + range(12, 20, 2) + range(22, 30, 2) + range(30, 100, 10)
+        kregulars = range(10, 100, 10)
+        topologies += [("kregular%d" % i) for i in kregulars]
+        topologies += ['global']
+        sets_of_filenames = [["%s_F23_%02d.no_info" % (topology, r) for r in range(30)] for topology in topologies]
+        get_infos = lambda x: [
+            SwarmParser.read_file_and_measures(filename, informations_grep=info_grep)[1][info_grep][-1][1]
+            for filename in x]
+        values = map(get_infos, sets_of_filenames)
 
+        boxes_kargs = {'color': 'black', 'linewidth': 1.3, 'zorder': 3, 'fillstyle': 'full', 'facecolor': '#a6bddb'}
+        means_kargs = {'color': 'black', 'fillstyle': 'full', 'markerfacecolor': "black", 'marker': "s",
+                       'markersize': 3, 'mew': 1, 'mec': 'black', 'zorder': 5}
+        fliers_kargs = {'color': 'black', 'marker': "s", 'markersize': 1, 'mew': 1.2, 'mec': 'black'}
+        whiskers_kargs = {'color': 'black', 'linewidth': 1.2, 'zorder': 2, 'linestyle': '-', 'alpha': 1.0,
+                          'mec': 'black'}
+        medians_kargs = {'color': 'black', 'linewidth': 1.6, 'zorder': 5, 'alpha': 0.3}
+        caps_kargs = {'linewidth': 1.5, 'color': 'black'}
+        # topologies_legend[0] = 'Ring'
+        # topologies_legend[len(topologies)-1] = 'Global'
+        topologies = [2] + kregulars + [100]
+        topologies_legend = map(str, topologies)
+        legends = [range(1, len(topologies_legend) + 1), topologies_legend, {"rotation": 90}]
+        yticks_args = [3000, 4000, 5000, 6000, 7000]
+        yticks_args = yticks_args, map(str, yticks_args)
+        Plotter.plot_boxplots(values, grid_only='y', xlim=(0.3, len(topologies)+0.6), ylim=(2900, 7700), yscale='log',
+                              xticks_args=legends, yticks_args=yticks_args, grid=False, widths=0.7,
+                              tight_layout=[-0.05, -0.06, 1.03, 1.06], bootstrap=2000, boxes_kargs=boxes_kargs,
+                              showmeans=False, ylabel="Fitness", xlabel="$k$-regular topologies", size=(2.8, 2.3),
+                              showfliers=True, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whis=1.,
+                              whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs,
+                              output="fitness_f23_10.pdf")
 
     @staticmethod
     def get_distribution(values, bins, absolute=False):
