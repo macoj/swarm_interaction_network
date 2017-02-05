@@ -103,7 +103,7 @@ class Simulator:
         for topology in [("kregular", 6)]:
             for function in [23]:
                 for k in [12, 14, 16, 18, 22, 24, 26, 28] + range(10, 100, 10):
-                    commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %d False > %s%d_F%02d_%02d.with_positions " %
+                    commands += ["java -jar PSO/jar/pso_no_info.jar 1 %d %d %d %d %d 0 %d False > %s%d_F%02d_%02d.no_info " %
                                  (particles, evaluations, dimensions, function, topology[1], k,
                                  topology[0], k, function, r) for r in range(runs)]
         return commands
