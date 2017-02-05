@@ -117,10 +117,12 @@ class Plotter:
     @staticmethod
     def plot_curve(pd_data, title=None, x_label=None, y_label=None, output_filename=None,
                    legends=None, figsize=(3, 2), marker=".", linestyle='-', markersize=10, loc=2, loc_anchor=False,
-                   linewidth=1, markevery=None, colors=None, ylim=None, xlim=None, vline_at=None,
-                   xticks_args=None, font_size=9, font_family='normal', font_weight='normal',
+                   linewidth=1, markevery=None, colors=None, ylim=None, xlim=None, vline_at=None, vline_style='-',
+                   vline_color='blue', legend_frameon=True, legend_shadow=False, rugs=None, hline_at=None,
+                   hline_style='-', hline_color='blue', hline_width=1, dpi=300, legend_ms=1,
+                   xticks_args=None,
                    yticks_args=None, grid=False, tight_layout=None, x_scale='linear', annotate=None,
-                   y_scale='linear', legend_ncol=1,  xtick_rotation=0, dpi=300, **kwargs):
+                   y_scale='linear', no_axis=False, legend_ncol=1,  xtick_rotation=0, zorder_curves=3, **kwargs):
         if pd_data is not None:
             # font = {'family': font_family,
             #         'weight': font_weight,
@@ -132,77 +134,133 @@ class Plotter:
             if marker:
                 if type(marker) is not list:
                     marker = [marker]
-                    
             else:
                 marker = [None]
             markercycler = cycle(marker)
             if type(pd_data) is not list:
-                plt.plot(pd_data['x'], pd_data['y'], linestyle=linestyle, linewidth=linewidth, markersize=markersize,
-                         marker=next(markercycler), markevery=markevery, color=colors, **kwargs)
+                y = pd_data['y']
+                if 'x' not in pd_data:
+                    x = range(len(y))
+                else:
+                    x = pd_data['x']
+                plt.plot(x, y, linestyle=linestyle, linewidth=linewidth, markersize=markersize,
+                         marker=next(markercycler), markevery=markevery, color=colors, zorder=zorder_curves, **kwargs)
                 if xlim:
                     plt.xlim(xlim)
                 else:
                     plt.xlim(min(pd_data['x']), max(pd_data['x']))
             else:
-                lines = ["-", "--", "-.", ":"]  # matplotlib.markers.MarkerStyle.markers.keys() #
+                if type(linestyle) is list:
+                    lines = linestyle
+                else:
+                    lines = ["-", "--", ":", "-."]  # matplotlib.markers.MarkerStyle.markers.keys() #
                 linecycler = cycle(lines)
                 xlim_min = float('inf')
                 xlim_max = float('-inf')
                 colorcycler = None
                 legendcycler = None
+                if not legends:
+                    legends = [None]
                 if legends:
                     legendcycler = cycle(legends)
                 if colors:
                     colorcycler = cycle(colors)
                 for pd_data_i in pd_data:
                     legend_title = None
-                    if legendcycler is not None:
-                        legend_title = next(legendcycler)
-                    if linestyle is None:
-                        ls = next(linecycler)
+                    if legends:
+                        legend_title = cycle(legendcycler)
+                    ls = next(linecycler)
+                    y = pd_data_i['y']
+                    if 'x' in pd_data_i:
+                        x = pd_data_i['x']
                     else:
-                        linestyle = ls
-                    if colorcycler is not None:
-                        color = next(colorcycler)
-                        plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
-                                 marker=next(markercycler), label=legend_title,
+                        x = range(1, len(y) + 1)
+                    if colorcycler:
+                        current_color = next(colorcycler)
+                        plt.plot(x, y, linestyle=ls,
+                                 marker=next(markercycler), label=next(legend_title),
                                  markersize=markersize, linewidth=linewidth,
-                                 markevery=markevery, color=color, mec=color, **kwargs)
+                                 markevery=markevery, zorder=zorder_curves, color=current_color,
+                                 mec=current_color, **kwargs)
                     else:
-                        plt.plot(pd_data_i['x'], pd_data_i['y'], linestyle=ls,
-                                 marker=next(markercycler), label=legend_title,
+                        plt.plot(x, y, linestyle=ls,
+                                 marker=next(markercycler), label=next(legend_title),
                                  markersize=markersize, linewidth=linewidth,
-                                 markevery=markevery, **kwargs)
-                    if markevery:
-                        markevery += 1
+                                 markevery=markevery, zorder=zorder_curves, **kwargs)
+                    # if markevery:
+                    #     markevery += 1
                     if not loc_anchor:
-                        plt.legend(loc=loc, numpoints=1, framealpha=1.0, handletextpad=0.1, borderpad=0.2,
-                                   ncol=legend_ncol)
+                        legend = plt.legend(loc=loc, numpoints=1, framealpha=1.0,
+                                            #handletextpad=0.1,  borderpad=0.3,
+                                            ncol=legend_ncol, frameon=legend_frameon, shadow=legend_shadow)
                     else:
-                        plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1, ncol=legend_ncol)
-                    # leg = plt.gca().get_legend()
-                    # ltext = leg.get_texts()  # all the text.Text instance in the legend
-                    # plt.setp(ltext, fontsize='medium')    # the legend text fontsize
-                    xlim_min = min(xlim_min, min(pd_data_i['x']))
-                    xlim_max = max(xlim_max, max(pd_data_i['x']))
+                        legend = plt.legend(bbox_to_anchor=(1.01, 1), loc=loc, borderaxespad=0., numpoints=1,
+                                            ncol=legend_ncol, frameon=legend_frameon, shadow=legend_shadow)
+                    if legend:
+                        for legend_handle in legend.legendHandles:
+                            legend_handle._legmarker.set_markersize(legend_ms)
+                    if legends[0] is not None:
+                        leg = plt.gca().get_legend()
+                        ltext = leg.get_texts()  # all the text.Text instance in the legend
+                        # plt.setp(ltext, fontsize='medium')    # the legend text fontsize
+                    xlim_min = min(xlim_min, min(x))
+                    xlim_max = max(xlim_max, max(x))
                 if xlim:
                     plt.xlim(xlim)
                 else:
                     plt.xlim(xlim_min, xlim_max)
             if vline_at is not None:
-                plt.axvline(x=vline_at)
+                if type(vline_at) is list:
+                    if type(vline_color) is not list:
+                        vline_color = [vline_color]*len(vline_at)
+                    if type(vline_style) is not list:
+                        vline_style = [vline_style]*len(vline_at)
+                    for vline_i in range(len(vline_at)):
+                        plt.axvline(x=vline_at[vline_i], color=vline_color[vline_i], linestyle=vline_style[vline_i])
+                else:
+                    plt.axvline(x=vline_at, color=vline_color, linestyle=vline_style)
+            if hline_at is not None:
+                if type(hline_at) is list:
+                    if type(hline_color) is not list:
+                        hline_color = [hline_color]*len(hline_at)
+                    if type(hline_style) is not list:
+                        hline_style = [hline_style]*len(hline_at)
+                    for hline_i in range(len(hline_at)):
+                        plt.axhline(y=hline_at[hline_i], color=hline_color[hline_i], linestyle=hline_style[hline_i], zorder=zorder_curves+1)
+                else:
+                    plt.axhline(y=hline_at, color=hline_color, linestyle=hline_style, linewidth=hline_width, zorder=zorder_curves+1)
+            if rugs:
+                colorcycler = None
+                if colors:
+                    colorcycler = cycle(colors)
+                if type(rugs[0]) == list:
+                    d = 0.012
+                    current_color = next(colorcycler)
+                    plt.plot(rugs[0], np.zeros(len(rugs[0]))-d, '|', ms=5, mew=0.5, color=current_color)
+                    current_color = next(colorcycler)
+                    plt.plot(rugs[1], np.zeros(len(rugs[1]))-d*(3+1), '|', ms=5, mew=0.5, color=current_color)
+                    current_color = next(colorcycler)
+                    plt.plot(rugs[2], np.zeros(len(rugs[2]))-d*(3+3.4), '|', ms=5, mew=0.5, color=current_color)
+                    # for rug_i in range(1, len(rugs)):
+
+                else:
+                    plt.plot(rugs, np.zeros(len(rugs)), 'b+', ms=25)
             if annotate:
                 fig.text(*annotate)
             if x_scale:
                 plt.xscale(x_scale)
             if y_scale:
                 plt.yscale(y_scale)
-            if xticks_args:
-                plt.xticks(*xticks_args, rotation=xtick_rotation)
-            if yticks_args:
-                plt.yticks(*yticks_args)
+            if not no_axis:
+                if xticks_args:
+                    plt.xticks(*xticks_args, rotation=xtick_rotation)
+                if yticks_args:
+                    plt.yticks(*yticks_args)
+            else:
+                plt.yticks([])
+                plt.xticks([])
             if grid:
-                plt.grid()
+                plt.grid(zorder=1)
             if ylim:
                 plt.ylim(ylim)
             if x_label:
@@ -216,6 +274,9 @@ class Plotter:
                     plt.tight_layout()
                 else:
                     plt.tight_layout(rect=tight_layout)
+            for ax in fig.get_axes():
+                for k, spine in ax.spines.items():
+                    spine.set_zorder(zorder_curves + 1)
             if output_filename:
                 plt.savefig(output_filename, dpi=dpi)
                 #plt.clf()
