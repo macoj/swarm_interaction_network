@@ -110,6 +110,9 @@ class Simulator:
 
 """
 execfile("simulator.py")
+
+
+
 Simulator.execute(Simulator.pso(), number_of_processes=6, delay_between=10)
 Simulator.pso()[0]
 range(10, 21)
