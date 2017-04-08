@@ -352,7 +352,7 @@ public class PSO implements Runnable {
             this.initializeRNG();
             this.initializePSO();
             // > print topology and leave
-            this.printTopology();
+//            this.printTopology();
             do {
                 this.evaluatePositionAndUpdatePersonal();
                 this.updateGBest();
