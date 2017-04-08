@@ -2,6 +2,7 @@ package pso;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.text.DecimalFormat;
 import java.util.Arrays;
 import java.util.Random;
 
@@ -340,7 +341,7 @@ public class PSO implements Runnable {
     	if (print_writer == null) {
         	print_writer =  new PrintWriter(System.out, true);
         }
-//    	DecimalFormat decimal_format = new DecimalFormat("#.####");
+    	DecimalFormat decimal_format = new DecimalFormat("#.#######");
         Analysis diversity = new AnalysisOlorunda(this, print_writer);
         Analysis aggregation = new AnalysisYang(this, print_writer);
         Analysis ratio = new AnalysisWorasucheep(this, print_writer);
@@ -363,7 +364,7 @@ public class PSO implements Runnable {
                 this.updateInfluenceGraph();
                 // we now print:
                 // > fitness
-                String it = "it:#" + this.current_iteration + " " + particle_best_value[this.swarm_gbest];
+                String it = "it:#" + this.current_iteration + " " + decimal_format.format(particle_best_value[this.swarm_gbest]);
                 print_writer.println(it);
                 // > influence graph
                 String igLine = "ig:#" + this.current_iteration + " ";
@@ -386,7 +387,7 @@ public class PSO implements Runnable {
 	                print_writer.print("velocities:#" + this.current_iteration + " ");
 	                for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
 	                	for (int d = 0; d < this.DIMENSION; d++) {
-	                		print_writer.print(this.particle_velocity[i][d] + " ");
+	                		print_writer.print(decimal_format.format(this.particle_velocity[i][d]) + " ");
 						}
 	                }
 	                print_writer.println();	
