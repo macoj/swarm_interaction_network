@@ -762,7 +762,11 @@ public class PSO implements Runnable {
 					if (randomDouble() <= swarm_random_topology_p) {
 						int k = (i + j)%swarm_neighborhood_graph.length;
 						int randomNode = getRandomNodes(1)[0];
-						if(!(swarm_neighborhood_graph[i][randomNode] || swarm_neighborhood_graph[randomNode][i])){
+						while (i == randomNode){
+							randomNode = getRandomNodes(1)[0];
+						}
+						boolean isDuplicateEdge = (swarm_neighborhood_graph[i][randomNode] || swarm_neighborhood_graph[randomNode][i]);
+						if(!isDuplicateEdge){
 							removeNeighbour(i, k);
 							addNeighbour(i, randomNode);							
 						}
