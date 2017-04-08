@@ -55,7 +55,7 @@ public class PSO implements Runnable {
 	
 	Function FUNCTION;
 	
-	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS, K_REGULAR, WATTS_STROGATZ};
+	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS, K_REGULAR, WATTS_STROGATZ, MASLOW_SNEPPEN};
 	
 	enum TOPOLOGY_MECHANISM { NONE, DYNAMIC_2011 };
 	
@@ -779,6 +779,11 @@ public class PSO implements Runnable {
 				}
 			}
 			break;
+//		case MASLOW_SNEPPEN:
+//			createRegularTopology();
+//			int num_rewiring = 
+//			for 
+//			break;
 		default:
 			break;
 		}	
