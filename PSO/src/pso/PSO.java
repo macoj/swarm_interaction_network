@@ -28,8 +28,7 @@ public class PSO implements Runnable {
 	
 	TOPOLOGY swarm_initial_topology;
 	TOPOLOGY_MECHANISM swarm_topology_mechanism;
-	double swarm_random_topology_p; 
-	int swarm_static_topology_parameter;
+	double swarm_static_topology_parameter;
 	
 	double particle_position[][];
 	double particle_velocity[][];
@@ -163,14 +162,14 @@ public class PSO implements Runnable {
 			// TODO: you need to organize things here for parameters of the topologies!!
 			particles_failures_threshold = 50; // TODO :
 			if (args.length > 7) {
-				swarm_static_topology_parameter = Integer.parseInt(args[7]);
+				swarm_static_topology_parameter = Double.parseDouble(args[7]);
 			}
 			if (args.length == 9) {
 				swarm_print_info = Boolean.parseBoolean(args[8]);
 			}
 			return true;
 		} else {
-			System.out.print("PSO.jar runs particles evaluations dimensions function topology mechanism [mechanism_parameter]");
+			System.out.print("PSO.jar runs particles evaluations dimensions function topology mechanism topology_parameter print_info");
 			// > NUMBER OF RUNS
 			// > NUMBER OF PARTICLES
 			// > NUMBER OF FITNESS EVALUATIONS 		
@@ -352,6 +351,8 @@ public class PSO implements Runnable {
         	this.current_iteration = 0; 
             this.initializeRNG();
             this.initializePSO();
+            // > print topology and leave
+            this.printTopology();
             do {
                 this.evaluatePositionAndUpdatePersonal();
                 this.updateGBest();
@@ -374,6 +375,7 @@ public class PSO implements Runnable {
                     }                            
                 }
                 print_writer.println();
+                
                 if (swarm_print_info) {
 	                // > best personal values
 //	                printWriter.print("pbest:#" + this.current_iteration + " ");
@@ -413,6 +415,20 @@ public class PSO implements Runnable {
         }
         
         print_writer.close();
+	}
+
+	private void printTopology() {
+        for (int i = 0; i < NUMBER_OF_PARTICLES; i++) {
+            for (int j = 0; j < NUMBER_OF_PARTICLES; j++) {
+            	if (swarm_neighborhood_graph[i][j]) {
+            		print_writer.print("1 ");
+            	} else {
+            		print_writer.print("0 ");
+            	}
+            }                            
+        }
+        print_writer.println();
+        System.exit(0);
 	}
 
 	private void updateInfluenceGraph() {
@@ -721,7 +737,7 @@ public class PSO implements Runnable {
 			for (int i = 0; i < swarm_neighborhood_graph.length; i++) {
 				for (int j = 0; j < swarm_neighborhood_graph.length; j++) {
 					if (i != j) {
-						if (randomDouble() <= swarm_random_topology_p) {
+						if (randomDouble() <= swarm_static_topology_parameter) {
 							addNeighbour(i, j);
 						}
 					}
@@ -739,7 +755,7 @@ public class PSO implements Runnable {
 			}
 			break;
 		case NSOME_PARTNERS:
-			int n = swarm_static_topology_parameter;
+			int n = (int) swarm_static_topology_parameter;
 			for (int i = 0; i < swarm_neighborhood_graph.length; i += n) {
 				for (int p_i = 0; p_i < n; p_i++) {
 					for (int p_j = p_i; p_j < n; p_j++) {
@@ -755,11 +771,11 @@ public class PSO implements Runnable {
 			}
 			break;
 		case WATTS_STROGATZ:
-			createRegularTopology();
-			int m = swarm_static_topology_parameter / 2 ;
+			int m = 4;  // we follow Watts and Strogatz
+			createRegularTopology(m);
 			for (int j = 1; j <= m; j += 1) {
 				for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
-					if (randomDouble() <= swarm_random_topology_p) {
+					if (randomDouble() <= swarm_static_topology_parameter) {
 						int k = (i + j)%swarm_neighborhood_graph.length;
 						int randomNode = getRandomNodes(1)[0];
 						while (i == randomNode){
@@ -801,7 +817,11 @@ public class PSO implements Runnable {
 	}
 
 	private void createRegularTopology() {
-		int m = swarm_static_topology_parameter / 2 ;
+		int m = ((int) swarm_static_topology_parameter) / 2;
+		createRegularTopology(m);
+	}
+	
+	private void createRegularTopology(int m) {
 		boolean opposite_also = false;
 		boolean possible = true;
 		if (swarm_static_topology_parameter % 2 != 0) {
