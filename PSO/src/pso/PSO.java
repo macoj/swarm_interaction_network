@@ -2,6 +2,7 @@ package pso;
 
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Random;
 
 import com.sun.management.GarbageCollectionNotificationInfo;
@@ -54,7 +55,7 @@ public class PSO implements Runnable {
 	
 	Function FUNCTION;
 	
-	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS, K_REGULAR};
+	enum TOPOLOGY { GLOBAL, RING, RANDOM, VON_NEUMANN, THREESOME_PARTNERS, NSOME_PARTNERS, K_REGULAR, WATTS_STROGATZ};
 	
 	enum TOPOLOGY_MECHANISM { NONE, DYNAMIC_2011 };
 	
@@ -728,26 +729,7 @@ public class PSO implements Runnable {
 			}
 			break;
 		case K_REGULAR:
-			int m = swarm_static_topology_parameter / 2 ;
-			boolean opposite_also = false;
-			boolean possible = true;
-			if (swarm_static_topology_parameter % 2 != 0) {
-				if (swarm_neighborhood_graph.length % 2 == 0) {
-					opposite_also = true;
-				} else {
-					possible = false;
-				}
-			}
-			if (possible) {
-				for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
-					for (int n = 1; n <= m; n += 1) {
-						addNeighbour(i, (i + n)%swarm_neighborhood_graph.length);
-						if (opposite_also) {
-							addNeighbour(i, (i + swarm_neighborhood_graph.length/2)%swarm_neighborhood_graph.length);
-						}
-					}
-				}
-			}
+			createRegularTopology();
 			break;
 		case THREESOME_PARTNERS:
 			for (int i = 0; i < swarm_neighborhood_graph.length; i += 3) {
@@ -772,9 +754,74 @@ public class PSO implements Runnable {
 				//addNeighbour((i+1)%swarm_neighborhood_graph.length, (i+2)%swarm_neighborhood_graph.length);
 			}
 			break;
+		case WATTS_STROGATZ:
+			createRegularTopology();
+			int m = swarm_static_topology_parameter / 2 ;
+			for (int j = 1; j <= m; j += 1) {
+				for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
+					if (randomDouble() <= swarm_random_topology_p) {
+						int k = (i + j)%swarm_neighborhood_graph.length;
+						int randomNode = getRandomNodes(1)[0];
+						if(!(swarm_neighborhood_graph[i][k] || swarm_neighborhood_graph[k][i])){
+							removeNeighbour(i, k);
+							addNeighbour(i, randomNode);							
+						}
+//						TODO are we going to use odd numbers for k?
+//						if (opposite_also) {
+//						addNeighbour(i, (i + swarm_neighborhood_graph.length/2)%swarm_neighborhood_graph.length);
+//					}
+
+					}
+				}
+			}
+			break;
 		default:
 			break;
 		}	
+	}
+	
+	private int[] getRandomNodes(int numberNodes) {
+		int randomNodes[] = new int[numberNodes];
+		for(int i=0; i < numberNodes; i++){
+			boolean containsNode = true;
+			while(containsNode){
+				int nextNode = this.random_number_generator.nextInt(this.NUMBER_OF_PARTICLES);
+				containsNode = Arrays.asList(randomNodes).contains(nextNode);
+				if (!containsNode){
+					randomNodes[i] = nextNode;
+					break;
+				}
+			}		
+		}
+		return randomNodes;
+	}
+
+	private void createRegularTopology() {
+		int m = swarm_static_topology_parameter / 2 ;
+		boolean opposite_also = false;
+		boolean possible = true;
+		if (swarm_static_topology_parameter % 2 != 0) {
+			if (swarm_neighborhood_graph.length % 2 == 0) {
+				opposite_also = true;
+			} else {
+				possible = false;
+			}
+		}
+		if (possible) {
+			for (int i = 0; i < swarm_neighborhood_graph.length; i += 1) {
+				for (int n = 1; n <= m; n += 1) {
+					addNeighbour(i, (i + n)%swarm_neighborhood_graph.length);
+					if (opposite_also) {
+						addNeighbour(i, (i + swarm_neighborhood_graph.length/2)%swarm_neighborhood_graph.length);
+					}
+				}
+			}
+		}
+	}
+
+	private void rewireNeighbor(int i, int j) {
+		
+		
 	}
 
 	private void addNeighbour(int i, int j) {
