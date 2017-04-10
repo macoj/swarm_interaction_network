@@ -75,8 +75,8 @@ class Simulator:
         """
         commands = []
         evaluations = 600000
-        dimensions = 1000
-        particles = 100
+        dimensions = 100
+        particless = [25, 50, 100, 200, 400, 800, 1000]
         functions = range(21, 29)
         functions = [23]
         runs = 30
@@ -100,13 +100,21 @@ class Simulator:
         #         commands += ["java -jar PSO/jar/pso_no_c2.jar 1 %d %d %d %d %d 0 %d False > %s_F%02d_%02d.normal " %
         #                      (particles, evaluations, dimensions, function, topology[1], topology[2],
         #                      topology[0], function, r) for r in range(runs)]
-        for topology in [("kregular", 6)]:
-            for function in [23]:
-                # for k in [12, 14, 16, 18, 22, 24, 26, 28] + range(10, 100, 10):
-                for k in range(32, 40, 2):
-                    commands += ["java -jar PSO/jar/pso_no_info.jar 1 %d %d %d %d %d 0 %d False > %s%d_F%02d_%02d.no_info " %
-                                 (particles, evaluations, dimensions, function, topology[1], k,
-                                 topology[0], k, function, r) for r in range(runs)]
+        # for topology in [("kregular", 6)]:
+        #     for function in [23]:
+        #         # for k in [12, 14, 16, 18, 22, 24, 26, 28] + range(10, 100, 10):
+        #         for k in range(32, 40, 2):
+        #             commands += ["java -jar PSO/jar/pso_no_info.jar 1 %d %d %d %d %d 0 %d False > %s%d_F%02d_%02d.no_info " %
+        #                          (particles, evaluations, dimensions, function, topology[1], k,
+        #                          topology[0], k, function, r) for r in range(runs)]
+        ps = [10**-5, 5*10**-5, 10**-4, 2*10**-4, 3*10**-4, 4*10**-4, 5*10**-4, 10**-3, 5*10**-3, 10**-2, 5*10**-2, 0.1, 0.5, 0.7, 0.9, 1.0]
+        for particles in particless:
+            for topology in [("watts_strogatz", 7)]:
+                for function in [23]:
+                    for p in ps:
+                        commands += ["java -jar PSO/jar/pso.jar 1 %d %d %d %d %d 0 %f True > %s_%0.5f_F%02d_%02d" %
+                                     (particles, evaluations, dimensions, function, topology[1], p,
+                                     topology[0], p, function, r) for r in range(runs)]
         return commands
 
 """
