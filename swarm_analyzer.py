@@ -14,6 +14,8 @@ from giant_component_analysis_plotter import GiantComponentDeathPlotter
 from scipy.stats import pearsonr
 import scipy.stats as st
 from statsmodels.distributions.empirical_distribution import ECDF
+from functools import reduce
+from operator import add
 
 
 class SwarmAnalyzer:
@@ -31,7 +33,7 @@ class SwarmAnalyzer:
         graph_matrices = all_graph_matrices[''][window_size]
         # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
         # tw, then the maximum is 2*t, therefore:
-        weight_normalize = [2.0*i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
+        weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
         curves = GiantComponentDeath.create_giant_component_curves(graph_matrices, adjusted=True, include_zero=False,
                                                                    weight_normalize=weight_normalize)
         return curves
@@ -43,7 +45,7 @@ class SwarmAnalyzer:
         normalization = None
         if normalize:
             assert normalize_max_y is not None or normalize_constant is not None, "[ERROR] Missing normalizing factor!"
-            normalization = float(normalize_max_y)*len(tx)
+            normalization = float(normalize_max_y) * len(tx)
         for graph in curves:
             x, y = list(graph.x), list(graph.y)
             x.append(1.0)
@@ -57,16 +59,17 @@ class SwarmAnalyzer:
             del f
             del ty
         if normalization:
-            areas = [a/normalization for a in areas]
+            areas = [a / normalization for a in areas]
         return areas
 
     @staticmethod
     def get_giant_component_destruction_area(filename, window_size, number_of_individuals=100, until=-1):
         graphs = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size=window_size, until=until)
         areas = SwarmAnalyzer.get_areas_under_curves(graphs, normalize=True, normalize_max_y=number_of_individuals)
-        #df = pd.DataFrame({'x': range(window_size, window_size + len(areas)), 'y': areas})
+        # df = pd.DataFrame({'x': range(window_size, window_size + len(areas)), 'y': areas})
         df = pd.DataFrame({'x': range(len(areas)), 'y': areas})
         return df
+
     """
     execfile("swarm_analyzer.py")
     filename = "/mnt/pso_100_particles/global_F06_00"
@@ -85,43 +88,84 @@ class SwarmAnalyzer:
 
     @staticmethod
     def calculate_velocities_correlation(
-            filename, dimensions=1000, particles=100, informations_grep="velocities\:#", kind='all', absolute=False,
-            save_hdf=None, **kargs):
+            filename, dimensions=100, particles=1000, informations_grep="velocities\:#", kind='all', kind_average='all',
+            absolute=False, save_hdf=None, **kargs):
         information_map = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
         velocities = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=None,
             informations_grep=informations_grep, information_map=information_map, **kargs)
         velocities = [v[1] for v in velocities[1][informations_grep]]
-        velocities = [v/np.linalg.norm(v) for v in velocities]
+        # normalize all velocities at each iteration.
+        velocities = [v / np.linalg.norm(v) for v in velocities]
         correlation_t = []
         v_sum = []
-        for iteration in range(len(velocities)):
+        v_average = []
+
+        if kind_average in ['all']:
+            v_sum = reduce(add, (velocities[it] for it in range(len(velocities))))
+            v_average = v_sum / float(len(velocities))
+        elif kind_average in ['iteration']:
+            v_sum = copy.deepcopy(velocities[0])
+
+        for iteration in range(1, len(velocities)):
             if kind in ['all']:
                 correlations = pd.DataFrame(np.rot90(velocities[iteration])).corr()
-                correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
+                correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
+                # correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
+                correlation = np.ravel(correlations)
                 correlation_t.append(correlation)
             elif kind in ['average', 'fluctuations']:
-                if iteration == 0:
-                    v_sum = copy.deepcopy(velocities[0])
-                else:
+                if kind_average in ['iteration']:
                     v_sum += velocities[iteration]
-                v_average = v_sum / float(iteration + 1)
+                    v_average = v_sum / float(iteration)
                 correlations = None
                 if kind == 'fluctuations':
-                    if iteration < len(velocities) - 1:
-                        fluctuations = [velocities[iteration+1][p] - v_average[p] for p in range(particles)]
-                        correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
+                    # if iteration < len(velocities) - 1:
+                    fluctuations = [velocities[iteration][p] - v_average[p] for p in range(particles)]
+                    correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
                 else:
                     # average
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
                 if correlations is not None:
-                    correlation = np.array(correlations).reshape(1, correlations.shape[0]*correlations.shape[1])[0]
+                    correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
                     correlation_t.append(correlation)
         if save_hdf is not None:
             df = pd.DataFrame(correlation_t)
             df.to_hdf(save_hdf, 'df')
         return correlation_t
+
     """
+
+
+DIEGO
+import matplotlib.pyplot as plt
+# matplotlib.use('Agg')
+execfile("swarm_analyzer.py")
+filename = 'watts_strogatz_1.00000_F23_29_min'
+filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
+correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind='fluctuations', save_hdf=filename_hdf)
+for particle in range(100):
+    Plotter.plot_curve({'x': range(len(correlation_t[particle])), 'y': correlation_t[particle]}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="pearson correlation", title="Particle #%d" % particle, output_filename="plot.png")
+
+filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
+df = pd.read_hdf(filename_hdf, 'df')
+
+for it in range(0,2):
+        print it
+        values = df.irow(it)
+        individuals = int(np.sqrt(len(values)))
+        unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
+        unique = np.abs(unique)
+        plt.hist(unique)
+        #plt.xlim((-1, 1))
+        plt.show()
+        ax = fit.plot_ccdf(ls='', marker='.')
+        ax = fit.power_law.plot_ccdf(ax=ax)
+        ax = fit.lognormal.plot_ccdf(ax=ax)
+        ax = fit.exponential.plot_ccdf(ax=ax)
+        ax = fit.truncated_power_law.plot_ccdf(ax=ax)
+        plt.show()
+
 import matplotlib
 matplotlib.use('Agg')
 execfile("swarm_analyzer.py")
@@ -232,10 +276,11 @@ for iteration in iterations:
         for i in range(iterations):
             values = df.irow(i)
             distribution = SwarmAnalyzer.get_distribution(values, bins, absolute=absolute)
-            entropy = -sum([pi*np.log(pi) for pi in distribution if pi > 0.0])
+            entropy = -sum([pi * np.log(pi) for pi in distribution if pi > 0.0])
             del distribution
             entropies.append(entropy)
         return entropies
+
     """
 import matplotlib
 matplotlib.use('Agg')
@@ -299,7 +344,7 @@ for topology in topologies:
         Plotter.plos_style()
         colors = ['#009e73'] + ['#e69f00'] + ["#0072b2"]
         yticks_args = np.arange(-0.0006, 0.0006, 0.0002)
-        yticks_args = yticks_args, map(str, 1000*yticks_args)
+        yticks_args = yticks_args, map(str, 1000 * yticks_args)
         Plotter.plot_curve(curves, x_label="Iteration", y_label="Slope ($\\times10^{-3}$)", ylim=(-0.0006, 0.00025),
                            yticks_args=yticks_args, figsize=(3.33, 2.4), legends=["Global", "Ring", "Selfish"], loc=1,
                            tight_layout=[-0.07, -0.03, 1.03, 1.01], marker=[''], colors=colors, linewidth=1.1,
@@ -324,22 +369,22 @@ for topology in topologies:
             df = pd.read_hdf(hdf_file, 'df')
             distributions.append(list(df['entropy']))
         distributions[0] = [d for d in distributions[0] if d > 0.0]
-        titles = ["$c_2=0$", "$k = 2$ to $28$"] + [None] *17 + ["$k=30$ to $100$"] + [None] *20
-        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] *2 + ["$k=30$ to $100$"] + [None] *20
+        titles = ["$c_2=0$", "$k = 2$ to $28$"] + [None] * 17 + ["$k=30$ to $100$"] + [None] * 20
+        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 2 + ["$k=30$ to $100$"] + [None] * 20
         curves = []
         for i in range(len(distributions)):
             ecdf = ECDF(distributions[i])
             x = np.arange(0, 6, 0.1)
             curves.append({'x': x, 'y': ecdf(x)})
             # print float(cmap.N)*(i+1)/len(distributions)
-        colors = ["#0072b2"] + ['#e69f00']*18 + ['#009e73']*20
-        colors = ["#0072b2"] + ['#e69f00']*3 + ['#009e73']*20
+        colors = ["#0072b2"] + ['#e69f00'] * 18 + ['#009e73'] * 20
+        colors = ["#0072b2"] + ['#e69f00'] * 3 + ['#009e73'] * 20
         Plotter.plos_style()
         Plotter.plot_curve(curves, x_label="Entropy ($h$)", y_label="$P(H < h)$", loc=4, figsize=(3.33, 2.4),
                            xlim=(1.7, 5.6), marker=[""], tight_layout=[-0.05, -0.07, 1.02, 1.03], colors=colors,
-                           linewidth=1.5, legends=titles, linestyle=["-."] + [":"]*3 + ["-"]*20,
-                           output_filename="cdf_entropy_10.pdf",)
-                           #output_filename="cdf_entropy.pdf")
+                           linewidth=1.5, legends=titles, linestyle=["-."] + [":"] * 3 + ["-"] * 20,
+                           output_filename="cdf_entropy_10.pdf", )
+        # output_filename="cdf_entropy.pdf")
 
     @staticmethod
     def plot_correlations_cdf():
@@ -370,39 +415,57 @@ for topology in topologies:
             df = pd.read_hdf(filename_hdf, 'df')
             matrix = df.as_matrix()
             all_values = np.array(map(get_values, matrix))
-            all_values = all_values.reshape(1, all_values.shape[0]*all_values.shape[1])
+            all_values = all_values.reshape(1, all_values.shape[0] * all_values.shape[1])
             all_values = all_values[0][~np.isnan(all_values[0])]
             ecdf = ECDF(all_values)
             curves.append({'x': x, 'y': ecdf(x)})
 
             colors = ['#009e73'] + ['#e69f00'] + ["#0072b2"]
 
-        colors = ["#009e73"] + ['#e69f00']*17 + ['#0072b2']*20
-        colors = ["#0072b2"] + ['#e69f00']*3 + ['#009e73']*20
+        colors = ["#009e73"] + ['#e69f00'] * 17 + ['#0072b2'] * 20
+        colors = ["#0072b2"] + ['#e69f00'] * 3 + ['#009e73'] * 20
         Plotter.plos_style()
         xticks_args = np.arange(-0.4, 0.6, 0.2)
-        xticks_args = xticks_args, map(str, xticks_args )
+        xticks_args = xticks_args, map(str, xticks_args)
 
-        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 2 + ["$k=30$ to $100$"] + [None] *20
-        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 2 + ["$k=30$ to $100$"] + [None] *20
-        linestyle = ["-."] + [":"] * 3 + ["-"]*20
-        Plotter.plot_curve(curves, x_label="Correlation ($r$)", linewidth=1.5, legends=titles, linestyle=linestyle, xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.4, 0.4), figsize=(3.33, 2.4), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors, output_filename="correlations_cdf_10.pdf")
-        xticks_args = [-0.6, -0.4, -0.2,  0. ,  0.2]
-        xticks_args = xticks_args, map(str, xticks_args )
-        Plotter.plot_curve(curves, x_label="Correlation ($r$)", y_scale='log', figsize=(3.33, 2.4), linewidth=1.5, linestyle=linestyle, ylim=(10**-4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.6, 0.2),  marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors, output_filename="correlations_cdf_10_log.pdf")
-        Plotter.plot_curve(curves, y_scale='log', figsize=(2, 1.6), linewidth=1.5, linestyle=linestyle, ylim=(10**-4, 1.0), xticks_args=xticks_args, loc=4, xlim=(-0.6, 0.2),  marker=[""], tight_layout=[], colors=colors, output_filename="correlations_cdf_10_log_inline.pdf")
+        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 2 + ["$k=30$ to $100$"] + [None] * 20
+        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 2 + ["$k=30$ to $100$"] + [None] * 20
+        linestyle = ["-."] + [":"] * 3 + ["-"] * 20
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", linewidth=1.5, legends=titles, linestyle=linestyle,
+                           xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.4, 0.4), figsize=(3.33, 2.4),
+                           marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf_10.pdf")
+        xticks_args = [-0.6, -0.4, -0.2, 0., 0.2]
+        xticks_args = xticks_args, map(str, xticks_args)
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", y_scale='log', figsize=(3.33, 2.4), linewidth=1.5,
+                           linestyle=linestyle, ylim=(10 ** -4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$",
+                           loc=4, xlim=(-0.6, 0.2), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf_10_log.pdf")
+        Plotter.plot_curve(curves, y_scale='log', figsize=(2, 1.6), linewidth=1.5, linestyle=linestyle,
+                           ylim=(10 ** -4, 1.0), xticks_args=xticks_args, loc=4, xlim=(-0.6, 0.2), marker=[""],
+                           tight_layout=[], colors=colors, output_filename="correlations_cdf_10_log_inline.pdf")
 
-        colors = ["#d95f02"] + ['#1b9e77']*18 + ['#7570b3']*20
-        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 17 + ["$k=30$ to $100$"] + [None] *20
-        Plotter.plot_curve(curves, x_label="Correlation ($r$)", y_scale='log', linestyle=linestyle, ylim=(10**-4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.6, 0.2), figsize=(3, 2.3), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors, output_filename="correlations_cdf_log.pdf")
+        colors = ["#d95f02"] + ['#1b9e77'] * 18 + ['#7570b3'] * 20
+        titles = ["$c_2=0$", "$k = 2$ to $20$"] + [None] * 17 + ["$k=30$ to $100$"] + [None] * 20
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", y_scale='log', linestyle=linestyle,
+                           ylim=(10 ** -4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.6, 0.2),
+                           figsize=(3, 2.3), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf_log.pdf")
 
-        xticks_args = [ -0.2,  0, 0.2, 0.4]
-        xticks_args = xticks_args, map(str, xticks_args )
-        Plotter.plot_curve(curves, x_label="Correlation ($r$)", legends=titles, grid=True, linestyle=linestyle, ylim=(10**-4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.3, 0.5), figsize=(3, 2.3), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors, output_filename="correlations_cdf.pdf")
+        xticks_args = [-0.2, 0, 0.2, 0.4]
+        xticks_args = xticks_args, map(str, xticks_args)
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", legends=titles, grid=True, linestyle=linestyle,
+                           ylim=(10 ** -4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.3, 0.5),
+                           figsize=(3, 2.3), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf.pdf")
 
-        xticks_args = [-0.4, -0.2,  0.,  0.2]
-        xticks_args = xticks_args, map(str, xticks_args )
-        Plotter.plot_curve(curves, x_label="Correlation ($r$)", legends=titles, y_scale='log', grid=True, linestyle=linestyle, ylim=(10**-4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$", loc=4, xlim=(-0.4, 0.2), figsize=(3, 2.3), marker=[""], tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors, output_filename="correlations_cdf_log.pdf")
+        xticks_args = [-0.4, -0.2, 0., 0.2]
+        xticks_args = xticks_args, map(str, xticks_args)
+        Plotter.plot_curve(curves, x_label="Correlation ($r$)", legends=titles, y_scale='log', grid=True,
+                           linestyle=linestyle, ylim=(10 ** -4, 1.0), xticks_args=xticks_args, y_label="$P(R < r)$",
+                           loc=4, xlim=(-0.4, 0.2), figsize=(3, 2.3), marker=[""],
+                           tight_layout=[-0.05, -0.07, 1.03, 1.03], colors=colors,
+                           output_filename="correlations_cdf_log.pdf")
 
         execfile("swarm_analyzer.py")
         execfile("plotter.py")
@@ -416,10 +479,12 @@ for topology in topologies:
         filename_hdfs += ["./noc2_F21_00.with_positions_fluctuations_correlation.hdf"]
         filename_hdfs += ["./regular30_F21_00.with_positions_fluctuations_correlation.hdf"]
         filename_hdfs += ["./ring_F21_00.with_positions_fluctuations_correlation.hdf"]
+
         def get_values(values):
             values = values.reshape(100, 100)
             values = values[np.triu_indices(n=100, k=1)]
             return values
+
         for filename_hdf in filename_hdfs:
             df = pd.read_hdf(filename_hdf, 'df')
             iterations = 1000
@@ -430,10 +495,14 @@ for topology in topologies:
             f_counts = lambda x: SwarmAnalyzer.get_counts(x, bins=bins, dimensions=100)
             counts = map(f_counts, matrix)
             Plotter.plos_style()
-            Plotter.plot_heatmap(np.fliplr(np.rot90(counts, -1)), cmap=plt.get_cmap("gist_earth_r"), vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1], titles_y=["-1", "0", "1"], tight_layout=[-0.05, -0.1, 1.06, 1.11], figsize=(3.33, 1.2), colorbar_on=False, output_filename=filename_hdf+".pdf")
+            Plotter.plot_heatmap(np.fliplr(np.rot90(counts, -1)), cmap=plt.get_cmap("gist_earth_r"), vmax=None,
+                                 vmin=None, set_yticks=[0, len(bins) / 2.0, len(bins) - 1], titles_y=["-1", "0", "1"],
+                                 tight_layout=[-0.05, -0.1, 1.06, 1.11], figsize=(3.33, 1.2), colorbar_on=False,
+                                 output_filename=filename_hdf + ".pdf")
         Plotter.plot_heatmap(
-            np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins)/2.0, len(bins)-1],
+            np.fliplr(np.rot90(counts, -1)), vmax=None, vmin=None, set_yticks=[0, len(bins) / 2.0, len(bins) - 1],
             titles_y=["-1", "0", "1"], tight_layout=[0, 0, 1, 0.98], figsize=(30, 4), colorbar_on=False, **kargs)
+
     """
     import matplotlib
     matplotlib.use('Agg')
@@ -459,7 +528,7 @@ for topology in topologies:
 
     @staticmethod
     def get_counts(values, bins, dimensions):
-    # def get_counts(values, bins, dimensions, absolute=False):
+        # def get_counts(values, bins, dimensions, absolute=False):
         values = values.reshape(dimensions, dimensions)
         values = values[np.triu_indices(n=dimensions, k=1)]
         # if absolute:
@@ -525,7 +594,6 @@ SwarmAnalyzer.get_alphas(filename, iterations=iterations)
 SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     """
 
-
     @staticmethod
     def plot_boxplot_fitness(sets_of_filenames, output_filename=None, info_grep="it\:#"):
         # all:
@@ -561,24 +629,24 @@ SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
         yticks_args = [3000, 4000, 5000, 6000, 7000]
         # inline:
         yticks_args = [3000, 4000, 5000]
-        yticks_args = yticks_args, map(lambda x: str(x/1000), yticks_args)
-        Plotter.plot_boxplots(values, grid_only='y', xlim=(0.3, len(topologies)+0.6),
+        yticks_args = yticks_args, map(lambda x: str(x / 1000), yticks_args)
+        Plotter.plot_boxplots(values, grid_only='y', xlim=(0.3, len(topologies) + 0.6),
                               yticks_args=yticks_args,
-                              ylim=(2900, 5000), # inline
-                              #yscale='log', ylim=(2900, 7700), # all
+                              ylim=(2900, 5000),  # inline
+                              # yscale='log', ylim=(2900, 7700), # all
                               xticks_args=legends,
                               grid=False, widths=0.7,
-                              #tight_layout=[-0.07, -0.08, 1.04, 1.06], # all
-                              tight_layout=[-0.07, -0.08, 1.04, 1.1], # inline
+                              # tight_layout=[-0.07, -0.08, 1.04, 1.06], # all
+                              tight_layout=[-0.07, -0.08, 1.04, 1.1],  # inline
                               bootstrap=2000, boxes_kargs=boxes_kargs,
                               showmeans=False,
-                              #ylabel="Fitness ($\\times 10^3$)", xlabel="$k$-regular topologies",
-                              #size=(3.33, 2.3), # all
-                              size=(1.8, 1.2), # all
+                              # ylabel="Fitness ($\\times 10^3$)", xlabel="$k$-regular topologies",
+                              # size=(3.33, 2.3), # all
+                              size=(1.8, 1.2),  # all
                               showfliers=True, fliers_kargs=fliers_kargs, means_kargs=means_kargs, whis=1.,
                               whiskers_kargs=whiskers_kargs, medians_kargs=medians_kargs, caps_kargs=caps_kargs,
                               output="fitness_f23_inline.pdf")
-                              #output="fitness_f23_10.pdf")
+        # output="fitness_f23_10.pdf")
 
     @staticmethod
     def get_distribution(values, bins, absolute=False):
@@ -593,13 +661,15 @@ SwarmAnalyzer.plot_heatmap_correlations(filename, iterations=iterations)
     @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
         influence_graph_grep = 'ig\:#'
-        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x, min_weight=min_weight*2*window_size,
+        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x,
+                                                                                 min_weight=min_weight * 2 * window_size,
                                                                                  pre_callback=Callback.to_symmetric)
         all_graph_matrices, _ = SwarmParser.read_file_and_measures(filename,
                                                                    influence_graph_grep=influence_graph_grep,
                                                                    pos_callback=pos_callback,
                                                                    window_size=window_size, **kargs)
         return all_graph_matrices
+
     """
 execfile("swarm_analyzer.py")
 topology = "kregular"
@@ -697,7 +767,7 @@ plt.clf()
         print " > information parsing: %s" % str(informations_grep)
         df_info = SwarmAnalyzer.get_swarm_informations_from_file(filename, informations_grep)
         if normalize:
-            df_columns = {k: dict(zip(df_info['x'], df_info[k]/max(df_info[k]))) for k in informations_grep}
+            df_columns = {k: dict(zip(df_info['x'], df_info[k] / max(df_info[k]))) for k in informations_grep}
         else:
             df_columns = {k: dict(zip(df_info['x'], df_info[k])) for k in informations_grep}
         print "  > OK"
@@ -721,6 +791,7 @@ plt.clf()
         real_df.index = real_df['x']
         del real_df['x']
         return real_df
+
     """
 execfile("swarm_analyzer.py")
 import time
@@ -733,6 +804,7 @@ df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename)
                                                 normalize=False):
         df = SwarmAnalyzer.generate_swarm_analysis_df_from_file(filename, informations_grep, tws, normalize)
         df.to_hdf(output_hdf, 'df')
+
     """
 10 20 30 40 50 60 70 80 90 100
 10 3
@@ -776,7 +848,7 @@ for topology in topologies[13:17]:
         fitness = np.array(df['it:#'][smooth:])
         # f_delta = [f(t) - f(t+1)]/f(t+1)
         # f_delta = f(t)/f(t+1) - 1
-        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff = fitness[:len(fitness) - 1] / fitness[1:len(fitness)]
         fitness_diff -= 1
 
         # noinspection PyTypeChecker
@@ -797,8 +869,9 @@ for topology in topologies[13:17]:
         for threshold_i in range(len(counts)):
             if counts[threshold_i] > iter_threshold:
                 break
-        stagnation_iteration = sum(counts[:threshold_i-1])
+        stagnation_iteration = sum(counts[:threshold_i - 1])
         return stagnation_iteration
+
     """
     execfile("swarm_analyzer.py")
     execfile("plotter.py")
@@ -820,7 +893,7 @@ for topology in topologies[13:17]:
     # noinspection PyTypeChecker
     @staticmethod
     def calculate_cd_and_dfit(function=14, mean=True, tws=None, topologies=None, runs=30,
-                              diff_threshold=10**-5, iter_threshold=500, fitness_only=False,
+                              diff_threshold=10 ** -5, iter_threshold=500, fitness_only=False,
                               max_iteration_mode=None):
         it = "it:#"
         if not topologies:
@@ -865,6 +938,7 @@ for topology in topologies[13:17]:
             return fitnesses
         else:
             return cds, dfits
+
     """
 execfile("swarm_analyzer.py")
 execfile("plotter.py")
@@ -963,6 +1037,7 @@ plt.show()
     def calculate_correlation_cd_dfit(**kargs):
         cds, dfits = SwarmAnalyzer.calculate_cd_and_dfit(**kargs)
         return pearsonr(cds, dfits)
+
     """
 execfile("swarm_analyzer.py")
 SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
@@ -988,17 +1063,19 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
             df = df.head(head)
         x = df.index[smooth:len(df)]
         if not tws:
-            communication_diversity_smoothed = [sum(df[tw][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            communication_diversity_smoothed = [sum(df[tw][n - smooth:n]) / float(smooth) for n in
+                                                range(smooth, len(df))]
         else:
-            sum_tws = sum([df[c] for c in tws])/float(len(tws))
-            communication_diversity_smoothed = [sum(sum_tws[n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            sum_tws = sum([df[c] for c in tws]) / float(len(tws))
+            communication_diversity_smoothed = [sum(sum_tws[n - smooth:n]) / float(smooth) for n in
+                                                range(smooth, len(df))]
         communication_diversity_smoothed = 1 - np.array(communication_diversity_smoothed)
         fitness = np.array(df['it:#'][smooth:])
         #
         # f_delta = [f(t) - f(t+1)]/f(t+1)
         # f_delta = f(t)/f(t+1) - 1
         #
-        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff = fitness[:len(fitness) - 1] / fitness[1:len(fitness)]
         # Plotter.plot_curve({'x': range(len(fitness_diff)), 'y': fitness_diff})
         # Plotter.plot_curve({'x': range(len(fitness)), 'y': fitness}, vline_at=stagnation_iteration)
 
@@ -1021,13 +1098,14 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         for threshold_i in range(len(counts)):
             if counts[threshold_i] > iter_threshold:
                 break
-        stagnation_iteration = sum(counts[:threshold_i-1])
+        stagnation_iteration = sum(counts[:threshold_i - 1])
         communication_diversity_until_stagnation = communication_diversity_smoothed[:stagnation_iteration]
         if plot:
-            Plotter.plot_curve({'x': x, 'y': fitness/max(fitness)}, vline_at=stagnation_iteration, figsize=(15, 4),
+            Plotter.plot_curve({'x': x, 'y': fitness / max(fitness)}, vline_at=stagnation_iteration, figsize=(15, 4),
                                markersize=3, ylim=(0, 1.0), grid=True)
 
-        return sum(communication_diversity_until_stagnation)/float(stagnation_iteration), float(stagnation_iteration)
+        return sum(communication_diversity_until_stagnation) / float(stagnation_iteration), float(stagnation_iteration)
+
     """
     execfile("swarm_analyzer.py")
     i = 0
@@ -1047,17 +1125,19 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
             df = df.head(head)
         x = df.index[smooth:len(df)]
         if not tws:
-            communication_diversity_smoothed = [sum(df[tw][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            communication_diversity_smoothed = [sum(df[tw][n - smooth:n]) / float(smooth) for n in
+                                                range(smooth, len(df))]
         else:
             sum_tws = sum([df[c] for c in tws])
-            communication_diversity_smoothed = [sum(sum_tws[n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            communication_diversity_smoothed = [sum(sum_tws[n - smooth:n]) / float(smooth) for n in
+                                                range(smooth, len(df))]
         curves = [{'x': x, 'y': communication_diversity_smoothed}]
         fitness = np.array(df['it:#'][smooth:])
-        curves += [{'x': x, 'y': fitness/fitness.max()}]
-        measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',
+        curves += [{'x': x, 'y': fitness / fitness.max()}]
+        measures = ['aggregation_factor:#', 'coherence:#', 'normalized_average_around_center:#',
                     'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#', 'radius:#']
 
-        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff = fitness[:len(fitness) - 1] / fitness[1:len(fitness)]
         fitness_diff -= 1
         # noinspection PyTypeChecker
         fitness_diff = list(fitness_diff > diff_threshold)
@@ -1077,13 +1157,13 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         for threshold_i in range(len(counts)):
             if counts[threshold_i] > iter_threshold:
                 break
-        stagnation_iteration = sum(counts[:threshold_i-1])
+        stagnation_iteration = sum(counts[:threshold_i - 1])
         for m in measures:
             ddx = df.index[smooth:len(df)]
-            ddy = [sum(df[m][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+            ddy = [sum(df[m][n - smooth:n]) / float(smooth) for n in range(smooth, len(df))]
             ddy /= max(ddy)
             curves += [{'x': ddx, 'y': ddy}]
-        legends = ['cd', 'it']+measures
+        legends = ['cd', 'it'] + measures
         if plot:
             Plotter.plot_curve(curves, legends=legends, vline_at=stagnation_iteration, figsize=(15, 4),
                                markersize=3, ylim=(0, 1.0), grid=True, loc=1, **kargs)
@@ -1092,6 +1172,7 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
             for c in curves[2:]:
                 result.append(np.mean(c['y'][:stagnation_iteration]))
             return result
+
     """
     execfile("swarm_analyzer.py")
     results = []
@@ -1148,12 +1229,13 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         df = pd.DataFrame(measures_and_cd[0])
         for m in measures_and_cd[1:]:
             ddy = m[m.keys()[0]]
-            ddy = np.array(ddy[1:])/np.array(ddy[:-1])
+            ddy = np.array(ddy[1:]) / np.array(ddy[:-1])
             df[m.keys()[0]] = ddy
         if iteration:
             df = df.head(iteration + 1)
             df = df.tail(1)
         return df
+
     """
     execfile("swarm_analyzer.py")
     #for iteration in range(1, 50, 10):
@@ -1202,14 +1284,14 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         x = df.index[smooth:len(df)]
         if not tws:
             if smooth != 0:
-                communication_diversity_smoothed = [sum(df[tw][n-smooth:n])/float(smooth)
+                communication_diversity_smoothed = [sum(df[tw][n - smooth:n]) / float(smooth)
                                                     for n in range(smooth, len(df))]
             else:
                 communication_diversity_smoothed = df[tw]
         else:
-            sum_tws = sum([df[c] for c in tws])/float(len(tws))
+            sum_tws = sum([df[c] for c in tws]) / float(len(tws))
             if smooth != 0:
-                communication_diversity_smoothed = [sum(sum_tws[n-smooth:n])/float(smooth)
+                communication_diversity_smoothed = [sum(sum_tws[n - smooth:n]) / float(smooth)
                                                     for n in range(smooth, len(df))]
             else:
                 communication_diversity_smoothed = sum_tws
@@ -1218,11 +1300,11 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         fitness = np.array(df['it:#'][smooth:])
         measures = []
         if not no_measure:
-            measures = ['aggregation_factor:#', 'coherence:#',  'normalized_average_around_center:#',
+            measures = ['aggregation_factor:#', 'coherence:#', 'normalized_average_around_center:#',
                         'average_around_center:#', 'average_of_average_around_all_particles:#', 'diameter:#',
                         'radius:#']
         # derivative
-        fitness_diff = fitness[:len(fitness)-1] / fitness[1:len(fitness)]
+        fitness_diff = fitness[:len(fitness) - 1] / fitness[1:len(fitness)]
         fitness_diff -= 1
         # noinspection PyTypeChecker
         fitness_diff = list(fitness_diff > diff_threshold)
@@ -1242,30 +1324,30 @@ SwarmAnalyzer.calculate_correlation_cd_dfit(function=6, runs=10)
         for threshold_i in range(len(counts)):
             if counts[threshold_i] > iter_threshold:
                 break
-        stagnation_iteration = sum(counts[:threshold_i-1])
+        stagnation_iteration = sum(counts[:threshold_i - 1])
         if not mean:
-            dfit = (fitness[:len(fitness)-1] - fitness[1:len(fitness)]) / fitness[1:len(fitness)]
+            dfit = (fitness[:len(fitness) - 1] - fitness[1:len(fitness)]) / fitness[1:len(fitness)]
             if smooth != 0:
-                dfit = [sum(dfit[n-smooth:n])/float(smooth) for n in range(smooth, len(dfit))]
-            curves = [{'x': x[:stagnation_iteration-smooth],
-                       'cd': communication_diversity_smoothed[:stagnation_iteration-smooth],
-                       'dfit': dfit[:stagnation_iteration-smooth]}]
+                dfit = [sum(dfit[n - smooth:n]) / float(smooth) for n in range(smooth, len(dfit))]
+            curves = [{'x': x[:stagnation_iteration - smooth],
+                       'cd': communication_diversity_smoothed[:stagnation_iteration - smooth],
+                       'dfit': dfit[:stagnation_iteration - smooth]}]
         else:
-            #curves = [{'cd': np.mean(communication_diversity_smoothed[:stagnation_iteration])}]
-            curves = [{'cd': communication_diversity_smoothed[stagnation_iteration-smooth]}]
+            # curves = [{'cd': np.mean(communication_diversity_smoothed[:stagnation_iteration])}]
+            curves = [{'cd': communication_diversity_smoothed[stagnation_iteration - smooth]}]
         for m in measures:
             if smooth != 0:
-                ddy = [sum(df[m][n-smooth:n])/float(smooth) for n in range(smooth, len(df))]
+                ddy = [sum(df[m][n - smooth:n]) / float(smooth) for n in range(smooth, len(df))]
             else:
                 ddy = df[m]
             # ddy /= max(ddy)
-            #ddy = (np.array(ddy[1:]) - np.array(ddy[:-1])) / np.array(ddy[:-1])
-            #ddy = np.array(ddy[1:]) / np.array(ddy[:-1])
+            # ddy = (np.array(ddy[1:]) - np.array(ddy[:-1])) / np.array(ddy[:-1])
+            # ddy = np.array(ddy[1:]) / np.array(ddy[:-1])
             if not mean:
-                curves += [{m: ddy[:stagnation_iteration-smooth]}]
+                curves += [{m: ddy[:stagnation_iteration - smooth]}]
             else:
                 # curves += [{m: np.mean(ddy[:stagnation_iteration])}]
-                curves += [{m: ddy[stagnation_iteration-smooth]}]
+                curves += [{m: ddy[stagnation_iteration - smooth]}]
         return curves
 
     """
@@ -1546,6 +1628,7 @@ Plotter.plot_heatmap(avg, output_filename="correlation_measures_ring_.pdf", valu
                     stagnation_its.append(stagnation_it)
         df = pd.DataFrame({'sum_cd': sums, 's_it': stagnation_its})
         return df
+
     """
 tw = 10
 df = SwarmAnalyzer.analyze_stagnation_correlation_communication_diversity(tw, head=2000, diff_threshold=0.01, smooth=1)
@@ -1812,12 +1895,13 @@ Plotter.plot_boxplots([d.y if d is not None else [] for d in ds ], ylim=(1, 2200
     def create_influence_graph_graphml(filename, output_file_name, window_size=1000, calculate_on=1000):
         influence_graph_grep = 'ig\:#'
         pre_callback = Callback.to_symmetric
-        #for calculate_on in calculates_on:
+        # for calculate_on in calculates_on:
         graph, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep=influence_graph_grep,
                                                       window_size=window_size, pre_callback=pre_callback,
                                                       calculate_on=calculate_on)
         igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
         igraph.Graph.write_graphml(igraph_graph, output_file_name)
+
     """
     filename = './data/100_particles/vonneumann_F06_15.teste'
     output_file_name = './vonneumann.graphml'
@@ -1836,13 +1920,17 @@ Plotter.plot_boxplots([d.y if d is not None else [] for d in ds ], ylim=(1, 2200
                 for r in range(runs):
                     filename = "./data/100_particles/%s_F%02d_%02d.hdf" % (t, function, r)
                     diff_threshold, iter_threshold = 0.02, 500
-                    _, stagnation_iteration = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename, 10, smooth=1, diff_threshold=diff_threshold, iter_threshold=iter_threshold)
+                    _, stagnation_iteration = SwarmAnalyzer.analyze_analysis_df_file_stagnation_derivative(filename, 10,
+                                                                                                           smooth=1,
+                                                                                                           diff_threshold=diff_threshold,
+                                                                                                           iter_threshold=iter_threshold)
                     df = pd.read_hdf(filename, 'df')
                     Plotter.plot_curve({'x': df.index, 'y': df['it:#']}, vline_at=stagnation_iteration, figsize=(10, 4))
 
     @staticmethod
     def analyze_analysis_df_file(filename):
         df = pd.read_hdf(filename, 'df')
+
     """
     execfile("swarm_analyzer.py")
 
@@ -2155,6 +2243,7 @@ Plotter.plot_boxplots([d.y if d is not None else [] for d in ds ], ylim=(1, 2200
             dict_information = dict(informations[information_grep])
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
         return df
+
     """
 execfile("swarm_analyzer.py")
 # plotting measures vs. fitness:
@@ -2274,13 +2363,13 @@ graph_3 = np.reshape(final_distances, (1, 10000))
     @staticmethod
     def difference_n(df, n):
         array = np.array(df['y'])
-        array = array[:len(array)-n] - array[n:]
+        array = array[:len(array) - n] - array[n:]
         data = {'y': list(array), 'x': list(df['x'][:len(df['x']) - n])}
         return data
 
     @staticmethod
     def get_giant_component_destruction_area_from_files(basename, window_size, runs=30):
-        filenames = [basename+"%02d" % i for i in range(1, runs+1)]
+        filenames = [basename + "%02d" % i for i in range(1, runs + 1)]
         df = None
         run = 1
         for filename in filenames[:1]:
@@ -2293,6 +2382,7 @@ graph_3 = np.reshape(final_distances, (1, 10000))
             run += 1
             del df_run
         return df
+
     """
     execfile("swarm_analyzer.py")
     basename = "/mnt/pso_100_particles/global_F06_"
@@ -2302,14 +2392,14 @@ graph_3 = np.reshape(final_distances, (1, 10000))
     @staticmethod
     def export_giant_component_destruction_areas(basename, window_size, runs=30):
         df = SwarmAnalyzer.get_giant_component_destruction_area_from_files(basename, runs=runs, window_size=window_size)
-        df.to_hdf(basename+str(window_size)+".hdf", 'df')
+        df.to_hdf(basename + str(window_size) + ".hdf", 'df')
 
     @staticmethod
     def read_hdfs_and_plot(basename):
-        filenames = [basename+"%02d" % i for i in range(1, 30)]
+        filenames = [basename + "%02d" % i for i in range(1, 30)]
         windows_size = 1000
         for filename in filenames:
-            df = pd.read_hdf(filename+"_"+str(windows_size)+".hdf", 'df')
+            df = pd.read_hdf(filename + "_" + str(windows_size) + ".hdf", 'df')
             Plotter.plot_curve(df, figsize=(18, 6))
 
     @staticmethod
@@ -2319,7 +2409,7 @@ graph_3 = np.reshape(final_distances, (1, 10000))
         graph_matrices, _ = SwarmParser.read_files_and_measures(filenames, influence_graph_grep=influence_graph_grep,
                                                                 pos_callback=pre_callback, windows_size=windows_size,
                                                                 calculate_on=calculate_on)
-        normalize = [2*i for i in windows_size]
+        normalize = [2 * i for i in windows_size]
         pd_datas = []
         for title, _ in filenames:
             graphs = [graph_matrices[title][i] for i in windows_size]
@@ -2327,7 +2417,9 @@ graph_3 = np.reshape(final_distances, (1, 10000))
             curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
                                                                              weight_normalize=normalize)
             pd_datas.append((title, dict(zip(windows_size, curves_areas))))
-        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0), figsize=(4.5, 4))
+        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0),
+                                                               figsize=(4.5, 4))
+
     """
     execfile("swarm_analyzer.py")
     execfile("giant_component_analysis_plotter.py")
@@ -2342,15 +2434,19 @@ graph_3 = np.reshape(final_distances, (1, 10000))
         graph_matrices, _ = SwarmParser.read_files_and_measures(filenames, influence_graph_grep=influence_graph_grep,
                                                                 pos_callback=pre_callback, windows_size=windows_size,
                                                                 calculate_on=calculate_on)
-        normalize = [2*i for i in windows_size]
+        normalize = [2 * i for i in windows_size]
         pd_datas = []
-        for title,_ in filenames:
+        for title, _ in filenames:
             graphs = [graph_matrices[title][i] for i in windows_size]
             graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
             curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
                                                                              weight_normalize=normalize)
             pd_datas.append((title, dict(zip(windows_size, curves_areas))))
-        GiantComponentDeathPlotter.giant_component_death_curve_with_area(pd_datas, xlim=(0, 1.0), figsize=(4.5, 1.9), mew=1.2, tight_layout=[-0.02, 0.01, 1.02, 1.06], output_filename="graph_destruction_area.pdf") #, **kargs)
+        GiantComponentDeathPlotter.giant_component_death_curve_with_area(pd_datas, xlim=(0, 1.0), figsize=(4.5, 1.9),
+                                                                         mew=1.2,
+                                                                         tight_layout=[-0.02, 0.01, 1.02, 1.06],
+                                                                         output_filename="graph_destruction_area.pdf")  # , **kargs)
+
     """
     plt.clf()
     execfile("swarm_analyzer.py")
@@ -2359,9 +2455,9 @@ graph_3 = np.reshape(final_distances, (1, 10000))
     SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000, output_filename="graph_destruction_area_10002.pdf")
     SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000)
     """
-    #create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
-    #create_heatmap_plot(all_graph_matrices, calculate_on)
-    #create_strength_distribution_curves(all_graph_matrices, calculate_on)
+    # create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
+    # create_heatmap_plot(all_graph_matrices, calculate_on)
+    # create_strength_distribution_curves(all_graph_matrices, calculate_on)
 
     # pd_data = (title, pd_data)
     # pd_datas_2.append(pd_data)
@@ -2387,9 +2483,10 @@ graph_3 = np.reshape(final_distances, (1, 10000))
 
     ### create the histograms data
     # gets the last graph in 'graphs' and plot the degree distribution of it
-    #return graph_matrix
+    # return graph_matrix
 
-#if __name__ == "__main__":
+
+# if __name__ == "__main__":
 #    SwarmAnalyzer.read_files_and_export_hdf(int(sys.argv[1]), sys.argv[2])
 
 """
@@ -2723,5 +2820,3 @@ for basename in basenames:
     curves.append({'x': xs, 'y': ys})
 Plotter.plot_curve(curves, figsize=(23,7), legends=['d', 'g', 'r'], x_label="Time Window", markersize=7, linewidth=2, alpha=0.7, grid=True, x_scale='log', y_scale='linear')
     """
-
-
