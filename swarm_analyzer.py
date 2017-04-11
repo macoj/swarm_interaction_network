@@ -110,7 +110,6 @@ class SwarmAnalyzer:
         for iteration in range(1, len(velocities)):
             if kind in ['all']:
                 correlations = pd.DataFrame(np.rot90(velocities[iteration])).corr()
-                correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
                 # correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
                 correlation = np.ravel(correlations)
                 correlation_t.append(correlation)
