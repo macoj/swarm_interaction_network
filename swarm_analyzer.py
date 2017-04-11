@@ -126,7 +126,8 @@ class SwarmAnalyzer:
                     # average
                     correlations = pd.DataFrame(np.rot90(v_average)).corr()
                 if correlations is not None:
-                    correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
+                    # correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
+                    correlation = np.ravel(correlations)
                     correlation_t.append(correlation)
         if save_hdf is not None:
             df = pd.DataFrame(correlation_t)
@@ -138,16 +139,18 @@ class SwarmAnalyzer:
 
 DIEGO
 import matplotlib.pyplot as plt
-# matplotlib.use('Agg')
+
 execfile("swarm_analyzer.py")
 filename = 'watts_strogatz_1.00000_F23_29_min'
 filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
 correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind='fluctuations', save_hdf=filename_hdf)
-for particle in range(100):
+for particle in range(0):
     Plotter.plot_curve({'x': range(len(correlation_t[particle])), 'y': correlation_t[particle]}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="pearson correlation", title="Particle #%d" % particle, output_filename="plot.png")
 
 filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
 df = pd.read_hdf(filename_hdf, 'df')
+
+fig, a = plt.subplots()
 
 for it in range(0,2):
         print it
