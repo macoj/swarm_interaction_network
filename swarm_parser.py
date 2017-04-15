@@ -110,34 +110,6 @@ class SwarmParser:
     """
 execfile("swarm_parser.py")
 t = SwarmParser.read_file_and_measures("/mnt/pso_100_particles/global_F06_00", influence_graph_grep="ig\:#", window_size=500, informations_grep=["radius\:#", "it\:#"])
-
-execfile("swarm_parser.py")
-informations_grep = "velocities\:#"
-
-dimensions, particles = 1000, 100
-f = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
-t = SwarmParser.read_file_and_measures("./regular30_F21_00.with_positions", influence_graph_grep=None, informations_grep=informations_grep, information_map=f, until=30)
-
-
-
-
-for i in range(10):
-    aaa = pd.DataFrame(np.rot90(t[1][informations_grep][i][1])).corr()
-    np.max(aaa[aaa[0] < 1][0])
-
-a = np.arange(20)
-import random
-random.shuffle(a)
-
-a = a.reshape(5, 4)
-
-import pandas as pd
-a_df = pd.DataFrame(a)
-a_df
-
-from scipy.stats import pearsonr
-pearsonr(a[0], a[1])
-
     """
 
     @staticmethod
