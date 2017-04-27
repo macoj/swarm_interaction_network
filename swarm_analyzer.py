@@ -28,12 +28,10 @@ class SwarmAnalyzer:
         igraph.Graph.write_graphml(igraph_graph, output_file_name)
 
     @staticmethod
-    def get_giant_component_destruction_curves(
-            filename, window_size, until=-1, influence_graph_grep='ig\:#', calculate_on=-1, count='components'):
-        pos_callback = Callback.to_symmetric
-        all_graph_matrices, _ = SwarmParser.read_files_and_measures(
-            [('', filename)], influence_graph_grep=influence_graph_grep, pos_callback=pos_callback,
-            windows_size=[window_size], until=until, calculate_on=calculate_on)
+    def get_giant_component_destruction_curves(filename, window_size, until=-1, calculate_on=-1, count='components'):
+        filenames = [('', filename)]
+        all_graph_matrices = SwarmAnalyzer.get_graph_matrices_from_files(
+            filenames, windows_size=[window_size], until=until, calculate_on=calculate_on)
         graph_matrices = all_graph_matrices[''][window_size]
         # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
         # tw, then the maximum is 2*t, therefore:
@@ -46,10 +44,23 @@ class SwarmAnalyzer:
     filename = './data/vonneumann_F06_15'
     window_size = 10
     until = 100
-    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100, count='size')
+    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100, count='count')
     import matplotlib.pyplot as plt
     plt.plot(curves[0]['x'], curves[0]['y'])
     plt.show()
+    """
+
+    @staticmethod
+    def get_graph_matrices_from_files(filenames, influence_graph_grep='ig\:#', **kargs):
+        pos_callback = Callback.to_symmetric
+        graph_matrices, _ = SwarmParser.read_files_and_measures(
+            filenames, influence_graph_grep=influence_graph_grep, pos_callback=pos_callback, **kargs)
+        return graph_matrices
+    """
+    execfile("swarm_analyzer.py")
+    filenames = [('Global', "./data/global_F06_15"), ('Ring', "./data/ring_F06_15")]
+    df = SwarmAnalyzer.get_graph_matrices_from_files(filenames, windows_size=[100, 1000], calculate_on=1000)
+    df['Global'][100][0]
     """
 
     @staticmethod
@@ -90,25 +101,3 @@ class SwarmAnalyzer:
             dict_information = dict(informations[information_grep])
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
         return df
-
-    @staticmethod
-    def read_files_and_plot(filenames, windows_size, calculate_on, influence_graph_grep='ig\:#'):
-        pre_callback = Callback.to_symmetric
-        graph_matrices, _ = SwarmParser.read_files_and_measures(
-            filenames, influence_graph_grep=influence_graph_grep, pos_callback=pre_callback, windows_size=windows_size,
-            calculate_on=calculate_on)
-        normalize = [2 * i for i in windows_size]
-        pd_datas = []
-        for title, _ in filenames:
-            graphs = [graph_matrices[title][i] for i in windows_size]
-            graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
-            curves_areas = GiantComponentDeath.create_giant_component_curves(graphs, weight_normalize=normalize)
-            pd_datas.append((title, dict(zip(windows_size, curves_areas))))
-        GiantComponentDeathPlotter.giant_component_death_curve(
-            calculate_on, pd_datas, windows_size, xlim=(0, 1.0), figsize=(4.5, 4))
-    """
-    execfile("swarm_analyzer.py")
-    execfile("giant_component_analysis_plotter.py")
-    filenames = [('Global', "./data/global_F06_15"), ('Ring', "./data/ring_F06_15"), ('Von Neumann', "./data/vonneumann_F06_15"), ('Dynamic', "./data/dynamicring_F06_15")]
-    df = SwarmAnalyzer.read_files_and_plot(filenames, windows_size=[100, 1000], calculate_on=1000)
-    """
