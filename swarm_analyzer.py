@@ -29,7 +29,7 @@ class SwarmAnalyzer:
 
     @staticmethod
     def get_giant_component_destruction_curves(
-            filename, window_size, until=-1, influence_graph_grep='ig\:#', calculate_on=-1):
+            filename, window_size, until=-1, influence_graph_grep='ig\:#', calculate_on=-1, count='components'):
         pos_callback = Callback.to_symmetric
         all_graph_matrices, _ = SwarmParser.read_files_and_measures(
             [('', filename)], influence_graph_grep=influence_graph_grep, pos_callback=pos_callback,
@@ -39,14 +39,17 @@ class SwarmAnalyzer:
         # tw, then the maximum is 2*t, therefore:
         weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
         curves = GiantComponentDeath.create_giant_component_curves(
-            graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize)
+            graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize, count=count)
         return curves
     """
     execfile("swarm_analyzer.py")
     filename = './data/vonneumann_F06_15'
     window_size = 10
     until = 100
-    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100)
+    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100, count='size')
+    import matplotlib.pyplot as plt
+    plt.plot(curves[0]['x'], curves[0]['y'])
+    plt.show()
     """
 
     @staticmethod

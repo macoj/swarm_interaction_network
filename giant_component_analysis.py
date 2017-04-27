@@ -47,7 +47,8 @@ class GiantComponentDeath:
         return result
 
     @staticmethod
-    def low_edges_weight_removal(igraph_graph, graphs_keeper_giant_size_threshold=None, include_zero=True):
+    def low_edges_weight_removal(
+            igraph_graph, graphs_keeper_giant_size_threshold=None, include_zero=True, count='components'):
         """ Removes the edges progressively by the weight starting with the ones with the lowest weight and returns
         the size of the giant component after each removal.
 
@@ -55,6 +56,8 @@ class GiantComponentDeath:
         :param graphs_keeper_giant_size_threshold:
         :return:
         """
+        assert count == "components" or count == "size", \
+            "I can only count the number of components or giant component size!"
         total_nodes = float(igraph_graph.vcount())
         # it can keep graph structures for certain threhsolds, thus:
         graphs = []
@@ -88,9 +91,10 @@ class GiantComponentDeath:
                             graphs_kept[index_graph] = (True, graph[1])
                     index_graph += 1
         # the result dataframe is sorted by the weight, low -> high
-        #pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': death_evolution_size})
-        pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': number_of_components})
-        #print str(number_of_components)
+        if count == 'components':
+            pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': number_of_components})
+        else:
+            pd_df = pd.DataFrame({'x': death_evolution_weight, 'y': death_evolution_size})
         if graphs is not []:
             result = (pd_df, graphs)
         else:
@@ -129,11 +133,11 @@ class GiantComponentDeath:
 
     @staticmethod
     def create_giant_component_curve(
-            graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, include_zero=True):
+            graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, **kargs):
         igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
         # create the graph objects as well as the death analysis
         pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(
-            igraph_graph, return_graphs_with_giant_sizes, include_zero=include_zero)
+            igraph_graph, return_graphs_with_giant_sizes, **kargs)
         # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
         # the weights leading to the destruction of the graph can be normalized.
         # when there is a time window tw, the maximum weight of an edge is equal
@@ -146,7 +150,7 @@ class GiantComponentDeath:
         return pd_data
 
     @staticmethod
-    def create_giant_component_curves(graph_matrices, adjusted=False, include_zero=True, weight_normalize=None):
+    def create_giant_component_curves(graph_matrices, adjusted=False, weight_normalize=None, **kargs):
         pd_datas = []
         normalize_index = 0
         if type(graph_matrices) == dict:
@@ -160,7 +164,7 @@ class GiantComponentDeath:
             else:
                 normalize_c = weight_normalize
             pd_data = GiantComponentDeath.create_giant_component_curve(
-                graph_matrix, normalize=normalize_c, adjusted=adjusted, include_zero=include_zero)
+                graph_matrix, normalize=normalize_c, adjusted=adjusted, **kargs)
             pd_datas.append(pd_data)
         return pd_datas
 
