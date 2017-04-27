@@ -87,188 +87,6 @@ class SwarmAnalyzer:
         return components
 
     @staticmethod
-    def calculate_velocities_correlation(
-            filename, dimensions=100, particles=1000, informations_grep="velocities\:#", kind='all', kind_average='all',
-            absolute=False, save_hdf=None, **kargs):
-        information_map = lambda x: np.array(map(float, x.split())).reshape(particles, dimensions)
-        velocities = SwarmParser.read_file_and_measures(
-            filename, influence_graph_grep=None,
-            informations_grep=informations_grep, information_map=information_map, **kargs)
-        velocities = [v[1] for v in velocities[1][informations_grep]]
-        # normalize all velocities at each iteration.
-        velocities = [v / np.linalg.norm(v) for v in velocities]
-        correlation_t = []
-        v_sum = []
-        v_average = []
-
-        if kind_average in ['all']:
-            v_sum = reduce(add, (velocities[it] for it in range(len(velocities))))
-            v_average = v_sum / float(len(velocities))
-        elif kind_average in ['iteration']:
-            v_sum = copy.deepcopy(velocities[0])
-
-        for iteration in range(1, len(velocities)):
-            if kind in ['all']:
-                correlations = pd.DataFrame(np.rot90(velocities[iteration])).corr()
-                # correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
-                correlation = np.ravel(correlations)
-                correlation_t.append(correlation)
-            elif kind in ['average', 'fluctuations']:
-                if kind_average in ['iteration']:
-                    v_sum += velocities[iteration]
-                    v_average = v_sum / float(iteration)
-                correlations = None
-                if kind == 'fluctuations':
-                    # if iteration < len(velocities) - 1:
-                    fluctuations = [velocities[iteration][p] - v_average[p] for p in range(particles)]
-                    correlations = pd.DataFrame(np.rot90(fluctuations)).corr()
-                else:
-                    # average
-                    correlations = pd.DataFrame(np.rot90(v_average)).corr()
-                if correlations is not None:
-                    # correlation = np.array(correlations).reshape(1, correlations.shape[0] * correlations.shape[1])[0]
-                    correlation = np.ravel(correlations)
-                    correlation_t.append(correlation)
-        if save_hdf is not None:
-            df = pd.DataFrame(correlation_t)
-            df.to_hdf(save_hdf, 'df')
-        return correlation_t
-
-    """
-
-
-DIEGO
-import matplotlib.pyplot as plt
-
-execfile("swarm_analyzer.py")
-filename = 'watts_strogatz_1.00000_F23_29_min'
-filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
-correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind='fluctuations', save_hdf=filename_hdf)
-for particle in range(0):
-    Plotter.plot_curve({'x': range(len(correlation_t[particle])), 'y': correlation_t[particle]}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="pearson correlation", title="Particle #%d" % particle, output_filename="plot.png")
-
-filename_hdf = 'watts_strogatz_1.00000_F23_29.hdf'
-df = pd.read_hdf(filename_hdf, 'df')
-
-fig, a = plt.subplots()
-
-for it in range(0,2):
-        print it
-        values = df.irow(it)
-        individuals = int(np.sqrt(len(values)))
-        unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
-        unique = np.abs(unique)
-        plt.hist(unique)
-        #plt.xlim((-1, 1))
-        plt.show()
-        ax = fit.plot_ccdf(ls='', marker='.')
-        ax = fit.power_law.plot_ccdf(ax=ax)
-        ax = fit.lognormal.plot_ccdf(ax=ax)
-        ax = fit.exponential.plot_ccdf(ax=ax)
-        ax = fit.truncated_power_law.plot_ccdf(ax=ax)
-        plt.show()
-
-import matplotlib
-matplotlib.use('Agg')
-execfile("swarm_analyzer.py")
-topologies = [("kregular%d" % i) for i in [3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90]]
-topologies += ['noc2']
-topologies += ['global']
-topologies += ['ring']
-topologies = [("kregular%d" % i) for i in range(12, 20, 2) + range(22, 30, 2)]
-for topology in topologies:
-    for function in [23]:
-        for run in [0]:
-            filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-            kind = "average"
-            print filename
-            filename_hdf = filename + "_%s_correlation.hdf" % kind
-            correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, save_hdf=filename_hdf)
-            del correlation_t
-
-    filename = "./data/100_particles/regular30_F21_00.with_positions_head_30"
-    kind = "average"
-    correlation_t = SwarmAnalyzer.calculate_velocities_correlation(filename, kind=kind, until=until)
-    for particle in range(100):
-        Plotter.plot_curve({'x': range(len(correlation_t[particle])), 'y': correlation_t[particle]}, dpi=72, figsize=(20, 5), tight_layout=[], x_label="Iteration", y_label="%s pearson correlation" % kind, title="Particle #%d" % particle, output_filename="%s_particle_%d_%s_F%02d_%02d.png" % (kind, particle, topology, function, run))
-
-    import powerlaw
-    filename = "regular30_F21_00.with_positions_fluctuations_correlation"
-    df = pd.read_hdf(filename + ".hdf", 'df')
-    results = []
-    for it in range(100, 1000, 100):
-        print it
-        values = df.irow(it)
-        individuals = int(np.sqrt(len(values)))
-        unique = [values[j*100 + i] for i in range(individuals) for j in range(i+1, individuals)]
-        unique = np.abs(unique)
-        plt.hist(unique)
-        #plt.xlim((-1, 1))
-        plt.show()
-        ax = fit.plot_ccdf(ls='', marker='.')
-        ax = fit.power_law.plot_ccdf(ax=ax)
-        ax = fit.lognormal.plot_ccdf(ax=ax)
-        ax = fit.exponential.plot_ccdf(ax=ax)
-        ax = fit.truncated_power_law.plot_ccdf(ax=ax)
-        plt.show()
-
-topology, function = "kregular30", 23
-topology, function = "regular30", 21
-topology = "noc2"
-topology, function = "global", 23
-function = 21
-function = 23
-run = 0
-kind = "fluctuations"
-filename = "./%s_F%02d_%02d.with_positions" % (topology, function, run)
-filename_hdf = filename + "_%s_correlation.hdf" % kind
-print filename_hdf
-df = pd.read_hdf(filename_hdf, 'df')
-
-from statsmodels.distributions.empirical_distribution import ECDF
-import matplotlib
-matplotlib.use('Agg')
-execfile("swarm_analyzer.py")
-
-
-x = np.arange(-1, 1, 0.01)
-curves.append({'x': x, 'y': ecdf(x)})
-
-all_values[0]
-df.tail(0)
-d
-values = matrix[0]
-iteration = 1520
-
-iteration = 1000
-iteration = 3988 # flat
-iteration = 3970 # v
-iteration = 3971 # v
-iteration = 3973 # v
-iteration = 3710 # v
-iteration = 4190 # 0 with tail
-iteration = 4500 # 0 not much tail
-iterations = [3988, 3971, 4190, 4500]
-Plotter.plos_style()
-for iteration in iterations:
-    values = np.array(df.irow(iteration))
-    values = values.reshape(100, 100)
-    values = values[np.triu_indices(n=100, k=1)]
-    print iteration
-    plt.figure(figsize=(1.65, 1.3))
-    plt.hist(values, bins=15, facecolor='#a6bddb')
-    plt.xlim(-1, 1)
-    plt.ylabel("Frequency")
-    plt.xlabel("Correlation")
-    plt.tight_layout(rect=[-0.08, -0.11, 1.09, 1.09])
-    # plt.savefig("%s_it%d_correlation_%s.pdf" % (filename, iteration, kind))
-    plt.savefig("histogram_%d.pdf" % (iteration))
-    # plt.clf()
-
-    plt.show()
-    """
-
-    @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
         influence_graph_grep = 'ig\:#'
         pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x,
@@ -515,40 +333,6 @@ graph_3 = np.reshape(final_distances, (1, 10000))
     """
 
     @staticmethod
-    def difference_n(df, n):
-        array = np.array(df['y'])
-        array = array[:len(array) - n] - array[n:]
-        data = {'y': list(array), 'x': list(df['x'][:len(df['x']) - n])}
-        return data
-
-    @staticmethod
-    def get_giant_component_destruction_area_from_files(basename, window_size, runs=30):
-        filenames = [basename + "%02d" % i for i in range(1, runs + 1)]
-        df = None
-        run = 1
-        for filename in filenames[:1]:
-            df = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=window_size)
-        df.columns = ['x', "%02d" % run]
-        run += 1
-        for filename in filenames[1:]:
-            df_run = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=window_size)
-            df["%02d" % run] = df_run['y']
-            run += 1
-            del df_run
-        return df
-
-    """
-    execfile("swarm_analyzer.py")
-    basename = "/mnt/pso_100_particles/global_F06_"
-    df = SwarmAnalyzer.get_giant_component_destruction_area_from_files(basename, 100, runs=3)
-    """
-
-    @staticmethod
-    def export_giant_component_destruction_areas(basename, window_size, runs=30):
-        df = SwarmAnalyzer.get_giant_component_destruction_area_from_files(basename, runs=runs, window_size=window_size)
-        df.to_hdf(basename + str(window_size) + ".hdf", 'df')
-
-    @staticmethod
     def read_hdfs_and_plot(basename):
         filenames = [basename + "%02d" % i for i in range(1, 30)]
         windows_size = 1000
@@ -560,88 +344,25 @@ graph_3 = np.reshape(final_distances, (1, 10000))
     def read_files_and_plot(filenames, windows_size, calculate_on):
         influence_graph_grep = 'ig\:#'
         pre_callback = Callback.to_symmetric
-        graph_matrices, _ = SwarmParser.read_files_and_measures(filenames, influence_graph_grep=influence_graph_grep,
-                                                                pos_callback=pre_callback, windows_size=windows_size,
-                                                                calculate_on=calculate_on)
+        graph_matrices, _ = SwarmParser.read_files_and_measures(
+            filenames, influence_graph_grep=influence_graph_grep, pos_callback=pre_callback, windows_size=windows_size,
+            calculate_on=calculate_on)
         normalize = [2 * i for i in windows_size]
         pd_datas = []
         for title, _ in filenames:
             graphs = [graph_matrices[title][i] for i in windows_size]
             graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
-            curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
-                                                                             weight_normalize=normalize)
+            curves_areas = GiantComponentDeath.create_giant_component_curves(graphs, weight_normalize=normalize)
             pd_datas.append((title, dict(zip(windows_size, curves_areas))))
-        GiantComponentDeathPlotter.giant_component_death_curve(calculate_on, pd_datas, windows_size, xlim=(0, 1.0),
-                                                               figsize=(4.5, 4))
-
+        GiantComponentDeathPlotter.giant_component_death_curve(
+            calculate_on, pd_datas, windows_size, xlim=(0, 1.0), figsize=(4.5, 4))
     """
     execfile("swarm_analyzer.py")
     execfile("giant_component_analysis_plotter.py")
-    filenames = [('Global', "./data/100_particles/global_F06_15.teste"), ('Ring', "./data/100_particles/ring_F06_15.teste"), ('Von Neumann', "./data/100_particles/vonneumann_F06_15.teste"), ('Dynamic', "./data/100_particles/dynamicring_F06_15.teste")]
-    df = SwarmAnalyzer.read_files_and_plot(filename, windows_size=[10, 50, 100, 1000], calculate_on=1000, tight_layout=[])
+    filenames = [('Global', "./data/global_F06_15"), ('Ring', "./data/ring_F06_15"), ('Von Neumann', "./data/vonneumann_F06_15"), ('Dynamic', "./data/dynamicring_F06_15")]
+    df = SwarmAnalyzer.read_files_and_plot(filenames, windows_size=[100, 1000], calculate_on=1000)
     """
 
-    @staticmethod
-    def read_files_and_plot_with_area(filenames, windows_size, calculate_on, **kargs):
-        influence_graph_grep = 'ig\:#'
-        pre_callback = Callback.to_symmetric
-        graph_matrices, _ = SwarmParser.read_files_and_measures(filenames, influence_graph_grep=influence_graph_grep,
-                                                                pos_callback=pre_callback, windows_size=windows_size,
-                                                                calculate_on=calculate_on)
-        normalize = [2 * i for i in windows_size]
-        pd_datas = []
-        for title, _ in filenames:
-            graphs = [graph_matrices[title][i] for i in windows_size]
-            graphs = map(lambda x: x[0], graphs)  # this was a calculate_on call
-            curves_areas = GiantComponentDeath.create_giant_component_curves(graphs,
-                                                                             weight_normalize=normalize)
-            pd_datas.append((title, dict(zip(windows_size, curves_areas))))
-        GiantComponentDeathPlotter.giant_component_death_curve_with_area(pd_datas, xlim=(0, 1.0), figsize=(4.5, 1.9),
-                                                                         mew=1.2,
-                                                                         tight_layout=[-0.02, 0.01, 1.02, 1.06],
-                                                                         output_filename="graph_destruction_area.pdf")  # , **kargs)
-
-    """
-    plt.clf()
-    execfile("swarm_analyzer.py")
-    execfile("giant_component_analysis_plotter.py")
-    filenames = [('Global', "./data/100_particles/global_F06_06.teste"), ('Ring', "./data/100_particles/ring_F06_06.teste")]
-    SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000, output_filename="graph_destruction_area_10002.pdf")
-    SwarmAnalyzer.read_files_and_plot_with_area(filenames, windows_size=[100, 1000], calculate_on=1000)
-    """
-    # create_strength_distribution_curves_windows_comparison(all_graph_matrices, calculate_on, windows_size)
-    # create_heatmap_plot(all_graph_matrices, calculate_on)
-    # create_strength_distribution_curves(all_graph_matrices, calculate_on)
-
-    # pd_data = (title, pd_data)
-    # pd_datas_2.append(pd_data)
-
-    # # but 'graphs' is actually igraph.graph, but we need
-    # # networkx graphs, dammit! (because just nx.graph can be plot with matplotlib :( -- it seems)
-    # nx_graphs = []
-    # graph = None
-    # for graph in graph_matrix:
-    #     graph_component_histogram = graph[2].components().sizes()
-    #     nx_graph = from_igraph_to_nxgraph(graph[2], only_connected_nodes=True)
-    #     title = str(graph[1]) + " ("+str(graph[0])+") [" + str(nx.number_of_nodes(nx_graph)) \
-    #                           + "/" + str(graph[2].vcount()) + "]"
-    #     nx_graphs.append((title, nx_graph, graph_component_histogram))
-    # if not nx_graphs:
-    #     nx_graphs = None
-    #
-    # ### here is the fitness data
-    # pd_data_1 = None
-    # if fitness is not None:
-    #     pd_data_1 = pd.DataFrame({'x': range(len(fitness)), 'y': fitness})
-    #     pd_data_1 = ('Fitness', pd_data_1)
-
-    ### create the histograms data
-    # gets the last graph in 'graphs' and plot the degree distribution of it
-    # return graph_matrix
-
-
-# if __name__ == "__main__":
-#    SwarmAnalyzer.read_files_and_export_hdf(int(sys.argv[1]), sys.argv[2])
 
 """
 execfile("swarm_analyzer.py")
