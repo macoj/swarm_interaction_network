@@ -15,7 +15,6 @@ class SwarmAnalyzer:
     @staticmethod
     def create_influence_graph(filename, influence_graph_grep='ig\:#', window_size=1000, calculate_on=1000):
         pre_callback = Callback.to_symmetric
-        # for calculate_on in calculates_on:
         graph, _ = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=influence_graph_grep, window_size=window_size, pre_callback=pre_callback,
             calculate_on=calculate_on)
@@ -61,8 +60,7 @@ class SwarmAnalyzer:
         return components
 
     @staticmethod
-    def get_number_of_components(filename, window_size, min_weight, **kargs):
-        influence_graph_grep = 'ig\:#'
+    def get_number_of_components(filename, window_size, min_weight, influence_graph_grep='ig\:#', **kargs):
         pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(
             x, min_weight=min_weight * 2 * window_size, pre_callback=Callback.to_symmetric)
         all_graph_matrices, _ = SwarmParser.read_file_and_measures(
@@ -91,8 +89,7 @@ class SwarmAnalyzer:
         return df
 
     @staticmethod
-    def read_files_and_plot(filenames, windows_size, calculate_on):
-        influence_graph_grep = 'ig\:#'
+    def read_files_and_plot(filenames, windows_size, calculate_on, influence_graph_grep='ig\:#'):
         pre_callback = Callback.to_symmetric
         graph_matrices, _ = SwarmParser.read_files_and_measures(
             filenames, influence_graph_grep=influence_graph_grep, pos_callback=pre_callback, windows_size=windows_size,
