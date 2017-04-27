@@ -2,8 +2,7 @@ __author__ = 'marcos'
 import igraph
 import pandas as pd
 
-from opt.plotter import Plotter
-from callbacks import Callback
+from opt.callbacks import Callback
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
 from opt.giant_component_analysis_plotter import GiantComponentDeathPlotter
@@ -14,12 +13,28 @@ class SwarmAnalyzer:
         pass
 
     @staticmethod
-    def get_giant_component_destruction_curves(filename, window_size, until=-1):
-        influence_graph_grep = 'ig\:#'
+    def create_influence_graph(filename, influence_graph_grep='ig\:#', window_size=1000, calculate_on=1000):
+        pre_callback = Callback.to_symmetric
+        # for calculate_on in calculates_on:
+        graph, _ = SwarmParser.read_file_and_measures(
+            filename, influence_graph_grep=influence_graph_grep, window_size=window_size, pre_callback=pre_callback,
+            calculate_on=calculate_on)
+        igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
+        return igraph_graph
+
+    @staticmethod
+    def create_influence_graph_graphml(filename, output_file_name, window_size=1000, calculate_on=1000):
+        igraph_graph = SwarmAnalyzer.create_influence_graph(
+            filename, window_size=window_size, calculate_on=calculate_on)
+        igraph.Graph.write_graphml(igraph_graph, output_file_name)
+
+    @staticmethod
+    def get_giant_component_destruction_curves(
+            filename, window_size, until=-1, influence_graph_grep='ig\:#', calculate_on=-1):
         pos_callback = Callback.to_symmetric
         all_graph_matrices, _ = SwarmParser.read_files_and_measures(
             [('', filename)], influence_graph_grep=influence_graph_grep, pos_callback=pos_callback,
-            windows_size=[window_size], until=until)
+            windows_size=[window_size], until=until, calculate_on=calculate_on)
         graph_matrices = all_graph_matrices[''][window_size]
         # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
         # tw, then the maximum is 2*t, therefore:
@@ -27,6 +42,13 @@ class SwarmAnalyzer:
         curves = GiantComponentDeath.create_giant_component_curves(
             graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize)
         return curves
+    """
+    execfile("swarm_analyzer.py")
+    filename = './data/vonneumann_F06_15'
+    window_size = 10
+    until = 100
+    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100)
+    """
 
     @staticmethod
     def get_number_of_components_of_graph(graph, min_weight=None, pre_callback=None):
@@ -49,21 +71,6 @@ class SwarmAnalyzer:
         return all_graph_matrices
 
     @staticmethod
-    def create_influence_graph_graphml(filename, output_file_name, window_size=1000, calculate_on=1000):
-        influence_graph_grep = 'ig\:#'
-        pre_callback = Callback.to_symmetric
-        # for calculate_on in calculates_on:
-        graph, _ = SwarmParser.read_file_and_measures(
-            filename, influence_graph_grep=influence_graph_grep, window_size=window_size, pre_callback=pre_callback,
-            calculate_on=calculate_on)
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
-        igraph.Graph.write_graphml(igraph_graph, output_file_name)
-    """
-    filename = './data/100_particles/vonneumann_F06_15.teste'
-    output_file_name = './vonneumann.graphml'
-    """
-
-    @staticmethod
     def get_swarm_informations_from_file(filename, informations_grep, information_map=float, **kargs):
         _, informations = SwarmParser.read_files_and_measures(
             [('', filename)], informations_grep=informations_grep, information_map=information_map, **kargs)
@@ -82,14 +89,6 @@ class SwarmAnalyzer:
             dict_information = dict(informations[information_grep])
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
         return df
-
-    @staticmethod
-    def read_hdfs_and_plot(basename):
-        filenames = [basename + "%02d" % i for i in range(1, 30)]
-        windows_size = 1000
-        for filename in filenames:
-            df = pd.read_hdf(filename + "_" + str(windows_size) + ".hdf", 'df')
-            Plotter.plot_curve(df, figsize=(18, 6))
 
     @staticmethod
     def read_files_and_plot(filenames, windows_size, calculate_on):
