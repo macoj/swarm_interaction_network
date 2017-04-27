@@ -1,9 +1,10 @@
 # Analyzing Swarm Intelligence
-Assessing a swarm intelligence technique by analyzing the interactions of the individuals.
+Assessing a swarm intelligence technique by analyzing the interactions of the individuals. This is still a working-in-progress project. Some tutorials on how to use this code follows:
 
-This is the code for most of the experiments in:
+* [[Tutorial 1]](Tutorial_1.ipynb) How to perform simple analysis.
 
-## Towards a Network-based Approach to Analyze Particle Swarm Optimizers
+Here you will find the code for most of the experiments in the papers above. 
+### Towards a Network-based Approach to Analyze Particle Swarm Optimizers
 > Oliveira, Marcos, Carmelo JA Bastos-Filho, and Ronaldo Menezes. "Towards a network-based approach to analyze particle swarm optimizers." Swarm Intelligence (SIS), 2014 IEEE Symposium on. IEEE, 2014.
 ```tex
 @inproceedings{oliveira2014towards,
@@ -15,7 +16,7 @@ This is the code for most of the experiments in:
   organization={IEEE}
 }
 ```
-## Communication Diversity in Particle Swarm Optimizers
+### Communication Diversity in Particle Swarm Optimizers
 > Oliveira, Marcos, et al. "Communication Diversity in Particle Swarm Optimizers." International Conference on Swarm Intelligence. Springer International Publishing, 2016.
 ```tex
 @inproceedings{oliveira2016communication,
@@ -27,7 +28,7 @@ This is the code for most of the experiments in:
   organization={Springer}
 }
 ```
-## Assessing Particle Swarm Optimizers Using Network Science Metrics
+### Assessing Particle Swarm Optimizers Using Network Science Metrics
 > Oliveira-Júnior, Marcos AC, Carmelo JA Bastos-Filho, and Ronaldo Menezes. "Assessing particle swarm optimizers using network science metrics." Complex Networks IV. Springer Berlin Heidelberg, 2013. 173-184.
 ```tex
 @incollection{oliveira2013assessing,
@@ -39,7 +40,7 @@ This is the code for most of the experiments in:
   publisher={Springer}
 }
 ```
-## Using Network Science to Assess Particle Swarm Optimizers
+### Using Network Science to Assess Particle Swarm Optimizers
 > Oliveira, Marcos, Carmelo JA Bastos-Filho, and Ronaldo Menezes. "Using network science to assess particle swarm optimizers." Social Network Analysis and Mining 5.1 (2015): 1-13.
 ```tex
 @article{oliveira2015using,
