@@ -26,55 +26,16 @@ class SwarmAnalyzer:
     def get_giant_component_destruction_curves(filename, window_size, until=-1):
         influence_graph_grep = 'ig\:#'
         pos_callback = Callback.to_symmetric
-        all_graph_matrices, _ = SwarmParser.read_files_and_measures([('', filename)],
-                                                                    influence_graph_grep=influence_graph_grep,
-                                                                    pos_callback=pos_callback,
-                                                                    windows_size=[window_size], until=until)
+        all_graph_matrices, _ = SwarmParser.read_files_and_measures(
+            [('', filename)], influence_graph_grep=influence_graph_grep, pos_callback=pos_callback,
+            windows_size=[window_size], until=until)
         graph_matrices = all_graph_matrices[''][window_size]
         # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
         # tw, then the maximum is 2*t, therefore:
         weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
-        curves = GiantComponentDeath.create_giant_component_curves(graph_matrices, adjusted=True, include_zero=False,
-                                                                   weight_normalize=weight_normalize)
+        curves = GiantComponentDeath.create_giant_component_curves(
+            graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize)
         return curves
-
-    @staticmethod
-    def get_areas_under_curves(curves, delta=0.001, normalize=False, normalize_max_y=None, normalize_constant=None):
-        areas = []
-        tx = np.arange(0, 1 + delta, delta)
-        normalization = None
-        if normalize:
-            assert normalize_max_y is not None or normalize_constant is not None, "[ERROR] Missing normalizing factor!"
-            normalization = float(normalize_max_y) * len(tx)
-        for graph in curves:
-            x, y = list(graph.x), list(graph.y)
-            x.append(1.0)
-            y.append(y[len(y) - 1])
-            f = interpolate.interp1d(x, y, kind='nearest')
-            ty = map(float, map(f, tx))
-            # areas.append(sum(ty * tx)/len(tx))
-            areas.append(sum(ty))
-            del x
-            del y
-            del f
-            del ty
-        if normalization:
-            areas = [a / normalization for a in areas]
-        return areas
-
-    @staticmethod
-    def get_giant_component_destruction_area(filename, window_size, number_of_individuals=100, until=-1):
-        graphs = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size=window_size, until=until)
-        areas = SwarmAnalyzer.get_areas_under_curves(graphs, normalize=True, normalize_max_y=number_of_individuals)
-        # df = pd.DataFrame({'x': range(window_size, window_size + len(areas)), 'y': areas})
-        df = pd.DataFrame({'x': range(len(areas)), 'y': areas})
-        return df
-
-    """
-    execfile("swarm_analyzer.py")
-    filename = "/mnt/pso_100_particles/global_F06_00"
-    df = SwarmAnalyzer.get_giant_component_destruction_area(filename, 100)
-    """
 
     @staticmethod
     def get_number_of_components_of_graph(graph, min_weight=None, pre_callback=None):
@@ -89,13 +50,11 @@ class SwarmAnalyzer:
     @staticmethod
     def get_number_of_components(filename, window_size, min_weight, **kargs):
         influence_graph_grep = 'ig\:#'
-        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(x,
-                                                                                 min_weight=min_weight * 2 * window_size,
-                                                                                 pre_callback=Callback.to_symmetric)
-        all_graph_matrices, _ = SwarmParser.read_file_and_measures(filename,
-                                                                   influence_graph_grep=influence_graph_grep,
-                                                                   pos_callback=pos_callback,
-                                                                   window_size=window_size, **kargs)
+        pos_callback = lambda x: SwarmAnalyzer.get_number_of_components_of_graph(
+            x, min_weight=min_weight * 2 * window_size, pre_callback=Callback.to_symmetric)
+        all_graph_matrices, _ = SwarmParser.read_file_and_measures(
+            filename, influence_graph_grep=influence_graph_grep, pos_callback=pos_callback,
+            window_size=window_size, **kargs)
         return all_graph_matrices
 
     @staticmethod
@@ -103,9 +62,9 @@ class SwarmAnalyzer:
         influence_graph_grep = 'ig\:#'
         pre_callback = Callback.to_symmetric
         # for calculate_on in calculates_on:
-        graph, _ = SwarmParser.read_file_and_measures(filename, influence_graph_grep=influence_graph_grep,
-                                                      window_size=window_size, pre_callback=pre_callback,
-                                                      calculate_on=calculate_on)
+        graph, _ = SwarmParser.read_file_and_measures(
+            filename, influence_graph_grep=influence_graph_grep, window_size=window_size, pre_callback=pre_callback,
+            calculate_on=calculate_on)
         igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
         igraph.Graph.write_graphml(igraph_graph, output_file_name)
     """
@@ -115,8 +74,8 @@ class SwarmAnalyzer:
 
     @staticmethod
     def get_swarm_informations_from_file(filename, informations_grep, information_map=float, **kargs):
-        _, informations = SwarmParser.read_files_and_measures([('', filename)], informations_grep=informations_grep,
-                                                              information_map=information_map, **kargs)
+        _, informations = SwarmParser.read_files_and_measures(
+            [('', filename)], informations_grep=informations_grep, information_map=information_map, **kargs)
         informations = informations[''][-1]  # there is no window here!
         # let's get the longest information sequence
         max_information_length = float("-inf")

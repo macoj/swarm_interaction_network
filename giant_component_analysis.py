@@ -17,7 +17,6 @@ class GiantComponentDeath:
             graphs_kept = list(set(graphs_keeper_giant_size_threshold))
             graphs_kept.sort(reverse=True)
             graphs_kept = map(lambda x: (False, x), graphs_kept)
-
         death_evolution_degree = []
         death_evolution_size = []
         graph_copy = igraph_graph.copy()
@@ -130,14 +129,12 @@ class GiantComponentDeath:
         print 'removing all with degree ' + str(degree) + ' - removed ' + str(a)
 
     @staticmethod
-    def create_giant_component_curve(graph_matrix, return_graphs_with_giant_sizes=None,
-                                     normalize=None, adjusted=False, include_zero=True):
-        # igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
+    def create_giant_component_curve(
+            graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, include_zero=True):
         igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
         # create the graph objects as well as the death analysis
-        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(igraph_graph,
-                                                                       return_graphs_with_giant_sizes,
-                                                                       include_zero=include_zero)
+        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(
+            igraph_graph, return_graphs_with_giant_sizes, include_zero=include_zero)
         # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
         # the weights leading to the destruction of the graph can be normalized.
         # when there is a time window tw, the maximum weight of an edge is equal
@@ -163,10 +160,8 @@ class GiantComponentDeath:
                 normalize_index += 1
             else:
                 normalize_c = weight_normalize
-            pd_data = GiantComponentDeath.create_giant_component_curve(graph_matrix,
-                                                                       normalize=normalize_c,
-                                                                       adjusted=adjusted,
-                                                                       include_zero=include_zero)
+            pd_data = GiantComponentDeath.create_giant_component_curve(
+                graph_matrix, normalize=normalize_c, adjusted=adjusted, include_zero=include_zero)
             pd_datas.append(pd_data)
         return pd_datas
 
