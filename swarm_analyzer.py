@@ -1,10 +1,9 @@
-from influence_graph import InfluenceGraph
-
 __author__ = 'marcos'
 import igraph
 import pandas as pd
 from opt.callbacks import Callback
 from swarm_parser import SwarmParser
+from influence_graph import InfluenceGraph
 from giant_component_analysis import GiantComponentDeath
 
 
