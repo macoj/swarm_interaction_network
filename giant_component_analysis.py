@@ -1,7 +1,6 @@
 __author__ = 'marcos'
 import pandas as pd
 import igraph
-from giant_component_analysis_plotter import GiantComponentDeathPlotter
 
 
 class GiantComponentDeath:

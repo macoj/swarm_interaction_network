@@ -1,21 +1,12 @@
 __author__ = 'marcos'
-import sys
-import time
 import igraph
-import copy
 import pandas as pd
-import numpy as np
-from plotter import Plotter
-from scipy import interpolate
+
+from opt.plotter import Plotter
 from callbacks import Callback
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
-from giant_component_analysis_plotter import GiantComponentDeathPlotter
-from scipy.stats import pearsonr
-import scipy.stats as st
-from statsmodels.distributions.empirical_distribution import ECDF
-from functools import reduce
-from operator import add
+from opt.giant_component_analysis_plotter import GiantComponentDeathPlotter
 
 
 class SwarmAnalyzer:
