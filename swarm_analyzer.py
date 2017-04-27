@@ -1,11 +1,11 @@
+from influence_graph import InfluenceGraph
+
 __author__ = 'marcos'
 import igraph
 import pandas as pd
-
 from opt.callbacks import Callback
 from swarm_parser import SwarmParser
 from giant_component_analysis import GiantComponentDeath
-from opt.giant_component_analysis_plotter import GiantComponentDeathPlotter
 
 
 class SwarmAnalyzer:
@@ -18,14 +18,14 @@ class SwarmAnalyzer:
         graph, _ = SwarmParser.read_file_and_measures(
             filename, influence_graph_grep=influence_graph_grep, window_size=window_size, pre_callback=pre_callback,
             calculate_on=calculate_on)
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph[0][1].tolist(), mode=igraph.ADJ_MAX)
+        igraph_graph = InfluenceGraph.create_graph_from_matrix(graph[0][1])
         return igraph_graph
 
     @staticmethod
     def create_influence_graph_graphml(filename, output_file_name, window_size=1000, calculate_on=1000):
         igraph_graph = SwarmAnalyzer.create_influence_graph(
             filename, window_size=window_size, calculate_on=calculate_on)
-        igraph.Graph.write_graphml(igraph_graph, output_file_name)
+        InfluenceGraph.to_graphml(igraph_graph, output_file_name)
 
     @staticmethod
     def get_giant_component_destruction_curves(filename, window_size, until=-1, calculate_on=-1, count='components'):
