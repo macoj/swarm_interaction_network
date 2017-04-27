@@ -1,6 +1,6 @@
 __author__ = 'marcos'
 import pandas as pd
-import igraph
+from influence_graph import InfluenceGraph
 
 
 class GiantComponentDeath:
@@ -72,7 +72,7 @@ class GiantComponentDeath:
     @staticmethod
     def create_giant_component_curve(
             graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, **kargs):
-        igraph_graph = igraph.Graph.Weighted_Adjacency(graph_matrix.tolist(), mode=igraph.ADJ_MAX)
+        igraph_graph = InfluenceGraph.create_graph_from_matrix(graph_matrix)
         # create the graph objects as well as the death analysis
         pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(
             igraph_graph, return_graphs_with_giant_sizes, **kargs)
