@@ -1,5 +1,5 @@
-# Analyzing Swarm Intelligence
-Assessing a swarm intelligence technique by analyzing the interactions of the individuals. This is still a working-in-progress project. Some tutorials on how to use this code follows:
+# Assessing swarm intelligence techniques
+Here we assess a swarm intelligence technique by examining the interactions of the individuals. This is still a working-in-progress project. Some tutorials on how to use this code follows:
 
 * [[Tutorial 1]](Tutorial_1.ipynb) How to perform simple analysis.
 
