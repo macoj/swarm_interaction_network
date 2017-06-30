@@ -3,7 +3,7 @@ Here we assess swarm intelligence techniques by examining the interactions betwe
 
 * [[Tutorial 1]](Tutorial_1.ipynb)  How to perform simple analyses.
 
-Here you will find the code for most of the experiments in the papers above. 
+Here you will find the code for most of the experiments in the papers bellow: 
 ### Towards a Network-based Approach to Analyze Particle Swarm Optimizers
 > Oliveira, Marcos, Carmelo JA Bastos-Filho, and Ronaldo Menezes. "Towards a network-based approach to analyze particle swarm optimizers." Swarm Intelligence (SIS), 2014 IEEE Symposium on. IEEE, 2014.
 ```tex
