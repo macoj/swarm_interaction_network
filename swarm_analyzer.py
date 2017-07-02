@@ -36,16 +36,21 @@ class SwarmAnalyzer:
         graph_matrices = all_graph_matrices[''][window_size]
         # the maximum is 2*tw, where tw is the window size, but if the graph is from an iteration t that is less than
         # tw, then the maximum is 2*t, therefore:
-        weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
+        if calculate_on == -1:
+            weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
+        else:
+            weight_normalize = [2.0 * calculate_on if calculate_on < window_size else 2.0 * window_size]
+        print weight_normalize
         curves = GiantComponentDeath.create_giant_component_curves(
             graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize, count=count)
         return curves
     """
     execfile("swarm_analyzer.py")
     filename = './data/vonneumann_F06_15'
-    window_size = 10
+    filename = './data/global_F06_15'
+    window_size = 100
     until = 100
-    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=100, count='count')
+    curves = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size, calculate_on=1000, count='components')
     import matplotlib.pyplot as plt
     plt.plot(curves[0]['x'], curves[0]['y'])
     plt.show()
