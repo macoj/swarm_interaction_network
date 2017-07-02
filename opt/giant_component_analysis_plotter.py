@@ -101,12 +101,12 @@ class GiantComponentDeathPlotter:
             ty = map(float, map(f, tx))
             components.append(ty)
         components = np.array(components)
-        yticks = range(10, len(tx), 100)
-        titles_y = map(str, [tx[i] for i in yticks])
+        yticks = [0, len(tx)/2, len(tx)]
+        titles_y = map(str, [0, 0.5, 1.0])
         xticks = range(0, len(tws), 50)
         titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
         Plotter.plot_heatmap(
-            np.fliplr(np.rot90(components, -1)), figsize=(2.5, 2.3), colorbar_on=False, ordered=False, vmin=0, vmax=100,
+            np.fliplr(np.rot90(components, -1)), figsize=(3.5, 3.3), colorbar_on=False, ordered=False, vmin=0, vmax=100,
             titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y,
-            set_yticks=yticks, tight_layout=[])
+            set_yticks=yticks, tight_layout=[], cmap=plt.cm.Spectral_r)
 
