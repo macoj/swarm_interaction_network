@@ -25,8 +25,8 @@ class GiantComponentDeathHelper:
         return df
     """
 execfile("opt/giant_component_analysis_helper.py")
-#for t in ['global', 'ring', 'dynamicring', 'vonneumann']:
+for t in ['ring', 'vonneumann', 'global', 'dynamicring']:
     filename = './data/%s_F06_15' % t
     df = GiantComponentDeathHelper.get_number_of_component_different_time_windows(filename)
-    df.to_hdf(filename + "_components3.hdf", 'df')
+    df.to_hdf(filename + "_components_.hdf", 'df')
     """
