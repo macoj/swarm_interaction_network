@@ -47,7 +47,7 @@ class SwarmPlotter():
             SwarmParser.read_file_and_measures(filename, informations_grep=info_grep)[1][info_grep][-1][1]
             for filename in x]
         values = map(get_infos, sets_of_filenames)
-
+        print values
         boxes_kargs = {'color': 'black', 'linewidth': 1.3, 'zorder': 3, 'fillstyle': 'full', 'facecolor': '#a6bddb'}
         means_kargs = {'color': 'black', 'fillstyle': 'full', 'markerfacecolor': "black", 'marker': "s",
                        'markersize': 3, 'mew': 1, 'mec': 'black', 'zorder': 5}
