@@ -40,7 +40,6 @@ class SwarmAnalyzer:
             weight_normalize = [2.0 * i if i < window_size else 2.0 * window_size for i in range(len(graph_matrices))]
         else:
             weight_normalize = [2.0 * calculate_on if calculate_on < window_size else 2.0 * window_size]
-        print weight_normalize
         curves = GiantComponentDeath.create_giant_component_curves(
             graph_matrices, adjusted=True, include_zero=False, weight_normalize=weight_normalize, count=count)
         return curves
