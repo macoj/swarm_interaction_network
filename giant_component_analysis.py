@@ -70,24 +70,6 @@ class GiantComponentDeath:
         igraph_graph.delete_edges(remove_them)
 
     @staticmethod
-    def create_giant_component_curve(
-            graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, **kargs):
-        igraph_graph = InfluenceGraph.create_graph_from_matrix(graph_matrix)
-        # create the graph objects as well as the death analysis
-        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(
-            igraph_graph, return_graphs_with_giant_sizes, **kargs)
-        # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
-        # the weights leading to the destruction of the graph can be normalized.
-        # when there is a time window tw, the maximum weight of an edge is equal
-        # to 2*tw, this is the case of two particles sharing information all the
-        # time.
-        if normalize:
-            pd_data['x'] /= normalize
-        if adjusted:
-            pd_data['x'] -= min(pd_data.x)  # to have zero (we admit that the min value is positive)
-        return pd_data
-
-    @staticmethod
     def create_giant_component_curves(graph_matrices, adjusted=False, weight_normalize=None, **kargs):
         pd_datas = []
         normalize_index = 0
@@ -105,4 +87,22 @@ class GiantComponentDeath:
                 graph_matrix, normalize=normalize_c, adjusted=adjusted, **kargs)
             pd_datas.append(pd_data)
         return pd_datas
+
+    @staticmethod
+    def create_giant_component_curve(
+            graph_matrix, return_graphs_with_giant_sizes=None, normalize=None, adjusted=False, **kargs):
+        igraph_graph = InfluenceGraph.create_graph_from_matrix(graph_matrix)
+        # create the graph objects as well as the death analysis
+        pd_data, graphs = GiantComponentDeath.low_edges_weight_removal(
+            igraph_graph, return_graphs_with_giant_sizes, **kargs)
+        # pd_data, graphs = GiantComponentDeath.nodes_degree_removal(igraph_graph, return_graphs_with_giant_sizes)
+        # the weights leading to the destruction of the graph can be normalized.
+        # when there is a time window tw, the maximum weight of an edge is equal
+        # to 2*tw, this is the case of two particles sharing information all the
+        # time.
+        if normalize:
+            pd_data['x'] /= normalize
+        if adjusted:
+            pd_data['x'] -= min(pd_data.x)  # to have zero (we admit that the min value is positive)
+        return pd_data
 
