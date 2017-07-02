@@ -90,13 +90,20 @@ class GiantComponentDeathPlotter:
     def giant_component_death_heatmap(df, interpolation='nearest'):
         from scipy import interpolate
         components = []
-        delta = 0.001
+        delta = 0.01
         tx = np.arange(0, 1 + delta, delta)
         tws = list(set([int(c[2:]) for c in df.columns]))
+        tws.sort()
         col_name = lambda x: "_%04d" % x
-        for tw in sorted(tws):
+        for tw in tws:
             x = df['x'+col_name(tw)].values
             y = df['y'+col_name(tw)].values
+            not_nan = ~np.isnan(x)
+            x = x[not_nan]
+            y = y[not_nan]
+            if x[0] != 0:  # let's include 0, 0 if we don't have
+                x = np.concatenate([[0], x])
+                y = np.concatenate([[0], y])
             f = interpolate.interp1d(x, y, kind=interpolation)
             ty = map(float, map(f, tx))
             components.append(ty)
