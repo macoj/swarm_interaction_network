@@ -1,6 +1,8 @@
 __author__ = 'marcos'
 import igraph
 import pandas as pd
+import numpy as np
+from scipy import interpolate
 from opt.callbacks import Callback
 from swarm_parser import SwarmParser
 from influence_graph import InfluenceGraph
@@ -100,3 +102,62 @@ class SwarmAnalyzer:
             dict_information = dict(informations[information_grep])
             df[information_grep] = [dict_information[i] if i in dict_information else float("nan") for i in iterations]
         return df
+
+    @staticmethod
+    def get_areas_under_curves(curves, delta=0.001, normalize=False, normalize_max_y=None, normalize_constant=None):
+        areas = []
+        tx = np.arange(0, 1 + delta, delta)
+        normalization = None
+        if normalize:
+            assert normalize_max_y is not None or normalize_constant is not None, "[ERROR] Missing normalizing factor!"
+            normalization = float(normalize_max_y) * len(tx)
+        for graph in curves:
+            x, y = list(graph.x), list(graph.y)
+            x.append(1.0)
+            y.append(y[len(y) - 1])
+            f = interpolate.interp1d(x, y, kind='nearest')
+            ty = map(float, map(f, tx))
+            areas.append(sum(ty))
+            del x
+            del y
+            del f
+            del ty
+        if normalization:
+            areas = [a / normalization for a in areas]
+        return areas
+
+    @staticmethod
+    def get_giant_component_destruction_area(filename, window_size, number_of_agents=100, until=-1, **kargs):
+        graphs = SwarmAnalyzer.get_giant_component_destruction_curves(filename, window_size=window_size, until=until)
+        areas = SwarmAnalyzer.get_areas_under_curves(graphs, normalize=True, normalize_max_y=number_of_agents, **kargs)
+        df = pd.DataFrame({window_size: areas})
+        return df
+    """
+    execfile("swarm_analyzer.py")
+    filename = './data/vonneumann_F06_15'
+    df1 = SwarmAnalyzer.get_giant_component_destruction_area(filename, 100, until=10)
+    df2 = SwarmAnalyzer.get_giant_component_destruction_area(filename, 10, until=10)
+    """
+
+    @staticmethod
+    def communication_diversity(filename, tws=None, **kargs):
+        import time
+        aucs = []
+        if tws is None:
+            tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
+        print filename
+        for tw in tws:
+            print "  > tw: %d (%s)" % (tw, time.strftime("%H:%M:%S-%d/%m/%y"))
+            auc = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=tw, **kargs)
+            print "   > OK"
+            aucs.append(auc)
+        print "  > OK"
+        print " > creating data frame"
+        df = pd.concat(aucs, axis=1)
+        df['cd'] = 1 - sum([df[c] for c in tws]) / float(len(tws))  # df[c] is already normalized
+        return df
+    """
+    execfile("swarm_analyzer.py")
+    filename = './data/vonneumann_F06_15'
+    cd = SwarmAnalyzer.communication_diversity(filename, until=500)
+    """
