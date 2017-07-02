@@ -16,7 +16,7 @@ class GiantComponentDeathHelper:
             col_x = "x_%04d" % tw
             col_y = "y_%04d" % tw
             curve = SwarmAnalyzer.get_giant_component_destruction_curves(
-                filename, tw, calculate_on=calculate_on, count='components')
+                filename, tw, calculate_on=calculate_on, count='components', adjusted=False)
             curve = curve[0].append([{'x': 1, 'y': curve[0]['y'].max()}])
             curve.index = range(len(curve))
             curve.columns = [col_x, col_y]
@@ -25,9 +25,8 @@ class GiantComponentDeathHelper:
         return df
     """
 execfile("opt/giant_component_analysis_helper.py")
-#for t in ['global', 'ring', 'dynamicring']:
-for t in ['ring']:
+#for t in ['global', 'ring', 'dynamicring', 'vonneumann']:
     filename = './data/%s_F06_15' % t
     df = GiantComponentDeathHelper.get_number_of_component_different_time_windows(filename)
-    df.to_hdf(filename + "_components2.hdf", 'df')
+    df.to_hdf(filename + "_components3.hdf", 'df')
     """

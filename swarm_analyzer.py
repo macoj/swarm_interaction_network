@@ -29,7 +29,8 @@ class SwarmAnalyzer:
         InfluenceGraph.to_graphml(igraph_graph, output_file_name)
 
     @staticmethod
-    def get_giant_component_destruction_curves(filename, window_size, until=-1, calculate_on=-1, count='components', adjusted=False):
+    def get_giant_component_destruction_curves(
+            filename, window_size, until=-1, calculate_on=-1, count='components', adjusted=True):
         filenames = [('', filename)]
         all_graph_matrices = SwarmAnalyzer.get_graph_matrices_from_files(
             filenames, windows_size=[window_size], until=until, calculate_on=calculate_on)
