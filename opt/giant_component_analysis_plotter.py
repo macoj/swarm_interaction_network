@@ -1,7 +1,8 @@
 __author__ = 'marcos'
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+from opt.plotter import Plotter
 from itertools import cycle
 
 
@@ -28,8 +29,8 @@ class GiantComponentDeathPlotter:
         colorblind = [(0, 0, 0), (230, 159, 0), (86, 180, 233), (0, 158, 115), (240, 228, 66), (0, 114, 178), (213, 94, 0), (204, 121, 167)]
         colorblind = ['#%02x%02x%02x' % (c[0], c[1], c[2]) for c in colorblind]
         colorcycler = cycle([colorblind[3], colorblind[5], colorblind[6], colorblind[1]])
-        x_lim = [numpy.inf, 0]
-        y_lim = [numpy.inf, 0]
+        x_lim = [np.inf, 0]
+        y_lim = [np.inf, 0]
         colors = {}
         for title, pd_data in pd_datas:
             for title_legend in pd_data:
@@ -84,3 +85,28 @@ class GiantComponentDeathPlotter:
             else:
                 plt.tight_layout(rect=tight_layout)
         plt.show()
+
+    @staticmethod
+    def giant_component_death_heatmap(df):
+        from scipy import interpolate
+        components = []
+        delta = 0.001
+        tx = np.arange(0, 1 + delta, delta)
+        tws = list(set([int(c[2:]) for c in df.columns]))
+        col_name = lambda x: "_%04d" % x
+        for tw in sorted(tws):
+            x = df['x'+col_name(tw)].values
+            y = df['y'+col_name(tw)].values
+            f = interpolate.interp1d(x, y, kind='nearest')
+            ty = map(float, map(f, tx))
+            components.append(ty)
+        components = np.array(components)
+        yticks = range(10, len(tx), 100)
+        titles_y = map(str, [tx[i] for i in yticks])
+        xticks = range(0, len(tws), 50)
+        titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
+        Plotter.plot_heatmap(
+            np.fliplr(np.rot90(components, -1)), figsize=(2.5, 2.3), colorbar_on=False, ordered=False, vmin=0, vmax=100,
+            titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y,
+            set_yticks=yticks, tight_layout=[])
+
