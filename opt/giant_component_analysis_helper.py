@@ -23,7 +23,7 @@ class GiantComponentDeathHelper:
         df = pd.concat(curves, axis=1)
         return df
     """
-execfile("giant_component_analysis_helper.py")
+execfile("opt/giant_component_analysis_helper.py")
 filename = './data/vonneumann_F06_15'
 df = GiantComponentDeathHelper.get_number_of_component_different_time_windows(filename)
 df.to_hdf(filename + "_components.hdf", 'df')
