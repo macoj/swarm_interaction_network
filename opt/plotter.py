@@ -549,49 +549,6 @@ class Plotter:
                 plt.tight_layout()
             else:
                 plt.tight_layout(rect=tight_layout)
-        #fig.tight_layout()
-        #
-        # if pd_data_2 is not None:
-        #     title = ''
-        #     if type(pd_data_2) == tuple:  # not so pythonic
-        #         title = pd_data_2[0]
-        #         pd_data_2 = pd_data_2[1]
-        #     ax3 = fig.add_subplot(plot_gridspec[4, 2])
-        #     plt.plot(pd_data_2['x'], pd_data_2['y'], linestyle='-', marker='.')
-        #     plt.xlim(min(pd_data_2['x']), max(pd_data_2['x']))
-        #     #plt.ylim(0, 1.1)
-        #     plt.title(title)
-        #
-        # if data_hist_1 is not None:
-        #     title = ''
-        #     if type(data_hist_1) == tuple:  # not so pythonic
-        #         title = data_hist_1[0]
-        #         data_hist_1 = data_hist_1[1]
-        #     #binwidth = 1
-        #     ax3 = fig.add_subplot(plot_gridspec[4, 3])
-        #     #min_bin = numpy.min(data_hist_1)
-        #     #max_bin = numpy.max(data_hist_1)
-        #     #bins = range(min_bin,max_bin+binwidth,binwidth)
-        #     ax3.hist(data_hist_1,  facecolor='blue', alpha=0.45)
-        #     #plt.xticks(numpy.unique(data_hist_1))
-        #     plt.tick_params(axis='both', which='major', labelsize=5)
-        #     plt.tick_params(axis='both', which='minor', labelsize=5)
-        #     plt.title(title)
-        #
-        # if data_hist_2 is not None:
-        #     title = ''
-        #     if type(data_hist_2) == tuple:  # not so pythonic
-        #         title = data_hist_2[0]
-        #         data_hist_2 = data_hist_2[1]
-        #     if data_hist_2:
-        #         ax3 = fig.add_subplot(plot_gridspec[4, 4])
-        #         #bins = range(min_bin,max_bin+binwidth,binwidth)
-        #         ax3.hist(data_hist_2,  facecolor='blue', alpha=0.45)
-        #         #plt.xticks(numpy.unique(data_hist_1))
-        #         plt.tick_params(axis='both', which='major', labelsize=5)
-        #         plt.tick_params(axis='both', which='minor', labelsize=5)
-        #         plt.title(title)
-        #
         if subplot_adjust:
             plt.subplots_adjust(*subplot_adjust)
         if grid:
@@ -606,8 +563,6 @@ class Plotter:
             plt.savefig(output_filename)
             #plt.clf()
             plt.close()
-        else:
-            plt.show()
 
     @staticmethod
     def plot_boxplots(data, titles=None, main_title=None, ylabel=None, xlabel=None, xscale=None, violin=False,

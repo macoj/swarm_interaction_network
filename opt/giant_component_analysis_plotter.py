@@ -87,7 +87,7 @@ class GiantComponentDeathPlotter:
         plt.show()
 
     @staticmethod
-    def giant_component_death_heatmap(df):
+    def giant_component_death_heatmap(df, interpolation='nearest'):
         from scipy import interpolate
         components = []
         delta = 0.001
@@ -97,7 +97,7 @@ class GiantComponentDeathPlotter:
         for tw in sorted(tws):
             x = df['x'+col_name(tw)].values
             y = df['y'+col_name(tw)].values
-            f = interpolate.interp1d(x, y, kind='nearest')
+            f = interpolate.interp1d(x, y, kind=interpolation)
             ty = map(float, map(f, tx))
             components.append(ty)
         components = np.array(components)
@@ -106,7 +106,7 @@ class GiantComponentDeathPlotter:
         xticks = range(0, len(tws), 50)
         titles_x = map(str, [1]+[tws[i]-1 for i in xticks[1:len(xticks)-1]]+[1000])
         Plotter.plot_heatmap(
-            np.fliplr(np.rot90(components, -1)), figsize=(3.5, 3.3), colorbar_on=False, ordered=False, vmin=0, vmax=100,
+            np.fliplr(np.rot90(components, -1)), figsize=(3.7, 3.3), colorbar_on=False, ordered=False, vmin=0, vmax=100,
             titles_x=titles_x, set_xticks=xticks, x_label="Time window", y_label="Filter", titles_y=titles_y,
             set_yticks=yticks, tight_layout=[], cmap=plt.cm.Spectral_r)
 
