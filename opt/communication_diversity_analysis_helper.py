@@ -19,7 +19,7 @@ class CommunicationDiversityHelper():
         if from_ is not None and to_ is not None:
             file_names = file_names[from_:to_]
         for f in file_names:
-            filename = '.data/analysis_on_a_dynamic_topology/%s' % f
+            filename = './data/analysis_on_a_dynamic_topology/%s' % f
             cd = SwarmAnalyzer.communication_diversity(filename, until=2000)
             cd.to_hdf(filename+"_cd.hdf", 'df')
             del cd
