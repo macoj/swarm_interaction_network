@@ -10,16 +10,20 @@ class CommunicationDiversityHelper():
     @staticmethod
     def calculate_communication_diversity(from_=None, to_=None):
         file_names = []
-        runs = 1
-        pks = [2, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
-        for topology in [("dynamic", 1)]:  # initial is ring
-            # for function in [26, 25, 24, 23]:  # sphere, schwefel, rosenbrock, rastrigin
-            for function in [26, 24]:  # sphere, schwefel, rosenbrock, rastrigin
-                for pk in pks:
-                    file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(10, 30)]
-            for function in [25, 23]:  # sphere, schwefel, rosenbrock, rastrigin
-                for pk in pks:
-                    file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(1, 30)]
+        # runs = 1
+        # pks = [2, 25, 50, 75, 100, 200, 300, 400, 500, 600, 700, 800, 900, 1000]
+        # for topology in [("dynamic", 1)]:  # initial is ring
+        #     # for function in [26, 25, 24, 23]:  # sphere, schwefel, rosenbrock, rastrigin
+        #     for function in [26, 24]:  # sphere, schwefel, rosenbrock, rastrigin
+        #         for pk in pks:
+        #             file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(10, 30)]
+        #     for function in [25, 23]:  # sphere, schwefel, rosenbrock, rastrigin
+        #         for pk in pks:
+        #             file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(1, 30)]
+        for function in [26, 25, 24, 23]:
+            for topology in [("global", 1), ("rinf", 1)]:  # initial is ring
+                file_names += ["%s_F%02d_%02d" % (topology[0], function, r) for r in range(1, 30)]
+
         if from_ is not None and to_ is not None:
             file_names = file_names[from_:to_]
         for f in file_names:
