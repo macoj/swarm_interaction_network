@@ -16,7 +16,10 @@ class CommunicationDiversityHelper():
             # for function in [26, 25, 24, 23]:  # sphere, schwefel, rosenbrock, rastrigin
             for function in [26, 24]:  # sphere, schwefel, rosenbrock, rastrigin
                 for pk in pks:
-                    file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(1, 10)]
+                    file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(10, 30)]
+            for function in [25, 23]:  # sphere, schwefel, rosenbrock, rastrigin
+                for pk in pks:
+                    file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(1, 30)]
         if from_ is not None and to_ is not None:
             file_names = file_names[from_:to_]
         for f in file_names:
@@ -26,26 +29,26 @@ class CommunicationDiversityHelper():
             del cd
     """
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=0, to_=31)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=0, to_=172)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=31, to_=62)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=172, to_=344)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=62, to_=93)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=344, to_=516)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=93, to_=124)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=516, to_=688)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=124, to_=155)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=688, to_=860)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=155, to_=186)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=860, to_=1032)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=186, to_=217)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=1032, to_=1204)
 
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=217, to_=252)
+CommunicationDiversityHelper.calculate_communication_diversity(from_=1204, to_=1372)
     """
