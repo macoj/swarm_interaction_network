@@ -21,7 +21,7 @@ class CommunicationDiversityHelper():
         #         for pk in pks:
         #             file_names += ["%s_%04d_F%02d_%02d" % (topology[0], pk, function, r) for r in range(1, 30)]
         for function in [26, 25, 24, 23]:
-            for topology in [("global", 1), ("rinf", 1)]:  # initial is ring
+            for topology in [("ring", 1)]:
                 file_names += ["%s_F%02d_%02d" % (topology[0], function, r) for r in range(1, 30)]
 
         if from_ is not None and to_ is not None:
@@ -33,7 +33,7 @@ class CommunicationDiversityHelper():
             del cd
     """
 execfile("opt/communication_diversity_analysis_helper.py")
-CommunicationDiversityHelper.calculate_communication_diversity(from_=0, to_=172)
+CommunicationDiversityHelper.calculate_communication_diversity()
 
 execfile("opt/communication_diversity_analysis_helper.py")
 CommunicationDiversityHelper.calculate_communication_diversity(from_=172, to_=344)
