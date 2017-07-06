@@ -604,7 +604,7 @@ class Plotter:
                     facecolorcycler = cycle([boxes_kargs['facecolor']])
                 else:
                     facecolorcycler = cycle(boxes_kargs['facecolor'])
-            bp = plt.boxplot(
+            bp = ax.boxplot(
                 data[first:], notch=notch, sym=sym, showmeans=showmeans, widths=widths, whis=whis, patch_artist=True, **kargs)
             for patch in bp['boxes']:
                 key_func = {'color': patch.set_color,
