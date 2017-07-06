@@ -53,7 +53,6 @@ class SwarmParser:
         """
         input_file = open(filename, 'r')
         if jump_lines is not None:
-            print jump_lines
             for _ in range(jump_lines):
                 input_file.readline()
         windowed = window_size >= 1
