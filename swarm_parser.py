@@ -48,10 +48,13 @@ class SwarmParser:
     @staticmethod
     def read_file_and_measures(
             filename, influence_graph_grep=None, informations_grep=None, information_map=float, window_size=-1,
-            pre_callback=None, pos_callback=None, calculate_on=-1, until=-1):
+            pre_callback=None, pos_callback=None, calculate_on=-1, until=-1, jump_lines=None):
         """
         """
         input_file = open(filename, 'r')
+        if jump_lines is not None:
+            for _ in range(jump_lines):
+                input_file.readline()
         windowed = window_size >= 1
         window = {}
         matrix_count = 0

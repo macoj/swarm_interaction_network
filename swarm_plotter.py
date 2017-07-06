@@ -36,7 +36,7 @@ class SwarmPlotter():
     @staticmethod
     def plot_boxplot_fitness(
             sets_of_filenames, output_filename=None, info_grep="it\:#", yticks_args=None, legends=None, showmeans=False,
-            showfliers=True, whis=1., widths=0.7, bootstrap=2000, **kargs):
+            showfliers=True, whis=1., widths=0.7, bootstrap=2000, jump_lines=None, **kargs):
         """
         :param sets_of_filenames:
         :param output_filename:
@@ -44,7 +44,8 @@ class SwarmPlotter():
         :return:
         """
         get_infos = lambda x: [
-            SwarmParser.read_file_and_measures(filename, informations_grep=info_grep)[1][info_grep][-1][1]
+            SwarmParser.read_file_and_measures(
+                filename, informations_grep=info_grep, jump_lines=jump_lines)[1][info_grep][-1][1]
             for filename in x]
         values = map(get_infos, sets_of_filenames)
 
