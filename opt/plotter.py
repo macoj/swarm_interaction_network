@@ -570,7 +570,7 @@ class Plotter:
                       whis=1., notch=0, sym='+', showmeans=True, widths=0.5, boxes_kargs=None, legends=None, dpi=72,
                       whiskers_kargs=None, means_kargs=None, fliers_kargs=None, medians_kargs=None, grid_only=None,
                       tight_layout=None, caps_kargs=None, on_current=False, just_plot=False, xticks_args=None,
-                      yticks_args=None, **kargs):
+                      yticks_args=None, ax=None, **kargs):
         # ## plot here:
         # multiple box plots on one figure
         if not on_current:
@@ -580,7 +580,8 @@ class Plotter:
                 plt.figure()
         # fig, axes = plt.subplots(nrows=2, ncols=2, figsize=(10, 10))
         # bp = axes[0, 0].boxplot(all_alphas, notch=0, sym='+', showmeans=True, widths=0.3)
-        ax = plt.axes()
+        if ax is None:
+            ax = plt.axes()
         if violin:
             plt.violinplot(data[first:])
         else:
