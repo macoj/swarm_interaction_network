@@ -1,3 +1,5 @@
+#! /usr/bin/env python
+# -*- coding: utf-8 -*-
 __author__ = 'marcos'
 from swarm_analyzer import SwarmAnalyzer
 from giant_component_analysis import GiantComponentDeath
