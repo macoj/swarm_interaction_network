@@ -105,7 +105,7 @@ class GiantComponentDeathPlotter:
                 x = np.concatenate([[0], x])
                 y = np.concatenate([[0], y])
             f = interpolate.interp1d(x, y, kind=interpolation)
-            ty = map(float, map(f, tx))
+            ty = list(map(float, list(map(f, tx))))
             components.append(ty)
         components = np.array(components)
         yticks = [0, len(tx)/2, len(tx)]

@@ -11,7 +11,7 @@ class GiantComponentDeathHelper:
     def get_number_of_component_different_time_windows(filename, calculate_on=1000, tws=None):
         curves = []
         if tws is None:
-            tws = range(1, calculate_on, 10) + [calculate_on]
+            tws = list(range(1, calculate_on, 10)) + [calculate_on]
         for tw in tws:
             col_x = "x_%04d" % tw
             col_y = "y_%04d" % tw
