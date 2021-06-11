@@ -4,6 +4,7 @@ __author__ = 'marcos'
 import re
 import math
 import numpy as np
+import pandas as pd
 
 
 class SwarmParser:
@@ -53,7 +54,7 @@ class SwarmParser:
             pre_callback=None, pos_callback=None, calculate_on=-1, until=-1, jump_lines=None):
         """
         """
-        input_file = open(filename, 'r')
+        input_file = pd.read_table(filename, header=None)
         if jump_lines is not None:
             for _ in range(jump_lines):
                 input_file.readline()
@@ -67,7 +68,8 @@ class SwarmParser:
                 informations_grep = [informations_grep]
             informations = dict([(i, []) for i in informations_grep])
         accumulated_matrix = None
-        for line in input_file:
+        for _, line in input_file.iterrows():
+            line = line.values[0]
             # we add fitnesses and influence graphs in ig_line and fitnesses
             matrix_line, information, iteration = SwarmParser.grep_line_infos(
                 line, influence_graph_grep, informations_grep, information_map=information_map)
@@ -101,7 +103,7 @@ class SwarmParser:
                 break
             if until != -1 and iteration >= until:
                 break
-        input_file.close()
+        # input_file.close()
         return graphs, informations
     """
 execfile("swarm_parser.py")
