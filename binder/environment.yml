@@ -1,0 +1,12 @@
+name: swarm_interaction_env
+channels:
+  - conda-forge
+dependencies:
+  - pandas
+  - networkx
+  - scikit-learn
+  - pip:
+    - powerlaw
+    - python-louvain
+    - statsmodels
+    - python-igraph
