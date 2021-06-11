@@ -152,14 +152,14 @@ class SwarmAnalyzer:
         aucs = []
         if tws is None:
             tws = [10, 25, 50, 75, 100, 200, 300, 400, 500, 1000]
-        print filename
+        print(filename)
         for tw in tws:
-            print "  > tw: %d (%s)" % (tw, time.strftime("%H:%M:%S-%d/%m/%y"))
+            print("  > tw: %d (%s)" % (tw, time.strftime("%H:%M:%S-%d/%m/%y")))
             auc = SwarmAnalyzer.get_giant_component_destruction_area(filename, window_size=tw, **kargs)
-            print "   > OK"
+            print("   > OK")
             aucs.append(auc)
-        print "  > OK"
-        print " > creating data frame"
+        print("  > OK")
+        print(" > creating data frame")
         df = pd.concat(aucs, axis=1)
         df['cd'] = 1 - sum([df[c] for c in tws]) / float(len(tws))  # df[c] is already normalized
         return df
