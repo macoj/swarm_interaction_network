@@ -56,8 +56,7 @@ class SwarmParser:
         """
         input_file = pd.read_table(filename, header=None)
         if jump_lines is not None:
-            for _ in range(jump_lines):
-                input_file.readline()
+            input_file = input_file[input_file:]
         windowed = window_size >= 1
         window = {}
         matrix_count = 0
