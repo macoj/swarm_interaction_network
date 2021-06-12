@@ -5,6 +5,7 @@ Here we assess swarm intelligence techniques by examining the social interaction
 
 Some tutorials on how to use this code follows:
 
+* [[Tutorial 0]](tutorials/Tutorial_0.md)  How to create the input files. 
 * [[Tutorial 1]](tutorials/Tutorial_1.ipynb)  How to perform simple analyses.
 * [[Tutorial 2]](tutorials/Tutorial_2.ipynb)  How to see the signature of interactions within a swarm.
 
