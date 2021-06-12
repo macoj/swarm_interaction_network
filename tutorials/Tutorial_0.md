@@ -48,3 +48,6 @@ Each algorithm has its own definition of an interaction. More info here:
 
 - Uncovering the social interaction network in swarm intelligence algorithms. *Appl Netw Sci* 5, **24** (2020). https://doi.org/10.1007/s41109-020-00260-8
 
+## PSO
+In the case of the Particle Swarm Optimization, `/algorithms/PSO/` contains a implementation of the algorithm that generates the interaction networks. To use that code, you just need to generate the runnable `.jar` and run it. 
+
