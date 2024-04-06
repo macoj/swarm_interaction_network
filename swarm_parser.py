@@ -29,8 +29,7 @@ class SwarmParser:
                 matrix_slices = [matrix_read[part:part+dimension] for part in range(0, number_of_elements, dimension)]
                 matrix_result = np.array(matrix_slices)
             else:
-                # this matrix cannot be assembled as a square matrix
-                pass
+                raise Exception("This matrix cannot be assembled as a square matrix")
             del matrix_read
         return matrix_result
 
