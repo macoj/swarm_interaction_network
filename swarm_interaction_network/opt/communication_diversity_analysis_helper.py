@@ -1,4 +1,4 @@
-from swarm_analyzer import SwarmAnalyzer
+from swarm_interaction_network.swarm_analyzer import SwarmAnalyzer
 
 __author__ = 'marcos'
 

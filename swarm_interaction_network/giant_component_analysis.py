@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 __author__ = 'marcos'
 import pandas as pd
-from influence_graph import InfluenceGraph
+from swarm_interaction_network.influence_graph import InfluenceGraph
 
 
 class GiantComponentDeath:

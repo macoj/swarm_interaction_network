@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 __author__ = 'marcos'
-from swarm_analyzer import SwarmAnalyzer
-from giant_component_analysis import GiantComponentDeath
-from opt.giant_component_analysis_plotter import GiantComponentDeathPlotter
-from swarm_parser import SwarmParser
-from opt.plotter import Plotter
+from swarm_interaction_network.swarm_analyzer import SwarmAnalyzer
+from swarm_interaction_network.giant_component_analysis import GiantComponentDeath
+from swarm_interaction_network.opt.giant_component_analysis_plotter import GiantComponentDeathPlotter
+from swarm_interaction_network.swarm_parser import SwarmParser
+from swarm_interaction_network.opt.plotter import Plotter
 
 
 class SwarmPlotter():

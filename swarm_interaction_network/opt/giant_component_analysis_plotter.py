@@ -2,7 +2,7 @@ __author__ = 'marcos'
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
-from opt.plotter import Plotter
+from swarm_interaction_network.opt.plotter import Plotter
 from itertools import cycle
 
 

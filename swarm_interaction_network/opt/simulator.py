@@ -11,7 +11,7 @@ class Simulator:
     @staticmethod
     def execute(commands, number_of_processes=2, delay_between=2, output_dir=None):
         if not output_dir:
-            output_dir = "."
+            output_dir = ""
         if number_of_processes > len(commands):
             number_of_processes = len(commands)
         epoch_time = str(int(time.time()))
