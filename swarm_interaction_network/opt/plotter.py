@@ -1,7 +1,6 @@
 __author__ = 'marcos'
 import numpy as np
 import matplotlib
-import numpy
 import pandas as pd
 import networkx as nx
 import matplotlib.pyplot as plt
@@ -375,17 +374,17 @@ class Plotter:
                 if not graph_histogram_without_one:
                     continue
                 binwidth = 1
-                min_bin = numpy.min(graph_histogram_without_one)
-                max_bin = numpy.max(graph_histogram_without_one)
+                min_bin = np.min(graph_histogram_without_one)
+                max_bin = np.max(graph_histogram_without_one)
                 bins = range(min_bin, max_bin+binwidth, binwidth)
                 ax3.hist(graph_histogram_without_one, bins=bins, facecolor='red', alpha=0.45)
-                plt.xticks(numpy.unique(graph_histogram_without_one))
+                plt.xticks(np.unique(graph_histogram_without_one))
                 plt.tick_params(axis='both', which='major', labelsize=5)
                 plt.tick_params(axis='both', which='minor', labelsize=5)
-#                plt.xticks(range(numpy.min(graph_histogram_without_one),
-#                           numpy.max(graph_histogram_without_one),
-#                           (numpy.min(graph_histogram_without_one) +  numpy.max(graph_histogram_without_one))/5))
-                #plt.xlim(1, numpy.max(graph_histogram))
+#                plt.xticks(range(np.min(graph_histogram_without_one),
+#                           np.max(graph_histogram_without_one),
+#                           (np.min(graph_histogram_without_one) +  np.max(graph_histogram_without_one))/5))
+                #plt.xlim(1, np.max(graph_histogram))
                 if gs_index == 0:
                     plt.title("Components size\nhistogram")
                 gs_index += 1
@@ -424,11 +423,11 @@ class Plotter:
                 data_hist_1 = data_hist_1[1]
             #binwidth = 1
             ax3 = fig.add_subplot(plot_gridspec[4, 3])
-            #min_bin = numpy.min(data_hist_1)
-            #max_bin = numpy.max(data_hist_1)
+            #min_bin = np.min(data_hist_1)
+            #max_bin = np.max(data_hist_1)
             #bins = range(min_bin,max_bin+binwidth,binwidth)
             ax3.hist(data_hist_1,  facecolor='blue', alpha=0.45)
-            #plt.xticks(numpy.unique(data_hist_1))
+            #plt.xticks(np.unique(data_hist_1))
             plt.tick_params(axis='both', which='major', labelsize=5)
             plt.tick_params(axis='both', which='minor', labelsize=5)
             plt.title(title)
@@ -442,7 +441,7 @@ class Plotter:
                 ax3 = fig.add_subplot(plot_gridspec[4, 4])
                 #bins = range(min_bin,max_bin+binwidth,binwidth)
                 ax3.hist(data_hist_2,  facecolor='blue', alpha=0.45)
-                #plt.xticks(numpy.unique(data_hist_1))
+                #plt.xticks(np.unique(data_hist_1))
                 plt.tick_params(axis='both', which='major', labelsize=5)
                 plt.tick_params(axis='both', which='minor', labelsize=5)
                 plt.title(title)

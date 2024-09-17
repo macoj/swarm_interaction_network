@@ -1,6 +1,6 @@
 __author__ = 'marcos'
 import pandas as pd
-from swarm_analyzer import SwarmAnalyzer
+from swarm_interaction_network.swarm_analyzer import SwarmAnalyzer
 
 
 class GiantComponentDeathHelper:
